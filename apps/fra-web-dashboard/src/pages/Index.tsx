@@ -1,0 +1,350 @@
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { useAuth } from '@/hooks/useAuth';
+import { Layout } from '@/components/layout/Layout';
+import { 
+  Shield, 
+  Users, 
+  Target, 
+  Award, 
+  ArrowRight,
+  Play,
+  BookOpen,
+  Clock,
+  CheckCircle2,
+} from 'lucide-react';
+import { useState } from 'react';
+
+export default function Index() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [sessionCode, setSessionCode] = useState('');
+
+  const handleJoinSession = () => {
+    if (sessionCode.trim()) {
+      navigate(`/workshop?session=${sessionCode.trim().toUpperCase()}`);
+    }
+  };
+
+  const features = [
+    {
+      icon: BookOpen,
+      title: 'Interactive Learning',
+      description: 'Engage with dynamic slides, quizzes, and real-world scenarios tailored to your sector.',
+    },
+    {
+      icon: Users,
+      title: 'Live Collaboration',
+      description: 'Participate in real-time polls and Q&A sessions with your colleagues and facilitator.',
+    },
+    {
+      icon: Target,
+      title: 'Personalised Action Plans',
+      description: 'Receive customised recommendations based on your responses and organisation needs.',
+    },
+    {
+      icon: Award,
+      title: 'Certificate of Completion',
+      description: 'Earn a verified certificate documenting your fraud risk awareness training.',
+    },
+  ];
+
+  const stats = [
+    { value: '30', label: 'Minutes', sublabel: 'Workshop Duration' },
+    { value: '6', label: 'Modules', sublabel: 'Comprehensive Coverage' },
+    { value: '100%', label: 'Interactive', sublabel: 'Engaging Content' },
+  ];
+
+  return (
+    <Layout>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden gradient-hero py-20 lg:py-32">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptMCAwdi02aDZ2Nmgtengvex0WC8rMC8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
+        
+        <div className="container relative">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center lg:text-left"
+            >
+              <div className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-4 py-1.5 text-sm font-medium text-accent mb-6">
+                <Shield className="h-4 w-4" />
+                <span>Professional Development Workshop</span>
+              </div>
+              
+              <h1 className="text-4xl font-bold tracking-tight text-primary-foreground sm:text-5xl lg:text-6xl mb-6">
+                Fraud Risk
+                <br />
+                <span className="text-accent">Awareness</span> Briefing
+              </h1>
+              
+              <p className="text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto lg:mx-0">
+                An interactive 30-minute workshop designed for trustees, executive leadership, and budget-holders. 
+                Build fraud resilience through engaging content and practical action plans.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                {user ? (
+                  <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
+                    <Link to="/dashboard">
+                      <Play className="mr-2 h-5 w-5" />
+                      Go to Dashboard
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
+                    <Link to="/auth?mode=signup">
+                      Get Started
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                )}
+                <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" asChild>
+                  <Link to="/resources">
+                    <BookOpen className="mr-2 h-5 w-5" />
+                    View Resources
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="relative"
+            >
+              <Card className="border-0 shadow-2xl bg-card/95 backdrop-blur">
+                <CardHeader>
+                  <CardTitle className="text-xl">Join a Live Session</CardTitle>
+                  <CardDescription>
+                    Enter the session code provided by your facilitator
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-3">
+                    <Input
+                      placeholder="Enter session code"
+                      value={sessionCode}
+                      onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
+                      className="text-center text-lg font-mono tracking-widest uppercase"
+                      maxLength={6}
+                    />
+                    <Button onClick={handleJoinSession} disabled={!sessionCode.trim()}>
+                      Join
+                    </Button>
+                  </div>
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">or</span>
+                    </div>
+                  </div>
+
+                  <Button 
+                    variant="secondary" 
+                    className="w-full"
+                    onClick={() => navigate(user ? '/workshop' : '/auth?mode=signup')}
+                  >
+                    Start Self-Paced Workshop
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4 mt-6">
+                {stats.map((stat, index) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }}
+                    className="text-center p-4 rounded-lg bg-primary-foreground/5 backdrop-blur"
+                  >
+                    <div className="text-2xl font-bold text-primary-foreground">{stat.value}</div>
+                    <div className="text-sm font-medium text-primary-foreground/80">{stat.label}</div>
+                    <div className="text-xs text-primary-foreground/60">{stat.sublabel}</div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 lg:py-32">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
+              What You'll Experience
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Our workshop combines cutting-edge interactive technology with expert-curated content 
+              to deliver an engaging and impactful learning experience.
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
+                  <CardHeader>
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                      <feature.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Workshop Overview Section */}
+      <section className="py-20 lg:py-32 bg-muted/50">
+        <div className="container">
+          <div className="grid gap-12 lg:grid-cols-2 items-center">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-6">
+                A Comprehensive 30-Minute Journey
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                From regulatory updates to practical action planning, our workshop covers 
+                everything you need to strengthen your organisation's fraud defenses.
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  { time: '5 min', title: 'Regulatory Landscape', desc: 'Current compliance requirements and legislation' },
+                  { time: '5 min', title: 'Fraud Types & Risks', desc: 'Understanding common fraud schemes' },
+                  { time: '5 min', title: 'Defense Strategies', desc: 'Practical controls and prevention measures' },
+                  { time: '5 min', title: 'Organisational Impact', desc: 'The true cost of fraud incidents' },
+                  { time: '5 min', title: 'Interactive Scenarios', desc: 'Real-world case studies and exercises' },
+                  { time: '5 min', title: 'Action Planning', desc: 'Your personalised next steps' },
+                ].map((item, index) => (
+                  <motion.div
+                    key={item.title}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    viewport={{ once: true }}
+                    className="flex items-start gap-4"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary min-w-[60px]">
+                      <Clock className="h-4 w-4" />
+                      {item.time}
+                    </div>
+                    <div>
+                      <div className="font-medium">{item.title}</div>
+                      <div className="text-sm text-muted-foreground">{item.desc}</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <Card className="border-0 shadow-xl">
+                <CardHeader className="gradient-hero text-primary-foreground rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5" />
+                    What You'll Learn
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <ul className="space-y-3">
+                    {[
+                      'Understand your obligations under the Economic Crime Act 2023',
+                      'Identify common fraud schemes targeting your sector',
+                      'Implement practical defense strategies immediately',
+                      'Recognise red flags and early warning signs',
+                      'Develop a personalised fraud prevention action plan',
+                      'Access downloadable resources and tools',
+                    ].map((item, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span className="text-sm">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 lg:py-32">
+        <div className="container">
+          <Card className="border-0 gradient-hero overflow-hidden">
+            <CardContent className="p-12 lg:p-16 text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl mb-4">
+                Ready to Strengthen Your Fraud Defenses?
+              </h2>
+              <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
+                Join thousands of professionals who have enhanced their fraud awareness 
+                through our interactive workshop platform.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
+                  <Link to={user ? '/workshop' : '/auth?mode=signup'}>
+                    Start Workshop Now
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" asChild>
+                  <Link to="/resources">
+                    Download Resources
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t py-12 bg-muted/30">
+        <div className="container">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+                <Shield className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="font-semibold">Fraud Risk Awareness Workshop</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </Layout>
+  );
+}

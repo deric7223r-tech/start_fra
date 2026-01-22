@@ -1,0 +1,351 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
+import { useWorkshopProgress } from '@/hooks/useWorkshopProgress';
+import { supabase } from '@/integrations/supabase/client';
+import { Layout } from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
+import { actionPlanTemplates } from '@/data/workshopContent';
+import { ActionPlan as ActionPlanType, ActionItem } from '@/types/workshop';
+import {
+  Target,
+  ArrowLeft,
+  Save,
+  Loader2,
+  CheckCircle2,
+  Clock,
+  Calendar,
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+export default function ActionPlan() {
+  const { user, profile, isLoading: authLoading } = useAuth();
+  const { progress } = useWorkshopProgress();
+  const navigate = useNavigate();
+  const [actionPlan, setActionPlan] = useState<ActionPlanType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [customCommitments, setCustomCommitments] = useState('');
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      fetchActionPlan();
+    }
+  }, [user]);
+
+  const fetchActionPlan = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('action_plans')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (data) {
+      setActionPlan({
+        ...data,
+        action_items: (data.action_items as unknown as ActionItem[]) || generateDefaultItems(),
+      });
+      setCustomCommitments(data.commitments?.join('\n') || '');
+    } else {
+      // Create default action plan
+      const defaultItems = generateDefaultItems();
+      const { data: newPlan, error: createError } = await supabase
+        .from('action_plans')
+        .insert([{
+          user_id: user.id,
+          action_items: JSON.parse(JSON.stringify(defaultItems)),
+          commitments: [],
+        }])
+        .select()
+        .single();
+
+      if (newPlan) {
+        setActionPlan({
+          ...newPlan,
+          action_items: defaultItems,
+        });
+      }
+    }
+
+    setIsLoading(false);
+  };
+
+  const generateDefaultItems = (): ActionItem[] => {
+    return [
+      ...actionPlanTemplates.immediate.map((item, i) => ({
+        id: `immediate-${i}`,
+        title: item,
+        description: '',
+        priority: 'high' as const,
+        timeframe: 'Immediate',
+        completed: false,
+      })),
+      ...actionPlanTemplates.thirtyDays.map((item, i) => ({
+        id: `thirty-${i}`,
+        title: item,
+        description: '',
+        priority: 'medium' as const,
+        timeframe: '30 Days',
+        completed: false,
+      })),
+      ...actionPlanTemplates.ninetyDays.map((item, i) => ({
+        id: `ninety-${i}`,
+        title: item,
+        description: '',
+        priority: 'low' as const,
+        timeframe: '90 Days',
+        completed: false,
+      })),
+    ];
+  };
+
+  const toggleItemComplete = async (itemId: string) => {
+    if (!actionPlan) return;
+
+    const updatedItems = actionPlan.action_items.map(item =>
+      item.id === itemId ? { ...item, completed: !item.completed } : item
+    );
+
+    setActionPlan(prev => prev ? { ...prev, action_items: updatedItems } : null);
+
+    const { error } = await supabase
+      .from('action_plans')
+      .update({ action_items: JSON.parse(JSON.stringify(updatedItems)) })
+      .eq('id', actionPlan.id);
+
+    if (error) {
+      console.error('Error updating action plan:', error);
+    }
+  };
+
+  const saveCommitments = async () => {
+    if (!actionPlan) return;
+
+    setIsSaving(true);
+    const commitments = customCommitments.split('\n').filter(c => c.trim());
+
+    const { error } = await supabase
+      .from('action_plans')
+      .update({ commitments })
+      .eq('id', actionPlan.id);
+
+    if (error) {
+      toast.error('Failed to save commitments');
+    } else {
+      toast.success('Commitments saved!');
+    }
+
+    setIsSaving(false);
+  };
+
+  if (authLoading || isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user || !profile) return null;
+
+  const groupedItems = {
+    immediate: actionPlan?.action_items.filter(i => i.timeframe === 'Immediate') || [],
+    thirtyDays: actionPlan?.action_items.filter(i => i.timeframe === '30 Days') || [],
+    ninetyDays: actionPlan?.action_items.filter(i => i.timeframe === '90 Days') || [],
+  };
+
+  const totalItems = actionPlan?.action_items.length || 0;
+  const completedItems = actionPlan?.action_items.filter(i => i.completed).length || 0;
+  const progressPercent = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+
+  return (
+    <Layout>
+      <div className="container py-8 lg:py-12">
+        <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight mb-2">Your Action Plan</h1>
+              <p className="text-lg text-muted-foreground">
+                Track your progress on implementing fraud prevention measures
+              </p>
+            </div>
+
+            <Card className="lg:w-64">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold mb-1">{completedItems}/{totalItems}</div>
+                  <div className="text-sm text-muted-foreground mb-3">Actions Completed</div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-success h-2 rounded-full transition-all"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Immediate Actions */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-destructive" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Immediate</CardTitle>
+                    <CardDescription>Within 7 days</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {groupedItems.immediate.map(item => (
+                    <div
+                      key={item.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                        item.completed ? 'bg-success/5 border-success/30' : 'hover:bg-muted'
+                      }`}
+                    >
+                      <Checkbox
+                        checked={item.completed}
+                        onCheckedChange={() => toggleItemComplete(item.id)}
+                        className="mt-0.5"
+                      />
+                      <span className={item.completed ? 'line-through text-muted-foreground' : ''}>
+                        {item.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 30-Day Actions */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-warning/10 flex items-center justify-center">
+                    <Calendar className="h-4 w-4 text-warning" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">30 Days</CardTitle>
+                    <CardDescription>First month</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {groupedItems.thirtyDays.map(item => (
+                    <div
+                      key={item.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                        item.completed ? 'bg-success/5 border-success/30' : 'hover:bg-muted'
+                      }`}
+                    >
+                      <Checkbox
+                        checked={item.completed}
+                        onCheckedChange={() => toggleItemComplete(item.id)}
+                        className="mt-0.5"
+                      />
+                      <span className={item.completed ? 'line-through text-muted-foreground' : ''}>
+                        {item.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 90-Day Actions */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center">
+                    <Target className="h-4 w-4 text-success" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">90 Days</CardTitle>
+                    <CardDescription>First quarter</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {groupedItems.ninetyDays.map(item => (
+                    <div
+                      key={item.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                        item.completed ? 'bg-success/5 border-success/30' : 'hover:bg-muted'
+                      }`}
+                    >
+                      <Checkbox
+                        checked={item.completed}
+                        onCheckedChange={() => toggleItemComplete(item.id)}
+                        className="mt-0.5"
+                      />
+                      <span className={item.completed ? 'line-through text-muted-foreground' : ''}>
+                        {item.title}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Personal Commitments */}
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Your Personal Commitments</CardTitle>
+              <CardDescription>
+                Add your own commitments based on what you've learned in the workshop
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="Enter your commitments (one per line)..."
+                value={customCommitments}
+                onChange={(e) => setCustomCommitments(e.target.value)}
+                rows={4}
+                className="mb-4"
+              />
+              <Button onClick={saveCommitments} disabled={isSaving}>
+                {isSaving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                Save Commitments
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    </Layout>
+  );
+}

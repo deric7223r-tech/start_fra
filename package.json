@@ -1,0 +1,42 @@
+{
+  "name": "@stopfra/monorepo",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Stop FRA - Fraud Risk Assessment Platform Monorepo",
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "apps/fra-backend/backend"
+  ],
+  "scripts": {
+    "dev:mobile": "bun --filter @stopfra/mobile-app start",
+    "dev:web": "bun --filter @stopfra/web-dashboard dev",
+    "dev:backend": "bun --filter @stopfra/backend dev",
+    "dev:training": "bun --filter @stopfra/training-app start",
+    "dev:budget": "bun --filter @stopfra/budget-guide start",
+    "build": "turbo run build",
+    "build:web": "bun --filter @stopfra/web-dashboard build",
+    "build:backend": "bun --filter @stopfra/backend build",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "test": "turbo run test",
+    "test:backend": "bun --filter @stopfra/backend test",
+    "db:migrate": "bun --filter @stopfra/backend db:migrate",
+    "db:seed": "bun --filter @stopfra/backend db:seed",
+    "db:studio": "bun --filter @stopfra/backend db:studio",
+    "clean": "rm -rf node_modules apps/*/node_modules apps/fra-backend/backend/node_modules",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.2.0",
+    "turbo": "^2.3.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "bun": ">=1.0.0"
+  },
+  "packageManager": "bun@1.1.0"
+}
