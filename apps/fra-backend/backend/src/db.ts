@@ -1,9 +1,12 @@
 import { Pool } from 'pg';
+import dns from 'node:dns';
 
 let pool: Pool | null = null;
 
 export function getDbPool(): Pool {
   if (pool) return pool;
+
+  dns.setDefaultResultOrder('ipv4first');
 
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
