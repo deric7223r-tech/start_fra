@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { getDbPool } from './db';
+import { getDbPool } from './db.js';
 
 async function main() {
   const migrationsDir = join(process.cwd(), 'migrations');

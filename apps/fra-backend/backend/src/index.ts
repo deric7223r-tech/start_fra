@@ -6,8 +6,8 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { getDbPool } from './db';
-import { getRedis } from './redis';
+import { getDbPool } from './db.js';
+import { getRedis } from './redis.js';
 
 const app = new Hono();
 
