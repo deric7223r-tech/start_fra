@@ -6,8 +6,12 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getDbPool } from './db.js';
 import { getRedis } from './redis.js';
+
+dotenv.config();
 
 const app = new Hono();
 
@@ -250,6 +254,16 @@ const stripeWebhookSchema = z.object({
   data: z.unknown().optional(),
 });
 
+const s3PresignUploadSchema = z.object({
+  filename: z.string().min(1).max(255),
+  contentType: z.string().min(1).max(255),
+  sizeBytes: z.number().int().positive(),
+});
+
+const s3PresignDownloadSchema = z.object({
+  key: z.string().min(1).max(1024),
+});
+
 function jsonError(c: Context, status: ContentfulStatusCode, code: string, message: string) {
   return c.json({ success: false, error: { code, message } }, status);
 }
@@ -344,6 +358,37 @@ app.use('*', async (c, next) => {
   c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 });
+
+const s3Bucket = process.env.S3_BUCKET;
+const s3Region = process.env.S3_REGION ?? process.env.AWS_REGION;
+const s3UploadPrefix = process.env.S3_UPLOAD_PREFIX ?? 'private/uploads';
+const s3DownloadPrefix = process.env.S3_DOWNLOAD_PREFIX ?? s3UploadPrefix;
+const s3UrlExpiresSeconds = Number(process.env.S3_URL_EXPIRES_SECONDS ?? 300);
+const s3MaxUploadBytes = Number(process.env.S3_MAX_UPLOAD_BYTES ?? 10 * 1024 * 1024);
+const s3AllowedContentTypes = (process.env.S3_ALLOWED_CONTENT_TYPES ?? 'application/pdf,image/png,image/jpeg')
+  .split(',')
+  .map((v) => v.trim())
+  .filter(Boolean);
+
+const s3Client = s3Bucket && s3Region ? new S3Client({ region: s3Region }) : null;
+
+function requireS3(c: Context): S3Client | Response {
+  if (!s3Client || !s3Bucket || !s3Region) {
+    return jsonError(c, 501, 'S3_NOT_CONFIGURED', 'S3 is not configured');
+  }
+  return s3Client;
+}
+
+function sanitizeFilename(filename: string): string {
+  const base = filename.split('/').pop() ?? filename;
+  return base.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 255);
+}
+
+function s3KeyForUpload(auth: AuthContext, filename: string): string {
+  const safe = sanitizeFilename(filename);
+  const id = crypto.randomUUID();
+  return `${s3UploadPrefix}/${auth.organisationId}/${auth.userId}/${id}_${safe}`;
+}
 
 function generateKeypassCode(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -581,6 +626,85 @@ api.get('/auth/me', (c) => {
     if (!user) return jsonError(c, 401, 'UNAUTHORIZED', 'User not found');
     return c.json({ success: true, data: publicUser(user) });
   })();
+});
+
+api.post('/uploads/presign', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const s3 = requireS3(c);
+  if (s3 instanceof Response) return s3;
+
+  const parsed = s3PresignUploadSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid upload payload');
+
+  const { filename, contentType, sizeBytes } = parsed.data;
+
+  if (!Number.isFinite(s3UrlExpiresSeconds) || s3UrlExpiresSeconds <= 0 || s3UrlExpiresSeconds > 3600) {
+    return jsonError(c, 500, 'S3_CONFIG_ERROR', 'Invalid S3_URL_EXPIRES_SECONDS');
+  }
+
+  if (!Number.isFinite(s3MaxUploadBytes) || s3MaxUploadBytes <= 0) {
+    return jsonError(c, 500, 'S3_CONFIG_ERROR', 'Invalid S3_MAX_UPLOAD_BYTES');
+  }
+
+  if (sizeBytes > s3MaxUploadBytes) {
+    return jsonError(c, 413, 'PAYLOAD_TOO_LARGE', 'File too large');
+  }
+
+  if (s3AllowedContentTypes.length > 0 && !s3AllowedContentTypes.includes(contentType)) {
+    return jsonError(c, 415, 'UNSUPPORTED_MEDIA_TYPE', 'Unsupported content type');
+  }
+
+  const key = s3KeyForUpload(auth, filename);
+  const cmd = new PutObjectCommand({
+    Bucket: s3Bucket,
+    Key: key,
+    ContentType: contentType,
+    ContentLength: sizeBytes,
+  });
+
+  const uploadUrl = await getSignedUrl(s3, cmd, { expiresIn: s3UrlExpiresSeconds });
+  return c.json({
+    success: true,
+    data: {
+      bucket: s3Bucket,
+      region: s3Region,
+      key,
+      uploadUrl,
+      expiresIn: s3UrlExpiresSeconds,
+    },
+  });
+});
+
+api.post('/downloads/presign', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const s3 = requireS3(c);
+  if (s3 instanceof Response) return s3;
+
+  const parsed = s3PresignDownloadSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid download payload');
+
+  const { key } = parsed.data;
+  const allowedPrefix = `${s3DownloadPrefix}/${auth.organisationId}/`;
+  if (!key.startsWith(allowedPrefix)) {
+    return jsonError(c, 403, 'FORBIDDEN', 'Not allowed to access this object');
+  }
+
+  const cmd = new GetObjectCommand({ Bucket: s3Bucket, Key: key });
+  const downloadUrl = await getSignedUrl(s3, cmd, { expiresIn: s3UrlExpiresSeconds });
+  return c.json({
+    success: true,
+    data: {
+      bucket: s3Bucket,
+      region: s3Region,
+      key,
+      downloadUrl,
+      expiresIn: s3UrlExpiresSeconds,
+    },
+  });
 });
 
 api.post('/auth/logout', async (c) => {
