@@ -1241,6 +1241,8 @@ api.get('/reports/generate', (c) => {
 });
 
 const port = Number(process.env.PORT ?? 3000);
+const hostname =
+  process.env.HOST ?? (process.env.NODE_ENV === 'production' ? '127.0.0.1' : undefined);
 
 if (!process.env.JEST_WORKER_ID && process.env.NODE_ENV !== 'test') {
   if (process.env.NODE_ENV === 'production') {
@@ -1251,7 +1253,7 @@ if (!process.env.JEST_WORKER_ID && process.env.NODE_ENV !== 'test') {
       throw new Error('JWT secrets must be set via environment variables in production');
     }
   }
-  serve({ fetch: app.fetch, port });
+  serve({ fetch: app.fetch, port, hostname });
 }
 
 export default app;
