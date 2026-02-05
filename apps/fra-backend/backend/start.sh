@@ -1,9 +1,6 @@
 #!/bin/bash
 set -e
 
-# Force Node.js to use IPv4
-export NODE_OPTIONS="--dns-result-order=ipv4first"
-
 # Fetch ALL parameters from SSM
 PARAMS=$(aws ssm get-parameters --with-decryption \
   --names \
@@ -12,6 +9,9 @@ PARAMS=$(aws ssm get-parameters --with-decryption \
     /fra/backend/DATABASE_URL \
     /fra/backend/JWT_SECRET \
     /fra/backend/JWT_REFRESH_SECRET \
+    /fra/backend/S3_BUCKET \
+    /fra/backend/S3_REGION \
+    /fra/backend/S3_MAX_UPLOAD_BYTES \
   --query "Parameters[*].[Name,Value]" --output text --region eu-west-2)
 
 # Parse and export
