@@ -2,6 +2,8 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useCallback, useEffect, useState } from 'react';
 import { authService, type User, type Organisation } from '@/services/auth.service';
 import type { KeyPass, EmployeeCount, OrganisationSize } from '@/types/assessment';
+import { apiService } from '@/services/api.service';
+import { API_CONFIG } from '@/constants/api';
 
 // Map backend user/org types to local types
 interface UserData extends User {
@@ -121,24 +123,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       try {
         console.log('Signing in with key-pass:', keyPassCode);
 
-        // TODO: Implement key-pass login with backend
-        // For now, return not implemented error
-        return {
-          success: false,
-          error: 'Key-pass login will be implemented with backend integration',
-        };
+        const result = await apiService.post<any>(
+          API_CONFIG.ENDPOINTS.KEYPASSES.USE,
+          { code: keyPassCode, email, name: email.split('@')[0] },
+          { requiresAuth: false }
+        );
 
-        /* Backend integration example:
-        const result = await apiService.post('/api/v1/keypasses/use', {
-          code: keyPassCode,
-          employeeEmail: email,
-          employeeName: email.split('@')[0],
-        });
+        if (result.success && result.data?.accessToken && result.data?.refreshToken) {
+          await apiService.setTokens(result.data.accessToken, result.data.refreshToken);
+        }
 
-        if (result.success && result.data) {
-          // Create employee session
+        if (result.success && result.data?.user && result.data?.organisation) {
           setUser(result.data.user);
-          setOrganisation(result.data.organisation);
+          setOrganisation(result.data.organisation as OrganisationData);
           return { success: true };
         }
 
@@ -146,7 +143,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           success: false,
           error: result.error?.message || 'Invalid key-pass code',
         };
-        */
       } catch (error) {
         console.error('Key-pass sign in error:', error);
         return { success: false, error: 'Failed to validate key-pass' };
@@ -202,14 +198,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       try {
         console.log('Allocating key-passes for package:', packageType);
 
-        // TODO: Call backend to allocate key-passes
-        // const result = await apiService.post('/api/v1/keypasses/allocate', {
-        //   organisationId: organisation.organisationId,
-        //   quantity: allocation,
-        // });
-
-        // For now, update local state
         const allocation = employeeCount === '1-10' || employeeCount === '11-50' ? 100 : 250;
+
+        const result = await apiService.post<any>(
+          API_CONFIG.ENDPOINTS.KEYPASSES.ALLOCATE,
+          { quantity: allocation, expiresInDays: 90 },
+          { requiresAuth: true }
+        );
+
+        if (result.success && Array.isArray(result.data?.codes)) {
+          setKeyPasses(result.data.codes.map((code: string) => ({ code, status: 'unused' } as any)));
+        }
 
         await updateOrganisation({
           packageType: packageType as any,

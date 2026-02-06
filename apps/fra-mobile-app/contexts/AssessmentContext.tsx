@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import NetInfo from '@react-native-community/netinfo';
 import type { AssessmentData, AssessmentStatus, PackageType, PaymentStatus, FeedbackData, RiskRegisterItem, RiskPriority } from '@/types/assessment';
 import { apiService } from '@/services/api.service';
+import { API_CONFIG } from '@/constants/api';
 import { debounce } from '@/utils/debounce';
 
 const STORAGE_KEY = 'fra_assessment_draft';
@@ -25,6 +26,10 @@ interface SyncQueueItem {
 
 function generateId(): string {
   return `fra-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+function isLocalOnlyAssessmentId(id: string): boolean {
+  return id.startsWith('fra-');
 }
 
 function createEmptyAssessment(): AssessmentData {
@@ -308,6 +313,32 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const ensureRemoteAssessment = async (current: AssessmentData): Promise<AssessmentData> => {
+    if (!apiService.isAuthenticated() || !isOnline) {
+      return current;
+    }
+
+    if (!isLocalOnlyAssessmentId(current.id)) {
+      return current;
+    }
+
+    const response = await apiService.post<any>(
+      API_CONFIG.ENDPOINTS.ASSESSMENTS.CREATE,
+      { title: 'Fraud Risk Assessment', answers: current as any },
+      { requiresAuth: true }
+    );
+
+    if (response.success && response.data?.id) {
+      const now = new Date().toISOString();
+      const next = { ...current, id: response.data.id, updatedAt: now };
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      setAssessment(next);
+      return next;
+    }
+
+    throw new Error(response.error?.message || 'Failed to create assessment');
+  };
+
   // Network detection
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
@@ -409,8 +440,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     try {
       setSyncStatus({ state: 'syncing', lastSync: syncStatus.lastSync });
 
+      const target = await ensureRemoteAssessment(assessment);
+
       const response = await apiService.patch(
-        `/api/v1/assessments/${assessment.id}`,
+        API_CONFIG.ENDPOINTS.ASSESSMENTS.UPDATE(target.id),
         data,
         { requiresAuth: true }
       );
@@ -518,15 +551,40 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     const newAssessment = createEmptyAssessment();
     setAssessment(newAssessment);
     saveDraft(newAssessment);
+
+    if (apiService.isAuthenticated() && isOnline) {
+      ensureRemoteAssessment(newAssessment).catch(async () => {
+        await addToSyncQueue(newAssessment);
+        setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
+      });
+    }
   }, [saveDraft]);
 
   const submitAssessment = useCallback(() => {
     const riskRegister = calculateRiskScore(assessment);
-    updateAssessment({ 
-      status: 'submitted' as AssessmentStatus, 
-      riskRegister 
+    updateAssessment({
+      status: 'submitted' as AssessmentStatus,
+      riskRegister,
     });
-  }, [assessment, updateAssessment]);
+
+    if (apiService.isAuthenticated() && isOnline) {
+      ensureRemoteAssessment(assessment)
+        .then((target) =>
+          apiService.post(
+            API_CONFIG.ENDPOINTS.ASSESSMENTS.SUBMIT(target.id),
+            {},
+            { requiresAuth: true }
+          )
+        )
+        .catch(async () => {
+          await addToSyncQueue({ status: 'submitted' as AssessmentStatus, riskRegister });
+          setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
+        });
+    } else {
+      addToSyncQueue({ status: 'submitted' as AssessmentStatus, riskRegister }).catch(console.error);
+      setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
+    }
+  }, [assessment, updateAssessment, isOnline]);
 
   const validateAssessment = useCallback(() => {
     if (!assessment.signature) {
