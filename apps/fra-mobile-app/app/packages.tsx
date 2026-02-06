@@ -30,7 +30,6 @@ function getOrganisationSize(employeeCount: EmployeeCount | null): OrganisationS
 export default function PackagesScreen() {
   const router = useRouter();
   const { assessment, selectPackage } = useAssessment();
-  const { allocateKeyPasses } = useAuth();
   
   const orgSize = useMemo(() => 
     getOrganisationSize(assessment.organisation.employeeCount),
@@ -96,7 +95,6 @@ export default function PackagesScreen() {
 
   const handleSelectPackage = async (pkg: PackageOption) => {
     selectPackage(pkg.id, pkg.price);
-    await allocateKeyPasses(pkg.id, assessment.organisation.employeeCount);
     router.push('/payment');
   };
 

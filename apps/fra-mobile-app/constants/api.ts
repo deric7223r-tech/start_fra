@@ -50,7 +50,6 @@ export const API_CONFIG = {
     },
     // Key-passes
     KEYPASSES: {
-      VALIDATE: '/api/v1/keypasses/validate',
       USE: '/api/v1/keypasses/use',
       ALLOCATE: '/api/v1/keypasses/allocate',
       BY_ORG: (orgId: string) => `/api/v1/keypasses/organisation/${orgId}`,

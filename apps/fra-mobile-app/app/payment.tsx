@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { CreditCard, Lock } from 'lucide-react-native';
 import colors from '@/constants/colors';
 
 export default function PaymentScreen() {
   const router = useRouter();
   const { assessment, processPayment } = useAssessment();
+  const { allocateKeyPasses } = useAuth();
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
@@ -63,6 +65,11 @@ export default function PaymentScreen() {
         cvc,
         name: cardholderName,
       });
+
+      if (assessment.payment.packageType) {
+        await allocateKeyPasses(assessment.payment.packageType, assessment.organisation.employeeCount);
+      }
+
       router.push('/confirmation');
     } catch {
       Alert.alert('Payment Failed', 'There was an issue processing your payment. Please try again.');
@@ -181,7 +188,7 @@ export default function PaymentScreen() {
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          This is a demonstration payment screen. No actual payment processing occurs.
+          Payments are processed securely. Your card details are not stored in the app.
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>

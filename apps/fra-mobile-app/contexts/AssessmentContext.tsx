@@ -608,21 +608,60 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
 
   const processPayment = useCallback(async (cardDetails: { number: string; expiry: string; cvc: string; name: string }) => {
     console.log('Processing payment with card ending:', cardDetails.number.slice(-4));
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const transactionId = `TXN-${Date.now()}`;
-    updateAssessment({
-      status: 'paid' as AssessmentStatus,
-      payment: {
-        ...assessment.payment,
-        transactionId,
-        status: 'success' as PaymentStatus,
-        date: new Date().toISOString(),
-      },
-    });
+    const packageType = assessment.payment.packageType;
+    if (!packageType) {
+      throw new Error('No package selected');
+    }
 
-    return { success: true, transactionId };
+    const packageId =
+      packageType === 'health-check'
+        ? 'pkg_basic'
+        : packageType === 'with-awareness'
+          ? 'pkg_training'
+          : 'pkg_full';
+
+    try {
+      const purchase = await apiService.post<any>(
+        API_CONFIG.ENDPOINTS.PURCHASES.CREATE,
+        { packageId },
+        { requiresAuth: true }
+      );
+
+      if (!purchase.success || !purchase.data?.purchaseId) {
+        throw new Error(purchase.error?.message || 'Failed to create purchase');
+      }
+
+      const confirmed = await apiService.post<any>(
+        API_CONFIG.ENDPOINTS.PURCHASES.CONFIRM(purchase.data.purchaseId),
+        { paymentIntentId: purchase.data.paymentIntentId },
+        { requiresAuth: true }
+      );
+
+      if (!confirmed.success) {
+        throw new Error(confirmed.error?.message || 'Failed to confirm purchase');
+      }
+
+      const transactionId = purchase.data.purchaseId as string;
+      updateAssessment({
+        status: 'paid' as AssessmentStatus,
+        payment: {
+          ...assessment.payment,
+          transactionId,
+          status: 'success' as PaymentStatus,
+          date: new Date().toISOString(),
+        },
+      });
+
+      return { success: true, transactionId };
+    } catch (error) {
+      updateAssessment({
+        payment: {
+          ...assessment.payment,
+          status: 'failed' as PaymentStatus,
+        },
+      });
+      throw error;
+    }
   }, [assessment.payment, updateAssessment]);
 
   const submitFeedback = useCallback((feedbackData: Omit<FeedbackData, 'id' | 'assessmentId' | 'date'>) => {
