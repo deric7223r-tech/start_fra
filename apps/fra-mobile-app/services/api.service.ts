@@ -26,10 +26,15 @@ class ApiService {
   private baseUrl: string;
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
+  private tokensLoadedPromise: Promise<void>;
 
   constructor() {
     this.baseUrl = API_CONFIG.BASE_URL;
-    this.loadTokens();
+    this.tokensLoadedPromise = this.loadTokens();
+  }
+
+  private async ensureTokensLoaded(): Promise<void> {
+    await this.tokensLoadedPromise;
   }
 
   /**
@@ -86,6 +91,7 @@ class ApiService {
     endpoint: string,
     options: ApiRequestOptions = {}
   ): Promise<ApiResponse<T>> {
+    await this.ensureTokensLoaded();
     const {
       requiresAuth = false,
       timeout = API_CONFIG.TIMEOUT,
@@ -185,9 +191,13 @@ class ApiService {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success && data.data.accessToken) {
+        if (data.success && data.data.accessToken && data.data.refreshToken) {
           this.accessToken = data.data.accessToken;
-          await AsyncStorage.setItem('accessToken', data.data.accessToken);
+          this.refreshToken = data.data.refreshToken;
+          await Promise.all([
+            AsyncStorage.setItem('accessToken', data.data.accessToken),
+            AsyncStorage.setItem('refreshToken', data.data.refreshToken),
+          ]);
           return true;
         }
       }

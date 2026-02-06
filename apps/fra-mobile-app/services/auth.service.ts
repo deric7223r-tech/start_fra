@@ -191,7 +191,7 @@ class AuthService {
         this.getCachedOrganisation(),
       ]);
 
-      if (user && organisation && apiService.isAuthenticated()) {
+      if (user && organisation) {
         // Verify token is still valid by fetching current user
         const response = await this.getCurrentUser();
         if (response.success) {

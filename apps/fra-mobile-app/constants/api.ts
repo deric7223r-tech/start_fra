@@ -25,7 +25,7 @@ const getApiBaseUrl = (): string => {
   }
 
   // Production API URL
-  return envUrl || 'https://api.stopfra.com';
+  return envUrl || 'https://api.fraud-risk.co.uk';
 };
 
 export const API_CONFIG = {
