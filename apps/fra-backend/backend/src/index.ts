@@ -6,7 +6,7 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getDbPool } from './db.js';
 import { getRedis } from './redis.js';
@@ -264,6 +264,11 @@ const s3PresignDownloadSchema = z.object({
   key: z.string().min(1).max(1024),
 });
 
+const s3PromoteUploadSchema = z.object({
+  sourceKey: z.string().min(1).max(1024),
+  filename: z.string().min(1).max(255).optional(),
+});
+
 function jsonError(c: Context, status: ContentfulStatusCode, code: string, message: string) {
   return c.json({ success: false, error: { code, message } }, status);
 }
@@ -388,6 +393,12 @@ function s3KeyForUpload(auth: AuthContext, filename: string): string {
   const safe = sanitizeFilename(filename);
   const id = crypto.randomUUID();
   return `${s3UploadPrefix}/${auth.organisationId}/${auth.userId}/${id}_${safe}`;
+}
+
+function s3KeyForDownload(auth: AuthContext, filename: string): string {
+  const safe = sanitizeFilename(filename);
+  const id = crypto.randomUUID();
+  return `${s3DownloadPrefix}/${auth.organisationId}/${id}_${safe}`;
 }
 
 function generateKeypassCode(): string {
@@ -673,6 +684,46 @@ api.post('/uploads/presign', async (c) => {
       key,
       uploadUrl,
       expiresIn: s3UrlExpiresSeconds,
+    },
+  });
+});
+
+api.post('/uploads/promote', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const s3 = requireS3(c);
+  if (s3 instanceof Response) return s3;
+
+  const parsed = s3PromoteUploadSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid promote payload');
+
+  const { sourceKey, filename } = parsed.data;
+
+  const allowedSourcePrefix = `${s3UploadPrefix}/${auth.organisationId}/`;
+  if (!sourceKey.startsWith(allowedSourcePrefix)) {
+    return jsonError(c, 403, 'FORBIDDEN', 'Not allowed to promote this object');
+  }
+
+  const inferredFilename = sourceKey.split('/').pop() ?? 'file';
+  const destKey = s3KeyForDownload(auth, filename ?? inferredFilename);
+
+  const copySource = encodeURIComponent(`${s3Bucket}/${sourceKey}`);
+  await s3.send(
+    new CopyObjectCommand({
+      Bucket: s3Bucket,
+      Key: destKey,
+      CopySource: copySource,
+    })
+  );
+
+  return c.json({
+    success: true,
+    data: {
+      bucket: s3Bucket,
+      region: s3Region,
+      sourceKey,
+      key: destKey,
     },
   });
 });
