@@ -1,11 +1,18 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { api, setTokens, clearTokens, hasStoredTokens } from '@/lib/api';
 import { Profile, AppRole } from '@/types/workshop';
 
+export interface AuthUser {
+  userId: string;
+  email: string;
+  name: string;
+  role: string;
+  organisationId: string;
+  createdAt: string;
+}
+
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
   profile: Profile | null;
   roles: AppRole[];
   isLoading: boolean;
@@ -23,125 +30,145 @@ interface SignUpMetadata {
   job_title?: string;
 }
 
+type MeResponse = AuthUser & {
+  profile: {
+    id: string;
+    user_id: string;
+    full_name: string;
+    organization_name: string;
+    sector: 'public' | 'charity' | 'private';
+    job_title: string | null;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  workshopRoles: string[];
+};
+
+type AuthResponse = {
+  user: AuthUser;
+  organisation: { organisationId: string; name: string };
+  accessToken: string;
+  refreshToken: string;
+  profile?: {
+    id: string;
+    user_id: string;
+    full_name: string;
+    organization_name: string;
+    sector: 'public' | 'charity' | 'private';
+    job_title: string | null;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  workshopRoles?: string[];
+};
+
+function mapProfile(raw: MeResponse['profile']): Profile | null {
+  if (!raw) return null;
+  return {
+    id: raw.id,
+    user_id: raw.user_id,
+    full_name: raw.full_name,
+    organization_name: raw.organization_name,
+    sector: raw.sector,
+    job_title: raw.job_title,
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+  };
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching profile:', error);
-      return null;
+  const hydrateFromMe = async () => {
+    try {
+      const data = await api.get<MeResponse>('/api/v1/auth/me');
+      setUser({
+        userId: data.userId,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        organisationId: data.organisationId,
+        createdAt: data.createdAt,
+      });
+      setProfile(mapProfile(data.profile));
+      setRoles((data.workshopRoles ?? []) as AppRole[]);
+    } catch {
+      clearTokens();
+      setUser(null);
+      setProfile(null);
+      setRoles([]);
     }
-    return data as Profile | null;
-  };
-
-  const fetchRoles = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error fetching roles:', error);
-      return [];
-    }
-    return data.map(r => r.role as AppRole);
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      const profileData = await fetchProfile(user.id);
-      setProfile(profileData);
+    if (hasStoredTokens()) {
+      await hydrateFromMe();
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Defer Supabase calls with setTimeout
-        if (session?.user) {
-          setTimeout(async () => {
-            const [profileData, rolesData] = await Promise.all([
-              fetchProfile(session.user.id),
-              fetchRoles(session.user.id),
-            ]);
-            setProfile(profileData);
-            setRoles(rolesData);
-            setIsLoading(false);
-          }, 0);
-        } else {
-          setProfile(null);
-          setRoles([]);
-          setIsLoading(false);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        Promise.all([
-          fetchProfile(session.user.id),
-          fetchRoles(session.user.id),
-        ]).then(([profileData, rolesData]) => {
-          setProfile(profileData);
-          setRoles(rolesData);
-          setIsLoading(false);
-        });
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    if (hasStoredTokens()) {
+      hydrateFromMe().finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
   const signUp = async (email: string, password: string, metadata: SignUpMetadata) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: metadata,
-      },
-    });
-    
-    return { error: error as Error | null };
+    try {
+      const data = await api.post<AuthResponse>('/api/v1/auth/signup', {
+        email,
+        password,
+        name: metadata.full_name,
+        organisationName: metadata.organization_name,
+        jobTitle: metadata.job_title,
+        sector: metadata.sector,
+        workshopRole: 'participant',
+      });
+
+      setTokens(data.accessToken, data.refreshToken);
+      setUser(data.user);
+      if (data.profile) setProfile(mapProfile(data.profile));
+      setRoles((data.workshopRoles ?? ['participant']) as AppRole[]);
+
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    return { error: error as Error | null };
+    try {
+      const data = await api.post<AuthResponse>('/api/v1/auth/login', {
+        email,
+        password,
+      });
+
+      setTokens(data.accessToken, data.refreshToken);
+      setUser(data.user);
+
+      // Fetch full profile+roles via /me after login
+      await hydrateFromMe();
+
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await api.post('/api/v1/auth/logout', {});
+    } catch {
+      // ignore logout errors
+    }
+    clearTokens();
     setUser(null);
-    setSession(null);
     setProfile(null);
     setRoles([]);
   };
@@ -151,7 +178,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user,
-      session,
       profile,
       roles,
       isLoading,

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorkshopProgress } from '@/hooks/useWorkshopProgress';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,17 +19,12 @@ import {
 import { toast } from 'sonner';
 
 export default function Certificate() {
-  const { user, profile, isLoading: authLoading } = useAuth();
+  const { user, profile } = useAuth();
   const { progress } = useWorkshopProgress();
   const navigate = useNavigate();
   const [certificate, setCertificate] = useState<CertificateType | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
+  const certificateRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -40,14 +35,13 @@ export default function Certificate() {
   const fetchCertificate = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('certificates')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (data) {
-      setCertificate(data);
+    try {
+      const certs = await api.get<CertificateType[]>('/api/v1/workshop/certificates');
+      if (certs.length > 0) {
+        setCertificate(certs[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching certificate:', err);
     }
   };
 
@@ -55,39 +49,78 @@ export default function Certificate() {
     if (!user || !progress?.completed_at) return;
 
     setIsGenerating(true);
-    
-    // Generate a unique certificate number
-    const certNumber = `FRA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-    const { data, error } = await supabase
-      .from('certificates')
-      .insert({
-        user_id: user.id,
-        certificate_number: certNumber,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast.error('Failed to generate certificate');
-      console.error(error);
-    } else {
+    try {
+      const data = await api.post<CertificateType>('/api/v1/workshop/certificates', {});
       setCertificate(data);
       toast.success('Certificate generated!');
+    } catch (err) {
+      toast.error('Failed to generate certificate');
+      console.error(err);
     }
 
     setIsGenerating(false);
   };
 
-  if (authLoading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </Layout>
-    );
-  }
+  const handleDownloadPDF = () => {
+    if (!certificateRef.current) return;
+
+    // Add print-only styles dynamically
+    const style = document.createElement('style');
+    style.id = 'certificate-print-styles';
+    style.textContent = `
+      @media print {
+        body * { visibility: hidden !important; }
+        #certificate-printable, #certificate-printable * { visibility: visible !important; }
+        #certificate-printable {
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          padding: 40px !important;
+        }
+        @page { size: landscape; margin: 20mm; }
+      }
+    `;
+    document.head.appendChild(style);
+    window.print();
+    // Clean up after print dialog closes
+    setTimeout(() => {
+      document.getElementById('certificate-print-styles')?.remove();
+    }, 1000);
+  };
+
+  const handleShareCertificate = async () => {
+    if (!certificate || !profile) return;
+
+    const shareData = {
+      title: 'Fraud Risk Awareness Certificate',
+      text: `${profile.full_name} has completed the Fraud Risk Awareness Workshop. Certificate: ${certificate.certificate_number}`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled or share failed - fall back to clipboard
+        if ((err as Error).name !== 'AbortError') {
+          await copyToClipboard(shareData);
+        }
+      }
+    } else {
+      await copyToClipboard(shareData);
+    }
+  };
+
+  const copyToClipboard = async (shareData: { text: string; url: string }) => {
+    try {
+      await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
+      toast.success('Certificate link copied to clipboard');
+    } catch {
+      toast.error('Unable to copy to clipboard');
+    }
+  };
 
   if (!user || !profile) return null;
 
@@ -137,7 +170,7 @@ export default function Certificate() {
           {certificate ? (
             <>
               {/* Certificate Display */}
-              <Card className="overflow-hidden mb-6">
+              <Card id="certificate-printable" ref={certificateRef} className="overflow-hidden mb-6">
                 <div className="gradient-hero p-8 lg:p-12 text-center">
                   <div className="flex justify-center mb-6">
                     <div className="h-20 w-20 rounded-full bg-accent flex items-center justify-center">
@@ -206,11 +239,11 @@ export default function Certificate() {
 
               {/* Actions */}
               <div className="flex flex-wrap gap-4 justify-center">
-                <Button size="lg">
+                <Button size="lg" onClick={handleDownloadPDF}>
                   <Download className="mr-2 h-5 w-5" />
                   Download PDF
                 </Button>
-                <Button size="lg" variant="outline">
+                <Button size="lg" variant="outline" onClick={handleShareCertificate}>
                   <Share2 className="mr-2 h-5 w-5" />
                   Share Certificate
                 </Button>

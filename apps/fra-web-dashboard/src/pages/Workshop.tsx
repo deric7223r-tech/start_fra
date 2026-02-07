@@ -30,7 +30,7 @@ export default function Workshop() {
   const [searchParams] = useSearchParams();
   const sessionCode = searchParams.get('session');
   
-  const { user, profile, isLoading: authLoading } = useAuth();
+  const { user, profile } = useAuth();
   const { progress, updateSection, completeSection, saveQuizScore, saveScenarioChoice, isLoading: progressLoading } = useWorkshopProgress(sessionCode);
   const { session, activePoll, participantCount, joinSession } = useSession(sessionCode || undefined);
   const navigate = useNavigate();
@@ -41,12 +41,6 @@ export default function Workshop() {
   const [scenarioStep, setScenarioStep] = useState(0);
   const [scenarioChoice, setScenarioChoice] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (progress?.current_section !== undefined) {
@@ -60,7 +54,7 @@ export default function Workshop() {
     }
   }, [sessionCode, user]);
 
-  if (authLoading || progressLoading) {
+  if (progressLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">

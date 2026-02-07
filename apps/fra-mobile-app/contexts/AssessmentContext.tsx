@@ -506,9 +506,34 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
           return;
         }
         try {
-          const parsed = JSON.parse(stored) as AssessmentData;
-          setAssessment(parsed);
-          console.log('Loaded draft assessment:', parsed.id);
+          const parsed = JSON.parse(stored) as Partial<AssessmentData>;
+          // Merge with defaults to ensure all fields exist (handles schema migrations)
+          const defaults = createEmptyAssessment();
+          const merged: AssessmentData = {
+            ...defaults,
+            ...parsed,
+            organisation: { ...defaults.organisation, ...parsed.organisation },
+            riskAppetite: { ...defaults.riskAppetite, ...parsed.riskAppetite },
+            fraudTriangle: { ...defaults.fraudTriangle, ...parsed.fraudTriangle },
+            procurement: { ...defaults.procurement, ...parsed.procurement },
+            cashBanking: { ...defaults.cashBanking, ...parsed.cashBanking },
+            payrollHR: { ...defaults.payrollHR, ...parsed.payrollHR },
+            revenue: { ...defaults.revenue, ...parsed.revenue },
+            itSystems: { ...defaults.itSystems, ...parsed.itSystems },
+            peopleCulture: { ...defaults.peopleCulture, ...parsed.peopleCulture },
+            controlsTechnology: { ...defaults.controlsTechnology, ...parsed.controlsTechnology },
+            riskRegister: parsed.riskRegister ?? defaults.riskRegister,
+            paymentsModule: { ...defaults.paymentsModule, ...parsed.paymentsModule, kpis: { ...defaults.paymentsModule.kpis, ...parsed.paymentsModule?.kpis } },
+            trainingAwareness: { ...defaults.trainingAwareness, ...parsed.trainingAwareness },
+            monitoringEvaluation: { ...defaults.monitoringEvaluation, ...parsed.monitoringEvaluation },
+            complianceMapping: { ...defaults.complianceMapping, ...parsed.complianceMapping },
+            fraudResponsePlan: { ...defaults.fraudResponsePlan, ...parsed.fraudResponsePlan },
+            actionPlan: { ...defaults.actionPlan, ...parsed.actionPlan },
+            documentControl: { ...defaults.documentControl, ...parsed.documentControl },
+            payment: { ...defaults.payment, ...parsed.payment },
+          };
+          setAssessment(merged);
+          console.log('Loaded draft assessment:', merged.id);
         } catch (parseError) {
           console.error('Failed to parse assessment data:', parseError, 'Stored value:', stored.substring(0, 100));
           await AsyncStorage.removeItem(STORAGE_KEY);

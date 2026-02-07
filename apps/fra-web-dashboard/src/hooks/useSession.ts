@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { api, connectSSE } from '@/lib/api';
 import { useAuth } from './useAuth';
 import { WorkshopSession, Poll, Question } from '@/types/workshop';
 
@@ -11,6 +11,12 @@ export function useSession(sessionCode?: string) {
   const [participantCount, setParticipantCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const sessionRef = useRef<WorkshopSession | null>(null);
+
+  // Keep ref in sync so SSE callbacks can access latest session
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   useEffect(() => {
     if (sessionCode) {
@@ -20,250 +26,158 @@ export function useSession(sessionCode?: string) {
     }
   }, [sessionCode]);
 
+  // SSE subscription for real-time updates
   useEffect(() => {
     if (!session) return;
 
-    // Subscribe to session updates
-    const sessionChannel = supabase
-      .channel(`session-${session.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'workshop_sessions',
-          filter: `id=eq.${session.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            setSession(payload.new as WorkshopSession);
-          }
+    const cleanup = connectSSE(`/api/v1/workshop/sessions/${session.id}/events`, {
+      session_update: (data) => {
+        setSession(data as WorkshopSession);
+      },
+      poll_created: (data) => {
+        const poll = data as Poll;
+        if (poll.is_active) {
+          setActivePoll({ ...poll, options: poll.options as string[] });
         }
-      )
-      .subscribe();
+      },
+      poll_closed: (data) => {
+        const poll = data as Poll;
+        setActivePoll((prev) => (prev?.id === poll.id ? null : prev));
+      },
+      question_added: () => {
+        fetchQuestions();
+      },
+      question_updated: () => {
+        fetchQuestions();
+      },
+      participant_joined: () => {
+        fetchParticipantCount();
+      },
+    });
 
-    // Subscribe to poll updates
-    const pollChannel = supabase
-      .channel(`polls-${session.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'polls',
-          filter: `session_id=eq.${session.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            const poll = payload.new as Poll;
-            if (poll.is_active) {
-              setActivePoll({
-                ...poll,
-                options: poll.options as string[],
-              });
-            } else if (activePoll?.id === poll.id) {
-              setActivePoll(null);
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    // Subscribe to question updates
-    const questionChannel = supabase
-      .channel(`questions-${session.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'questions',
-          filter: `session_id=eq.${session.id}`,
-        },
-        () => {
-          fetchQuestions();
-        }
-      )
-      .subscribe();
-
-    // Subscribe to participant updates
-    const participantChannel = supabase
-      .channel(`participants-${session.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'session_participants',
-          filter: `session_id=eq.${session.id}`,
-        },
-        () => {
-          fetchParticipantCount();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(sessionChannel);
-      supabase.removeChannel(pollChannel);
-      supabase.removeChannel(questionChannel);
-      supabase.removeChannel(participantChannel);
-    };
+    return cleanup;
   }, [session?.id]);
 
   const fetchSession = async () => {
     if (!sessionCode) return;
 
-    const { data, error } = await supabase
-      .from('workshop_sessions')
-      .select('*')
-      .eq('session_code', sessionCode.toUpperCase())
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching session:', error);
-      setError('Failed to load session');
-    } else if (!data) {
-      setError('Session not found');
-    } else {
+    try {
+      const data = await api.get<WorkshopSession>(
+        `/api/v1/workshop/sessions/code/${sessionCode.toUpperCase()}`
+      );
       setSession(data);
       setError(null);
       await Promise.all([
-        fetchActivePoll(data.id),
-        fetchQuestions(),
-        fetchParticipantCount(),
+        fetchActivePollById(data.id),
+        fetchQuestionsById(data.id),
+        fetchParticipantCountById(data.id),
       ]);
+    } catch (err) {
+      console.error('Error fetching session:', err);
+      setError((err as Error).message || 'Failed to load session');
     }
-    
+
     setIsLoading(false);
   };
 
-  const fetchActivePoll = async (sessionId: string) => {
-    const { data } = await supabase
-      .from('polls')
-      .select('*')
-      .eq('session_id', sessionId)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (data) {
-      setActivePoll({
-        ...data,
-        options: data.options as string[],
-      });
+  const fetchActivePollById = async (sessionId: string) => {
+    try {
+      const data = await api.get<Poll | null>(
+        `/api/v1/workshop/sessions/${sessionId}/polls/active`
+      );
+      if (data) {
+        setActivePoll({ ...data, options: data.options as string[] });
+      }
+    } catch {
+      // no active poll
     }
   };
 
-  const fetchQuestions = async () => {
-    if (!session) return;
-
-    const { data } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('session_id', session.id)
-      .order('upvotes', { ascending: false });
-
-    if (data) {
+  const fetchQuestionsById = async (sessionId: string) => {
+    try {
+      const data = await api.get<Question[]>(
+        `/api/v1/workshop/sessions/${sessionId}/questions`
+      );
       setQuestions(data);
+    } catch {
+      // ignore
     }
   };
 
-  const fetchParticipantCount = async () => {
-    if (!session) return;
+  const fetchQuestions = useCallback(async () => {
+    const s = sessionRef.current;
+    if (!s) return;
+    await fetchQuestionsById(s.id);
+  }, []);
 
-    const { count } = await supabase
-      .from('session_participants')
-      .select('*', { count: 'exact', head: true })
-      .eq('session_id', session.id);
-
-    setParticipantCount(count || 0);
+  const fetchParticipantCountById = async (sessionId: string) => {
+    try {
+      const data = await api.get<{ count: number }>(
+        `/api/v1/workshop/sessions/${sessionId}/participants`
+      );
+      setParticipantCount(data.count);
+    } catch {
+      // ignore
+    }
   };
+
+  const fetchParticipantCount = useCallback(async () => {
+    const s = sessionRef.current;
+    if (!s) return;
+    await fetchParticipantCountById(s.id);
+  }, []);
 
   const joinSession = async () => {
     if (!user || !session) return { error: 'Not authenticated or no session' };
 
-    const { error } = await supabase
-      .from('session_participants')
-      .upsert({
-        session_id: session.id,
-        user_id: user.id,
-      });
-
-    if (error) {
-      console.error('Error joining session:', error);
-      return { error: error.message };
+    try {
+      await api.post(`/api/v1/workshop/sessions/${session.id}/join`, {});
+      return { error: null };
+    } catch (err) {
+      console.error('Error joining session:', err);
+      return { error: (err as Error).message };
     }
-
-    return { error: null };
   };
 
   const submitPollResponse = async (pollId: string, optionIndex: number) => {
     if (!user) return { error: 'Not authenticated' };
 
-    const { error } = await supabase
-      .from('poll_responses')
-      .upsert({
-        poll_id: pollId,
-        user_id: user.id,
-        selected_option: optionIndex,
+    try {
+      await api.post(`/api/v1/workshop/polls/${pollId}/respond`, {
+        selectedOption: optionIndex,
       });
-
-    if (error) {
-      console.error('Error submitting poll response:', error);
-      return { error: error.message };
+      return { error: null };
+    } catch (err) {
+      console.error('Error submitting poll response:', err);
+      return { error: (err as Error).message };
     }
-
-    return { error: null };
   };
 
   const submitQuestion = async (questionText: string) => {
     if (!user || !session) return { error: 'Not authenticated or no session' };
 
-    const { error } = await supabase
-      .from('questions')
-      .insert({
-        session_id: session.id,
-        user_id: user.id,
-        question_text: questionText,
+    try {
+      await api.post(`/api/v1/workshop/sessions/${session.id}/questions`, {
+        questionText,
       });
-
-    if (error) {
-      console.error('Error submitting question:', error);
-      return { error: error.message };
+      return { error: null };
+    } catch (err) {
+      console.error('Error submitting question:', err);
+      return { error: (err as Error).message };
     }
-
-    return { error: null };
   };
 
   const upvoteQuestion = async (questionId: string) => {
     if (!user) return { error: 'Not authenticated' };
 
-    // Check if already upvoted
-    const { data: existing } = await supabase
-      .from('question_upvotes')
-      .select('id')
-      .eq('question_id', questionId)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (existing) {
-      // Remove upvote
-      await supabase
-        .from('question_upvotes')
-        .delete()
-        .eq('id', existing.id);
-    } else {
-      // Add upvote
-      await supabase
-        .from('question_upvotes')
-        .insert({
-          question_id: questionId,
-          user_id: user.id,
-        });
+    try {
+      await api.post(`/api/v1/workshop/questions/${questionId}/upvote`, {});
+      await fetchQuestions();
+      return { error: null };
+    } catch (err) {
+      console.error('Error upvoting question:', err);
+      return { error: (err as Error).message };
     }
-
-    await fetchQuestions();
-    return { error: null };
   };
 
   return {

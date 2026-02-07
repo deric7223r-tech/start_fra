@@ -12,5 +12,21 @@ module.exports = {
       },
     ],
   },
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
   testMatch: ['**/__tests__/**/*.test.ts'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+    '!src/migrate.ts', // infrastructure script, needs real DB
+  ],
+  coverageThreshold: {
+    global: {
+      lines: 60,
+      branches: 35,
+      functions: 50,
+      statements: 55,
+    },
+  },
 };

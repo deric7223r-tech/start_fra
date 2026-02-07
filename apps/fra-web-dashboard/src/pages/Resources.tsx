@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +14,7 @@ import {
   BookOpen,
   ExternalLink,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ClipboardCheck,
@@ -23,16 +23,16 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export default function Resources() {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, isLoading, navigate]);
+  if (!user) return null;
 
-  if (isLoading || !user) return null;
+  const handleDownload = (resourceTitle: string) => {
+    toast.info(`"${resourceTitle}" will be available for download after your organisation completes the full assessment.`, {
+      duration: 5000,
+    });
+  };
 
   const preWorkshopResources = [
     {
@@ -92,7 +92,7 @@ export default function Resources() {
                         <CardDescription>{resource.description}</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <Button variant="outline" className="w-full">
+                        <Button variant="outline" className="w-full" onClick={() => handleDownload(resource.title)}>
                           <Download className="mr-2 h-4 w-4" />
                           Download PDF
                         </Button>

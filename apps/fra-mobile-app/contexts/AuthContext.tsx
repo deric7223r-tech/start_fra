@@ -192,8 +192,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
    * Allocate key-passes (after package purchase)
    */
   const allocateKeyPasses = useCallback(
-    async (packageType: string, employeeCount: EmployeeCount | null) => {
-      if (!organisation) return;
+    async (packageType: string, employeeCount: EmployeeCount | null): Promise<{ success: boolean; error?: string }> => {
+      if (!organisation) return { success: false, error: 'No organisation found' };
 
       try {
         console.log('Allocating key-passes for package:', packageType);
@@ -208,6 +208,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
         if (result.success && Array.isArray(result.data?.codes)) {
           setKeyPasses(result.data.codes.map((code: string) => ({ code, status: 'unused' } as any)));
+        } else {
+          return { success: false, error: result.error?.message || 'Failed to allocate access codes' };
         }
 
         await updateOrganisation({
@@ -217,8 +219,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         });
 
         console.log(`Allocated ${allocation} key-passes`);
+        return { success: true };
       } catch (error) {
         console.error('Failed to allocate key-passes:', error);
+        return { success: false, error: 'Failed to allocate access codes' };
       }
     },
     [organisation, updateOrganisation]

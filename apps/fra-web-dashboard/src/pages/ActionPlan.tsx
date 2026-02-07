@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorkshopProgress } from '@/hooks/useWorkshopProgress';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,19 +23,13 @@ import {
 import { toast } from 'sonner';
 
 export default function ActionPlan() {
-  const { user, profile, isLoading: authLoading } = useAuth();
+  const { user, profile } = useAuth();
   const { progress } = useWorkshopProgress();
   const navigate = useNavigate();
   const [actionPlan, setActionPlan] = useState<ActionPlanType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [customCommitments, setCustomCommitments] = useState('');
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (user) {
@@ -46,37 +40,31 @@ export default function ActionPlan() {
   const fetchActionPlan = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('action_plans')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    try {
+      const plans = await api.get<ActionPlanType[]>('/api/v1/workshop/action-plans');
+      const data = plans.length > 0 ? plans[0] : null;
 
-    if (data) {
-      setActionPlan({
-        ...data,
-        action_items: (data.action_items as unknown as ActionItem[]) || generateDefaultItems(),
-      });
-      setCustomCommitments(data.commitments?.join('\n') || '');
-    } else {
-      // Create default action plan
-      const defaultItems = generateDefaultItems();
-      const { data: newPlan, error: createError } = await supabase
-        .from('action_plans')
-        .insert([{
-          user_id: user.id,
-          action_items: JSON.parse(JSON.stringify(defaultItems)),
+      if (data) {
+        setActionPlan({
+          ...data,
+          action_items: (data.action_items as unknown as ActionItem[]) || generateDefaultItems(),
+        });
+        setCustomCommitments(data.commitments?.join('\n') || '');
+      } else {
+        // Create default action plan
+        const defaultItems = generateDefaultItems();
+        const newPlan = await api.post<ActionPlanType>('/api/v1/workshop/action-plans', {
+          actionItems: defaultItems,
           commitments: [],
-        }])
-        .select()
-        .single();
+        });
 
-      if (newPlan) {
         setActionPlan({
           ...newPlan,
           action_items: defaultItems,
         });
       }
+    } catch (err) {
+      console.error('Error fetching action plan:', err);
     }
 
     setIsLoading(false);
@@ -120,13 +108,12 @@ export default function ActionPlan() {
 
     setActionPlan(prev => prev ? { ...prev, action_items: updatedItems } : null);
 
-    const { error } = await supabase
-      .from('action_plans')
-      .update({ action_items: JSON.parse(JSON.stringify(updatedItems)) })
-      .eq('id', actionPlan.id);
-
-    if (error) {
-      console.error('Error updating action plan:', error);
+    try {
+      await api.patch(`/api/v1/workshop/action-plans/${actionPlan.id}`, {
+        actionItems: updatedItems,
+      });
+    } catch (err) {
+      console.error('Error updating action plan:', err);
     }
   };
 
@@ -136,21 +123,19 @@ export default function ActionPlan() {
     setIsSaving(true);
     const commitments = customCommitments.split('\n').filter(c => c.trim());
 
-    const { error } = await supabase
-      .from('action_plans')
-      .update({ commitments })
-      .eq('id', actionPlan.id);
-
-    if (error) {
-      toast.error('Failed to save commitments');
-    } else {
+    try {
+      await api.patch(`/api/v1/workshop/action-plans/${actionPlan.id}`, {
+        commitments,
+      });
       toast.success('Commitments saved!');
+    } catch {
+      toast.error('Failed to save commitments');
     }
 
     setIsSaving(false);
   };
 
-  if (authLoading || isLoading) {
+  if (isLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">

@@ -30,7 +30,7 @@ The platform addresses:
 | Language | TypeScript |
 | Styling | Tailwind CSS |
 | Components | shadcn/ui (Radix primitives) |
-| Backend | Supabase (Auth, Database, Real-time) |
+| Backend | Hono API (JWT Auth, Neon PostgreSQL, SSE Real-time) |
 | State | React Query (@tanstack/react-query) |
 | Routing | React Router v6 |
 | Charts | Recharts |
@@ -51,9 +51,8 @@ src/
 │   ├── useAuth.tsx     # Authentication context
 │   ├── useSession.ts   # Workshop session management
 │   └── useWorkshopProgress.ts
-├── integrations/       # External service integrations
-│   └── supabase/       # Supabase client & types
-├── lib/                # Utility functions
+├── lib/                # Utility functions & API client
+│   └── api.ts          # Backend API client (fetch + SSE)
 ├── pages/              # Route components
 │   ├── Index.tsx       # Landing page
 │   ├── Auth.tsx        # Login/Register
@@ -101,10 +100,9 @@ npm run preview    # Preview production build
 
 ## Environment Configuration
 
-Requires `.env` file with Supabase credentials:
+Requires `.env` file with backend API URL:
 ```
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_API_URL=http://localhost:3000
 ```
 
 ---
@@ -144,7 +142,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 
 ## Related Documentation
 
-- [Supabase Docs](https://supabase.com/docs)
+- [Hono Framework](https://hono.dev)
 - [shadcn/ui](https://ui.shadcn.com)
 - [React Query](https://tanstack.com/query)
 - [Economic Crime Act 2023](https://www.legislation.gov.uk/ukpga/2023/56)

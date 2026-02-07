@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
 import { ChevronRight, Building2, Target, AlertTriangle, ShoppingCart, Banknote, Users2, TrendingUp, Monitor, Heart, Shield, DollarSign, GraduationCap, BarChart3, FileCheck, AlertOctagon, ListChecks } from 'lucide-react-native';
@@ -8,10 +8,21 @@ import colors from '@/constants/colors';
 export default function ReviewScreen() {
   const router = useRouter();
   const { assessment, submitAssessment } = useAssessment();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    submitAssessment();
-    router.push('/packages');
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      submitAssessment();
+      router.push('/packages');
+    } catch {
+      Alert.alert(
+        'Submission Failed',
+        'Unable to submit your assessment. Your answers are saved locally and will sync when possible.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getSectionSummary = (section: string): string => {
@@ -118,8 +129,17 @@ export default function ReviewScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.8}>
-          <Text style={styles.submitButtonText}>Submit and Continue</Text>
+        <TouchableOpacity
+          style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+          activeOpacity={0.8}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={styles.submitButtonText}>Submit and Continue</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -231,6 +251,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     padding: 16,
     alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
   submitButtonText: {
     fontSize: 17,

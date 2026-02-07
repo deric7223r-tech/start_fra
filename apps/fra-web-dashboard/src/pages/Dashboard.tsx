@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,17 +22,11 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, profile, isLoading: authLoading } = useAuth();
+  const { user, profile } = useAuth();
   const { progress, isLoading: progressLoading } = useWorkshopProgress();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
-  if (authLoading || progressLoading) {
+  if (progressLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">

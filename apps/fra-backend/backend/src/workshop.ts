@@ -1,0 +1,852 @@
+// ============================================================
+// Stop FRA - Workshop Routes (migrated from Supabase)
+// Mounted at /api/v1/workshop in index.ts
+// ============================================================
+
+import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
+import type { Context } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import jwt from 'jsonwebtoken';
+import { z } from 'zod';
+import { getDbPool } from './db.js';
+
+// ── Types ────────────────────────────────────────────────────
+
+type AuthContext = {
+  userId: string;
+  email: string;
+  role: string;
+  organisationId: string;
+};
+
+type SSEClient = {
+  id: string;
+  userId: string;
+  write: (event: string, data: unknown) => void;
+  close: () => void;
+};
+
+// ── SSE connection registry ──────────────────────────────────
+
+const sseClients = new Map<string, Set<SSEClient>>();
+
+export function broadcastToSession(sessionId: string, event: string, data: unknown) {
+  const clients = sseClients.get(sessionId);
+  if (!clients || clients.size === 0) return;
+  for (const client of clients) {
+    try {
+      client.write(event, data);
+    } catch {
+      clients.delete(client);
+    }
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function jsonError(c: Context, status: ContentfulStatusCode, code: string, message: string) {
+  return c.json({ success: false, error: { code, message } }, status);
+}
+
+function hasDatabase(): boolean {
+  return !!process.env.DATABASE_URL;
+}
+
+const jwtSecret = process.env.JWT_SECRET ?? 'dev_jwt_secret_change_me';
+
+function getAuth(c: Context): AuthContext | null {
+  // Check header first, then query param (for SSE EventSource)
+  let token: string | undefined;
+
+  const authHeader = c.req.header('authorization') ?? c.req.header('Authorization');
+  if (authHeader) {
+    const match = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (match) token = match[1];
+  }
+
+  if (!token) {
+    const queryToken = c.req.query('token');
+    if (queryToken) token = queryToken;
+  }
+
+  if (!token) return null;
+
+  try {
+    const payload = jwt.verify(token, jwtSecret) as {
+      sub: string;
+      email: string;
+      role: string;
+      organisationId: string;
+    };
+    return {
+      userId: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      organisationId: payload.organisationId,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function requireAuth(c: Context): AuthContext | Response {
+  const auth = getAuth(c);
+  if (!auth) return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid access token');
+  return auth;
+}
+
+// ── Workshop Hono App ────────────────────────────────────────
+
+const workshop = new Hono();
+
+// ── Profile endpoints ────────────────────────────────────────
+
+workshop.get('/profile', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: null });
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT id, user_id, full_name, organization_name, sector, job_title, created_at, updated_at FROM workshop_profiles WHERE user_id = $1 LIMIT 1',
+    [auth.userId]
+  );
+
+  return c.json({ success: true, data: res.rows[0] ?? null });
+});
+
+workshop.put('/profile', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({
+    fullName: z.string().min(1).max(200),
+    organizationName: z.string().min(1).max(200),
+    sector: z.enum(['public', 'charity', 'private']),
+    jobTitle: z.string().max(200).optional(),
+  });
+
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid profile data');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const { fullName, organizationName, sector, jobTitle } = parsed.data;
+
+  const res = await pool.query(
+    `INSERT INTO workshop_profiles (user_id, full_name, organization_name, sector, job_title, updated_at)
+     VALUES ($1, $2, $3, $4, $5, now())
+     ON CONFLICT (user_id) DO UPDATE SET full_name = $2, organization_name = $3, sector = $4, job_title = $5, updated_at = now()
+     RETURNING *`,
+    [auth.userId, fullName, organizationName, sector, jobTitle ?? null]
+  );
+
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+// ── Roles endpoints ──────────────────────────────────────────
+
+workshop.get('/roles', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: [] });
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT role FROM workshop_roles WHERE user_id = $1',
+    [auth.userId]
+  );
+
+  return c.json({ success: true, data: res.rows.map((r: { role: string }) => r.role) });
+});
+
+// ── Session endpoints ────────────────────────────────────────
+
+workshop.get('/sessions', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: [] });
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM workshop_sessions WHERE facilitator_id = $1 ORDER BY created_at DESC',
+    [auth.userId]
+  );
+
+  return c.json({ success: true, data: res.rows });
+});
+
+workshop.post('/sessions', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({ title: z.string().min(1).max(200) });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Title is required');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const sessionCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    `INSERT INTO workshop_sessions (facilitator_id, session_code, title, is_active, current_slide)
+     VALUES ($1, $2, $3, true, 0) RETURNING *`,
+    [auth.userId, sessionCode, parsed.data.title]
+  );
+
+  return c.json({ success: true, data: res.rows[0] }, 201);
+});
+
+workshop.get('/sessions/:id', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+
+  const pool = getDbPool();
+  const res = await pool.query('SELECT * FROM workshop_sessions WHERE id = $1 LIMIT 1', [c.req.param('id')]);
+
+  if (!res.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+workshop.get('/sessions/code/:code', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM workshop_sessions WHERE session_code = $1 LIMIT 1',
+    [c.req.param('code').toUpperCase()]
+  );
+
+  if (!res.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+workshop.patch('/sessions/:id', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({
+    currentSlide: z.number().int().min(0).optional(),
+    isActive: z.boolean().optional(),
+    title: z.string().min(1).max(200).optional(),
+  });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid update data');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const sessionId = c.req.param('id');
+
+  // Verify ownership
+  const check = await pool.query('SELECT facilitator_id FROM workshop_sessions WHERE id = $1', [sessionId]);
+  if (!check.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  if (check.rows[0].facilitator_id !== auth.userId) return jsonError(c, 403, 'FORBIDDEN', 'Not your session');
+
+  const sets: string[] = [];
+  const vals: unknown[] = [];
+  let idx = 1;
+
+  if (parsed.data.currentSlide !== undefined) { sets.push(`current_slide = $${idx++}`); vals.push(parsed.data.currentSlide); }
+  if (parsed.data.isActive !== undefined) { sets.push(`is_active = $${idx++}`); vals.push(parsed.data.isActive); }
+  if (parsed.data.title !== undefined) { sets.push(`title = $${idx++}`); vals.push(parsed.data.title); }
+
+  if (sets.length === 0) return jsonError(c, 400, 'VALIDATION_ERROR', 'No fields to update');
+
+  vals.push(sessionId);
+  const res = await pool.query(
+    `UPDATE workshop_sessions SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`,
+    vals
+  );
+
+  // Broadcast session update via SSE
+  broadcastToSession(sessionId, 'session_update', res.rows[0]);
+
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+workshop.post('/sessions/:id/end', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const sessionId = c.req.param('id');
+
+  const check = await pool.query('SELECT facilitator_id FROM workshop_sessions WHERE id = $1', [sessionId]);
+  if (!check.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  if (check.rows[0].facilitator_id !== auth.userId) return jsonError(c, 403, 'FORBIDDEN', 'Not your session');
+
+  const res = await pool.query(
+    'UPDATE workshop_sessions SET is_active = false, ended_at = now() WHERE id = $1 RETURNING *',
+    [sessionId]
+  );
+
+  broadcastToSession(sessionId, 'session_update', res.rows[0]);
+
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+workshop.post('/sessions/:id/join', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const sessionId = c.req.param('id');
+
+  // Verify session exists
+  const check = await pool.query('SELECT id FROM workshop_sessions WHERE id = $1', [sessionId]);
+  if (!check.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+
+  await pool.query(
+    'INSERT INTO session_participants (session_id, user_id) VALUES ($1, $2) ON CONFLICT (session_id, user_id) DO NOTHING',
+    [sessionId, auth.userId]
+  );
+
+  const countRes = await pool.query(
+    'SELECT COUNT(*)::int AS count FROM session_participants WHERE session_id = $1',
+    [sessionId]
+  );
+  const participantCount = countRes.rows[0]?.count ?? 0;
+
+  broadcastToSession(sessionId, 'participant_joined', { participantCount });
+
+  return c.json({ success: true, data: { participantCount } });
+});
+
+workshop.get('/sessions/:id/participants', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: { count: 0 } });
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT COUNT(*)::int AS count FROM session_participants WHERE session_id = $1',
+    [c.req.param('id')]
+  );
+
+  return c.json({ success: true, data: { count: res.rows[0]?.count ?? 0 } });
+});
+
+// ── Progress endpoints ───────────────────────────────────────
+
+workshop.get('/progress', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: null });
+
+  const pool = getDbPool();
+  const sessionId = c.req.query('sessionId');
+
+  let res;
+  if (sessionId) {
+    res = await pool.query(
+      'SELECT * FROM workshop_progress WHERE user_id = $1 AND session_id = $2 LIMIT 1',
+      [auth.userId, sessionId]
+    );
+  } else {
+    res = await pool.query(
+      'SELECT * FROM workshop_progress WHERE user_id = $1 AND session_id IS NULL LIMIT 1',
+      [auth.userId]
+    );
+  }
+
+  return c.json({ success: true, data: res.rows[0] ?? null });
+});
+
+workshop.post('/progress', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({ sessionId: z.string().uuid().optional() });
+  const parsed = schema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid data');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    `INSERT INTO workshop_progress (user_id, session_id, current_section, completed_sections, quiz_scores, scenario_choices)
+     VALUES ($1, $2, 0, '{}', '{}'::jsonb, '{}'::jsonb)
+     ON CONFLICT DO NOTHING
+     RETURNING *`,
+    [auth.userId, parsed.data.sessionId ?? null]
+  );
+
+  // If conflict (already exists), fetch existing
+  if (res.rows.length === 0) {
+    const existing = parsed.data.sessionId
+      ? await pool.query('SELECT * FROM workshop_progress WHERE user_id = $1 AND session_id = $2 LIMIT 1', [auth.userId, parsed.data.sessionId])
+      : await pool.query('SELECT * FROM workshop_progress WHERE user_id = $1 AND session_id IS NULL LIMIT 1', [auth.userId]);
+    return c.json({ success: true, data: existing.rows[0] ?? null });
+  }
+
+  return c.json({ success: true, data: res.rows[0] }, 201);
+});
+
+workshop.patch('/progress/:id', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({
+    currentSection: z.number().int().min(0).optional(),
+    completedSections: z.array(z.number().int()).optional(),
+    quizScores: z.record(z.number()).optional(),
+    scenarioChoices: z.record(z.string()).optional(),
+    completedAt: z.string().nullable().optional(),
+  });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid progress data');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const progressId = c.req.param('id');
+
+  // Verify ownership
+  const check = await pool.query('SELECT user_id FROM workshop_progress WHERE id = $1', [progressId]);
+  if (!check.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Progress not found');
+  if (check.rows[0].user_id !== auth.userId) return jsonError(c, 403, 'FORBIDDEN', 'Not your progress');
+
+  const sets: string[] = ['updated_at = now()'];
+  const vals: unknown[] = [];
+  let idx = 1;
+
+  if (parsed.data.currentSection !== undefined) { sets.push(`current_section = $${idx++}`); vals.push(parsed.data.currentSection); }
+  if (parsed.data.completedSections !== undefined) { sets.push(`completed_sections = $${idx++}`); vals.push(parsed.data.completedSections); }
+  if (parsed.data.quizScores !== undefined) { sets.push(`quiz_scores = $${idx++}`); vals.push(JSON.stringify(parsed.data.quizScores)); }
+  if (parsed.data.scenarioChoices !== undefined) { sets.push(`scenario_choices = $${idx++}`); vals.push(JSON.stringify(parsed.data.scenarioChoices)); }
+  if (parsed.data.completedAt !== undefined) { sets.push(`completed_at = $${idx++}`); vals.push(parsed.data.completedAt); }
+
+  vals.push(progressId);
+  const res = await pool.query(
+    `UPDATE workshop_progress SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`,
+    vals
+  );
+
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+// ── Polls endpoints ──────────────────────────────────────────
+
+workshop.get('/sessions/:sessionId/polls', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: [] });
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM polls WHERE session_id = $1 ORDER BY created_at DESC',
+    [c.req.param('sessionId')]
+  );
+
+  return c.json({ success: true, data: res.rows });
+});
+
+workshop.get('/sessions/:sessionId/polls/active', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: null });
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM polls WHERE session_id = $1 AND is_active = true LIMIT 1',
+    [c.req.param('sessionId')]
+  );
+
+  return c.json({ success: true, data: res.rows[0] ?? null });
+});
+
+workshop.post('/sessions/:sessionId/polls', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({
+    question: z.string().min(1).max(500),
+    options: z.array(z.string().min(1)).min(2).max(10),
+  });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Question and at least 2 options required');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const sessionId = c.req.param('sessionId');
+
+  // Verify facilitator
+  const check = await pool.query('SELECT facilitator_id FROM workshop_sessions WHERE id = $1', [sessionId]);
+  if (!check.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  if (check.rows[0].facilitator_id !== auth.userId) return jsonError(c, 403, 'FORBIDDEN', 'Not your session');
+
+  const res = await pool.query(
+    'INSERT INTO polls (session_id, question, options, is_active) VALUES ($1, $2, $3, true) RETURNING *',
+    [sessionId, parsed.data.question, JSON.stringify(parsed.data.options)]
+  );
+
+  broadcastToSession(sessionId, 'poll_created', res.rows[0]);
+
+  return c.json({ success: true, data: res.rows[0] }, 201);
+});
+
+workshop.patch('/polls/:pollId', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({ isActive: z.boolean() });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid data');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const pollId = c.req.param('pollId');
+
+  // Get poll + verify facilitator
+  const pollCheck = await pool.query(
+    'SELECT p.session_id, s.facilitator_id FROM polls p JOIN workshop_sessions s ON s.id = p.session_id WHERE p.id = $1',
+    [pollId]
+  );
+  if (!pollCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Poll not found');
+  if (pollCheck.rows[0].facilitator_id !== auth.userId) return jsonError(c, 403, 'FORBIDDEN', 'Not your session');
+
+  const res = await pool.query(
+    'UPDATE polls SET is_active = $1 WHERE id = $2 RETURNING *',
+    [parsed.data.isActive, pollId]
+  );
+
+  const sessionId = pollCheck.rows[0].session_id;
+  if (!parsed.data.isActive) {
+    broadcastToSession(sessionId, 'poll_closed', { id: pollId });
+  }
+
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+workshop.post('/polls/:pollId/respond', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({ selectedOption: z.number().int().min(0) });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'selectedOption required');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  await pool.query(
+    `INSERT INTO poll_responses (poll_id, user_id, selected_option)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (poll_id, user_id) DO UPDATE SET selected_option = $3`,
+    [c.req.param('pollId'), auth.userId, parsed.data.selectedOption]
+  );
+
+  return c.json({ success: true });
+});
+
+// ── Questions (Q&A) endpoints ────────────────────────────────
+
+workshop.get('/sessions/:sessionId/questions', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: [] });
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM questions WHERE session_id = $1 ORDER BY upvotes DESC, created_at DESC',
+    [c.req.param('sessionId')]
+  );
+
+  return c.json({ success: true, data: res.rows });
+});
+
+workshop.post('/sessions/:sessionId/questions', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({ questionText: z.string().min(1).max(1000) });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'questionText required');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const sessionId = c.req.param('sessionId');
+  const res = await pool.query(
+    'INSERT INTO questions (session_id, user_id, question_text) VALUES ($1, $2, $3) RETURNING *',
+    [sessionId, auth.userId, parsed.data.questionText]
+  );
+
+  broadcastToSession(sessionId, 'question_added', res.rows[0]);
+
+  return c.json({ success: true, data: res.rows[0] }, 201);
+});
+
+workshop.patch('/questions/:questionId', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({ isAnswered: z.boolean() });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid data');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const questionId = c.req.param('questionId');
+
+  // Get question + verify facilitator
+  const qCheck = await pool.query(
+    'SELECT q.session_id, s.facilitator_id FROM questions q JOIN workshop_sessions s ON s.id = q.session_id WHERE q.id = $1',
+    [questionId]
+  );
+  if (!qCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Question not found');
+  if (qCheck.rows[0].facilitator_id !== auth.userId) return jsonError(c, 403, 'FORBIDDEN', 'Not your session');
+
+  const res = await pool.query(
+    'UPDATE questions SET is_answered = $1 WHERE id = $2 RETURNING *',
+    [parsed.data.isAnswered, questionId]
+  );
+
+  broadcastToSession(qCheck.rows[0].session_id, 'question_updated', res.rows[0]);
+
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+workshop.post('/questions/:questionId/upvote', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const questionId = c.req.param('questionId');
+
+  // Check if already upvoted
+  const existing = await pool.query(
+    'SELECT id FROM question_upvotes WHERE question_id = $1 AND user_id = $2 LIMIT 1',
+    [questionId, auth.userId]
+  );
+
+  if (existing.rows[0]) {
+    // Remove upvote
+    await pool.query('DELETE FROM question_upvotes WHERE id = $1', [existing.rows[0].id]);
+    await pool.query('UPDATE questions SET upvotes = GREATEST(upvotes - 1, 0) WHERE id = $1', [questionId]);
+  } else {
+    // Add upvote
+    await pool.query(
+      'INSERT INTO question_upvotes (question_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [questionId, auth.userId]
+    );
+    await pool.query('UPDATE questions SET upvotes = upvotes + 1 WHERE id = $1', [questionId]);
+  }
+
+  // Get updated question
+  const updated = await pool.query('SELECT * FROM questions WHERE id = $1', [questionId]);
+  if (updated.rows[0]) {
+    // Get session_id for broadcast
+    broadcastToSession(updated.rows[0].session_id, 'question_updated', updated.rows[0]);
+  }
+
+  return c.json({ success: true, data: updated.rows[0] ?? null });
+});
+
+// ── Action Plans endpoints ───────────────────────────────────
+
+workshop.get('/action-plans', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: null });
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM action_plans WHERE user_id = $1 ORDER BY generated_at DESC LIMIT 1',
+    [auth.userId]
+  );
+
+  return c.json({ success: true, data: res.rows[0] ?? null });
+});
+
+workshop.post('/action-plans', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({
+    sessionId: z.string().uuid().optional(),
+    actionItems: z.unknown(),
+    commitments: z.array(z.string()).optional(),
+  });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid action plan data');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    `INSERT INTO action_plans (user_id, session_id, action_items, commitments)
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [auth.userId, parsed.data.sessionId ?? null, JSON.stringify(parsed.data.actionItems), parsed.data.commitments ?? []]
+  );
+
+  return c.json({ success: true, data: res.rows[0] }, 201);
+});
+
+workshop.patch('/action-plans/:id', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({
+    actionItems: z.unknown().optional(),
+    commitments: z.array(z.string()).optional(),
+  });
+  const parsed = schema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid data');
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+  const planId = c.req.param('id');
+
+  // Verify ownership
+  const check = await pool.query('SELECT user_id FROM action_plans WHERE id = $1', [planId]);
+  if (!check.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Action plan not found');
+  if (check.rows[0].user_id !== auth.userId) return jsonError(c, 403, 'FORBIDDEN', 'Not your action plan');
+
+  const sets: string[] = [];
+  const vals: unknown[] = [];
+  let idx = 1;
+
+  if (parsed.data.actionItems !== undefined) { sets.push(`action_items = $${idx++}`); vals.push(JSON.stringify(parsed.data.actionItems)); }
+  if (parsed.data.commitments !== undefined) { sets.push(`commitments = $${idx++}`); vals.push(parsed.data.commitments); }
+
+  if (sets.length === 0) return jsonError(c, 400, 'VALIDATION_ERROR', 'No fields to update');
+
+  vals.push(planId);
+  const res = await pool.query(
+    `UPDATE action_plans SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`,
+    vals
+  );
+
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+// ── Certificates endpoints ───────────────────────────────────
+
+workshop.get('/certificates', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (!hasDatabase()) return c.json({ success: true, data: null });
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM certificates WHERE user_id = $1 ORDER BY issued_at DESC LIMIT 1',
+    [auth.userId]
+  );
+
+  return c.json({ success: true, data: res.rows[0] ?? null });
+});
+
+workshop.post('/certificates', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const schema = z.object({ sessionId: z.string().uuid().optional() });
+  const parsed = schema.safeParse(await c.req.json().catch(() => ({})));
+
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
+
+  const pool = getDbPool();
+
+  // Check if already has a certificate
+  const existing = await pool.query('SELECT * FROM certificates WHERE user_id = $1 LIMIT 1', [auth.userId]);
+  if (existing.rows[0]) return c.json({ success: true, data: existing.rows[0] });
+
+  // Generate certificate number server-side
+  const certNumber = `FRA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+  const res = await pool.query(
+    `INSERT INTO certificates (user_id, session_id, certificate_number)
+     VALUES ($1, $2, $3) RETURNING *`,
+    [auth.userId, parsed.data?.sessionId ?? null, certNumber]
+  );
+
+  return c.json({ success: true, data: res.rows[0] }, 201);
+});
+
+// ── SSE Events endpoint ──────────────────────────────────────
+
+workshop.get('/sessions/:sessionId/events', async (c) => {
+  const auth = getAuth(c);
+  if (!auth) return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid access token');
+
+  const sessionId = c.req.param('sessionId');
+
+  return streamSSE(c, async (stream) => {
+    const clientId = crypto.randomUUID();
+
+    const client: SSEClient = {
+      id: clientId,
+      userId: auth.userId,
+      write: (event: string, data: unknown) => {
+        stream.writeSSE({ event, data: JSON.stringify(data), id: crypto.randomUUID() });
+      },
+      close: () => {
+        const clients = sseClients.get(sessionId);
+        if (clients) {
+          clients.delete(client);
+          if (clients.size === 0) sseClients.delete(sessionId);
+        }
+      },
+    };
+
+    // Register client
+    if (!sseClients.has(sessionId)) sseClients.set(sessionId, new Set());
+    sseClients.get(sessionId)!.add(client);
+
+    // Send initial connected event
+    stream.writeSSE({ event: 'connected', data: JSON.stringify({ clientId }), id: crypto.randomUUID() });
+
+    // Heartbeat every 30 seconds
+    const heartbeat = setInterval(() => {
+      try {
+        stream.writeSSE({ event: 'heartbeat', data: JSON.stringify({ ts: Date.now() }), id: crypto.randomUUID() });
+      } catch {
+        clearInterval(heartbeat);
+        client.close();
+      }
+    }, 30_000);
+
+    // Clean up on disconnect
+    stream.onAbort(() => {
+      clearInterval(heartbeat);
+      client.close();
+    });
+
+    // Keep the stream open indefinitely until client disconnects
+    await new Promise<void>((resolve) => {
+      stream.onAbort(() => resolve());
+    });
+  });
+});
+
+export default workshop;

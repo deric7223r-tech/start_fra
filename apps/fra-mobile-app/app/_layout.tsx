@@ -102,6 +102,38 @@ function RootLayoutNav() {
         options={{ title: "Dashboard" }}
       />
       <Stack.Screen
+        name="payments-module"
+        options={{ title: "Payments Module" }}
+      />
+      <Stack.Screen
+        name="training-awareness"
+        options={{ title: "Training & Awareness" }}
+      />
+      <Stack.Screen
+        name="monitoring-evaluation"
+        options={{ title: "Monitoring & Evaluation" }}
+      />
+      <Stack.Screen
+        name="compliance-mapping"
+        options={{ title: "Compliance Mapping" }}
+      />
+      <Stack.Screen
+        name="fraud-response"
+        options={{ title: "Fraud Response Plan" }}
+      />
+      <Stack.Screen
+        name="action-plan"
+        options={{ title: "Action Plan" }}
+      />
+      <Stack.Screen
+        name="procurement-refactored"
+        options={{ title: "Procurement" }}
+      />
+      <Stack.Screen
+        name="risk-appetite-refactored"
+        options={{ title: "Risk Appetite" }}
+      />
+      <Stack.Screen
         name="auth/login"
         options={{ title: "Sign In", headerShown: false }}
       />

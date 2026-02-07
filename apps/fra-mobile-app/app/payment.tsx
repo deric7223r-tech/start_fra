@@ -67,12 +67,27 @@ export default function PaymentScreen() {
       });
 
       if (assessment.payment.packageType) {
-        await allocateKeyPasses(assessment.payment.packageType, assessment.organisation.employeeCount);
+        const keyPassResult = await allocateKeyPasses(assessment.payment.packageType, assessment.organisation.employeeCount);
+        if (keyPassResult && !keyPassResult.success) {
+          Alert.alert(
+            'Payment Successful',
+            'Your payment was processed but employee access codes could not be allocated. Please contact support to resolve this.',
+            [{ text: 'Continue', onPress: () => router.push('/confirmation') }]
+          );
+          return;
+        }
       }
 
       router.push('/confirmation');
-    } catch {
-      Alert.alert('Payment Failed', 'There was an issue processing your payment. Please try again.');
+    } catch (error: any) {
+      const message = error?.message || '';
+      if (message.includes('TIMEOUT') || message.includes('timed out')) {
+        Alert.alert('Request Timed Out', 'The payment request timed out. Please check your connection and try again.');
+      } else if (message.includes('NETWORK') || message.includes('Network')) {
+        Alert.alert('Network Error', 'Please check your internet connection and try again.');
+      } else {
+        Alert.alert('Payment Failed', 'There was an issue processing your payment. Please try again.');
+      }
     } finally {
       setIsProcessing(false);
     }

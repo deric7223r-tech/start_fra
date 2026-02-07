@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
 import { Star } from 'lucide-react-native';
@@ -12,6 +12,7 @@ export default function FeedbackScreen() {
   const [whatWorkedWell, setWhatWorkedWell] = useState('');
   const [improvements, setImprovements] = useState('');
   const [consentFollowUp, setConsentFollowUp] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = () => {
     if (!rating) {
@@ -19,23 +20,30 @@ export default function FeedbackScreen() {
       return;
     }
 
-    submitFeedback({
-      rating,
-      whatWorkedWell,
-      improvements,
-      consentFollowUp,
-    });
+    setIsSubmitting(true);
+    try {
+      submitFeedback({
+        rating,
+        whatWorkedWell,
+        improvements,
+        consentFollowUp,
+      });
 
-    Alert.alert(
-      'Thank You!',
-      'Your feedback has been submitted. We appreciate you taking the time to help us improve.',
-      [
-        {
-          text: 'Return to Home',
-          onPress: () => router.push('/'),
-        },
-      ]
-    );
+      Alert.alert(
+        'Thank You!',
+        'Your feedback has been submitted. We appreciate you taking the time to help us improve.',
+        [
+          {
+            text: 'Return to Home',
+            onPress: () => router.push('/'),
+          },
+        ]
+      );
+    } catch {
+      Alert.alert('Submission Failed', 'Unable to submit feedback. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSkip = () => {
@@ -128,8 +136,17 @@ export default function FeedbackScreen() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.8}>
-          <Text style={styles.submitButtonText}>Submit Feedback</Text>
+        <TouchableOpacity
+          style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+          activeOpacity={0.8}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color={colors.white} />
+          ) : (
+            <Text style={styles.submitButtonText}>Submit Feedback</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.7}>
@@ -248,6 +265,9 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 12,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
   submitButtonText: {
     fontSize: 17,

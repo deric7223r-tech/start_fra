@@ -18,6 +18,8 @@ import {
 import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
 import { Button } from './Button';
+import { SyncStatus } from './SyncStatus';
+import { useAssessment } from '@/contexts/AssessmentContext';
 
 export interface AssessmentScreenProps {
   /** Screen title/intro text */
@@ -70,6 +72,7 @@ export function AssessmentScreen({
   progress,
 }: AssessmentScreenProps) {
   const router = useRouter();
+  const { syncStatus, isOnline, syncQueue } = useAssessment();
 
   const handleNext = () => {
     if (onNext) {
@@ -123,6 +126,18 @@ export function AssessmentScreen({
               {progress.current} of {progress.total}
             </Text>
           </View>
+        )}
+
+        {/* Sync Status */}
+        {(syncStatus.state !== 'synced' || !isOnline) && (
+          <SyncStatus
+            state={syncStatus.state}
+            lastSync={syncStatus.lastSync}
+            isOnline={isOnline}
+            queueCount={syncQueue.length}
+            errorMessage={syncStatus.errorMessage}
+            compact
+          />
         )}
 
         {/* Title */}

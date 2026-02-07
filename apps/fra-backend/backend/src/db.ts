@@ -18,7 +18,22 @@ export function getDbPool(): Pool {
   pool = new Pool({
     connectionString,
     ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    max: Number(process.env.DB_POOL_MAX ?? 20),
+    idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS ?? 30000),
+    connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS ?? 5000),
+    statement_timeout: Number(process.env.DB_STATEMENT_TIMEOUT_MS ?? 30000),
+  });
+
+  pool.on('error', (err) => {
+    console.error(JSON.stringify({ ts: new Date().toISOString(), level: 'error', component: 'pg_pool', error: err.message }));
   });
 
   return pool;
+}
+
+export async function closeDbPool(): Promise<void> {
+  if (pool) {
+    await pool.end();
+    pool = null;
+  }
 }

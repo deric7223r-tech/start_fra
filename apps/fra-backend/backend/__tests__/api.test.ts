@@ -6,7 +6,10 @@ describe('Backend API', () => {
   it('GET /health returns ok', async () => {
     const res = await app.request('http://localhost/health');
     expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({ status: 'ok' });
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.status).toBe('ok');
+    expect(body.checks).toBeDefined();
+    expect(typeof body.uptime).toBe('number');
   });
 
   it('auth signup/login/assessments flow', async () => {
