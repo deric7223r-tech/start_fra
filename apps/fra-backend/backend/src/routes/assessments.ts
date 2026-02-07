@@ -24,6 +24,24 @@ assessments.get('/assessments', (c) => {
   })();
 });
 
+assessments.get('/assessments/organisation/:orgId', (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const orgId = c.req.param('orgId');
+  if (orgId !== auth.organisationId) return jsonError(c, 403, 'FORBIDDEN', 'Forbidden');
+
+  if (!hasDatabase()) {
+    const items = Array.from(assessmentsById.values()).filter((a) => a.organisationId === orgId);
+    return c.json({ success: true, data: items });
+  }
+
+  return (async () => {
+    const items = await dbListAssessmentsByOrganisation(orgId);
+    return c.json({ success: true, data: items });
+  })();
+});
+
 assessments.post('/assessments', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;

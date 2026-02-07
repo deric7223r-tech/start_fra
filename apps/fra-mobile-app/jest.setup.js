@@ -8,35 +8,8 @@ jest.mock('react-native/Libraries/NativeComponent/ViewConfigIgnore', () => ({
   DynamicallyInjectedByGestureHandler: {},
 }), { virtual: true });
 
-// Disable host component name detection to avoid TypeScript parsing issues
-jest.mock('@testing-library/react-native/build/helpers/host-component-names', () => ({
-  configureHostComponentNamesIfNeeded: jest.fn(),
-  getHostComponentNames: jest.fn(() => new Set()),
-  isHostText: (element) => {
-    return !!element && (element.type === 'Text' || element.type === 'RCTText' || element.type === 'RCTVirtualText');
-  },
-  isHostElement: (element) => {
-    return !!element && typeof element.type === 'string';
-  },
-  isHostTextInput: (element) => {
-    return !!element && (element.type === 'TextInput' || element.type === 'RCTTextInput');
-  },
-  isHostSwitch: (element) => {
-    return !!element && (element.type === 'Switch' || element.type === 'RCTSwitch');
-  },
-  isHostScrollView: (element) => {
-    return !!element && (element.type === 'ScrollView' || element.type === 'RCTScrollView');
-  },
-  isHostTouchable: (element) => {
-    return (
-      !!element &&
-      (element.type === 'TouchableOpacity' ||
-        element.type === 'TouchableHighlight' ||
-        element.type === 'Pressable' ||
-        element.type === 'RCTView')
-    );
-  },
-}));
+// Note: host-component-names mock removed - the @react-native/babel-preset
+// properly handles Flow/TypeScript in React Native source files now.
 
 // Mock Expo modules
 jest.mock('expo-router', () => ({
@@ -60,6 +33,13 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(),
   removeItem: jest.fn(),
   clear: jest.fn(),
+}));
+
+// Mock NetInfo
+jest.mock('@react-native-community/netinfo', () => ({
+  addEventListener: jest.fn(() => jest.fn()),
+  fetch: jest.fn(() => Promise.resolve({ isConnected: true, isInternetReachable: true })),
+  useNetInfo: jest.fn(() => ({ isConnected: true, isInternetReachable: true })),
 }));
 
 // Suppress console warnings and errors during tests

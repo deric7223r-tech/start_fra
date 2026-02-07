@@ -121,7 +121,16 @@ export type DbKeypassRow = {
 // ── JWT config ──────────────────────────────────────────────────
 
 export const DEV_REFRESH_SECRET = 'dev_refresh_secret_change_me';
-export const refreshSecret: jwt.Secret = process.env.JWT_REFRESH_SECRET ?? DEV_REFRESH_SECRET;
+
+function resolveRefreshSecret(): jwt.Secret {
+  if (process.env.JWT_REFRESH_SECRET) return process.env.JWT_REFRESH_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_REFRESH_SECRET environment variable must be set in production');
+  }
+  return DEV_REFRESH_SECRET;
+}
+
+export const refreshSecret: jwt.Secret = resolveRefreshSecret();
 export const accessTokenExpiry = (process.env.JWT_EXPIRES_IN ?? '30m') as jwt.SignOptions['expiresIn'];
 export const refreshTokenExpiry = (process.env.JWT_REFRESH_EXPIRES_IN ?? '7d') as jwt.SignOptions['expiresIn'];
 

@@ -4,7 +4,7 @@ module.exports = {
     '^.+\\.(js|jsx|ts|tsx)$': '<rootDir>/jest-transformer.js',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|lucide-react-native|victory-native)',
+    'node_modules/(?!(\\.pnpm|((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|lucide-react-native|victory-native|@nkzw/.*))',
   ],
   collectCoverageFrom: [
     '**/*.{js,jsx,ts,tsx}',
@@ -26,6 +26,8 @@ module.exports = {
     '.*/Libraries/NativeComponent/ViewConfigIgnore(\\.js)?$': '<rootDir>/__mocks__/react-native/Libraries/NativeComponent/ViewConfigIgnore.js',
     '\\.svg$': '<rootDir>/__mocks__/svgMock.js',
     '\\.(png|jpg|jpeg|gif)$': '<rootDir>/__mocks__/fileMock.js',
+    '^@stopfra/ui-core/(.*)$': '<rootDir>/../../packages/ui-core/dist/$1/index.js',
+    '^@stopfra/ui-core$': '<rootDir>/../../packages/ui-core/dist/index.js',
     '^@/(.*)$': '<rootDir>/$1',
     '^@/components/(.*)$': '<rootDir>/components/$1',
     '^@/contexts/(.*)$': '<rootDir>/contexts/$1',

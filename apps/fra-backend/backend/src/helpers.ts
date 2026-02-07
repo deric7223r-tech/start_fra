@@ -10,7 +10,16 @@ export type AuthContext = {
 };
 
 export const DEV_JWT_SECRET = 'dev_jwt_secret_change_me';
-export const jwtSecret: jwt.Secret = process.env.JWT_SECRET ?? DEV_JWT_SECRET;
+
+function resolveJwtSecret(): jwt.Secret {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable must be set in production');
+  }
+  return DEV_JWT_SECRET;
+}
+
+export const jwtSecret: jwt.Secret = resolveJwtSecret();
 
 export function hasDatabase(): boolean {
   return !!process.env.DATABASE_URL;

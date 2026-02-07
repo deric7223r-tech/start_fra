@@ -17,7 +17,7 @@ export function getDbPool(): Pool {
 
   pool = new Pool({
     connectionString,
-    ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    ssl: useSsl ? { rejectUnauthorized: process.env.NODE_ENV === 'production' } : undefined,
     max: Number(process.env.DB_POOL_MAX ?? 20),
     idleTimeoutMillis: Number(process.env.DB_IDLE_TIMEOUT_MS ?? 30000),
     connectionTimeoutMillis: Number(process.env.DB_CONNECT_TIMEOUT_MS ?? 5000),

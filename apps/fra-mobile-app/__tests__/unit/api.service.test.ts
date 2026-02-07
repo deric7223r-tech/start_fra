@@ -8,8 +8,6 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 // ---------------------------------------------------------------------------
 // Mocks - must be declared before the module under test is imported
 // ---------------------------------------------------------------------------
@@ -19,6 +17,9 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(),
   removeItem: jest.fn(),
 }));
+
+// Use a mutable reference so it stays in sync after jest.resetModules()
+let AsyncStorage: any = require('@react-native-async-storage/async-storage');
 
 jest.mock('@/constants/api', () => ({
   API_CONFIG: {
@@ -49,6 +50,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   // Reset the module registry so ApiService re-runs its constructor.
   jest.resetModules();
+  // Re-acquire the AsyncStorage mock reference after jest.resetModules()
+  // so that mockImplementation calls target the current mock instance.
+  AsyncStorage = require('@react-native-async-storage/async-storage');
 });
 
 async function loadService() {
