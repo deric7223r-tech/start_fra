@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import app from '../src/index';
+import { app, createAuthenticatedUser, authHeaders } from './helpers';
 
 describe('Backend API', () => {
   it('GET /health returns ok', async () => {

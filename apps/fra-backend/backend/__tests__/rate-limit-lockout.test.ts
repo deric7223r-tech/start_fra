@@ -1,21 +1,10 @@
 /// <reference types="jest" />
 
-import app from '../src/index';
+import { app, createAuthenticatedUser } from './helpers';
 
 async function signup() {
-  const email = `test+rl+${Date.now()}+${Math.random().toString(36).slice(2)}@example.com`;
-  const res = await app.request('http://localhost/api/v1/auth/signup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email,
-      password: 'SecurePass123!',
-      name: 'RL User',
-      organisationName: 'RL Org',
-    }),
-  });
-  const json = (await res.json()) as any;
-  return { accessToken: json.data.accessToken as string, email };
+  const { accessToken, email } = await createAuthenticatedUser({ name: 'RL User', organisationName: 'RL Org' });
+  return { accessToken, email };
 }
 
 describe('Rate limiting and account lockout', () => {

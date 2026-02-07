@@ -4,63 +4,9 @@
 // ============================================================
 
 import { Hono } from 'hono';
-import type { Context } from 'hono';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { getDbPool } from './db.js';
-
-// ── Types ────────────────────────────────────────────────────
-
-type AuthContext = {
-  userId: string;
-  email: string;
-  role: string;
-  organisationId: string;
-};
-
-// ── Helpers ──────────────────────────────────────────────────
-
-function jsonError(c: Context, status: ContentfulStatusCode, code: string, message: string) {
-  return c.json({ success: false, error: { code, message } }, status);
-}
-
-function hasDatabase(): boolean {
-  return !!process.env.DATABASE_URL;
-}
-
-const jwtSecret = process.env.JWT_SECRET ?? 'dev_jwt_secret_change_me';
-
-function getAuth(c: Context): AuthContext | null {
-  const authHeader = c.req.header('authorization') ?? c.req.header('Authorization');
-  if (!authHeader) return null;
-
-  const match = authHeader.match(/^Bearer\s+(.+)$/i);
-  if (!match) return null;
-
-  try {
-    const payload = jwt.verify(match[1], jwtSecret) as {
-      sub: string;
-      email: string;
-      role: string;
-      organisationId: string;
-    };
-    return {
-      userId: payload.sub,
-      email: payload.email,
-      role: payload.role,
-      organisationId: payload.organisationId,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function requireAuth(c: Context): AuthContext | Response {
-  const auth = getAuth(c);
-  if (!auth) return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid access token');
-  return auth;
-}
+import { type AuthContext, hasDatabase, jsonError, requireAuth } from './helpers.js';
 
 // ── Budget Guide Hono App ────────────────────────────────────
 
@@ -120,8 +66,8 @@ budgetGuide.patch('/progress', async (c) => {
   const schema = z.object({
     selectedRoles: z.array(z.string()).optional(),
     completedScreens: z.array(z.string()).optional(),
-    watchItems: z.any().optional(),
-    contactDetails: z.any().optional(),
+    watchItems: z.record(z.string(), z.unknown()).optional(),
+    contactDetails: z.record(z.string(), z.unknown()).optional(),
     currentScreen: z.string().optional(),
     completedAt: z.string().nullable().optional(),
   });
@@ -236,7 +182,7 @@ budgetGuide.post('/analytics', async (c) => {
 
   const body = await c.req.json();
   const schema = z.object({
-    quizScores: z.any().optional(),
+    quizScores: z.record(z.string(), z.unknown()).optional(),
     timeSpentSeconds: z.number().int().min(0).optional(),
     screensVisited: z.array(z.string()).optional(),
     completed: z.boolean().optional(),

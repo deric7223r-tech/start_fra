@@ -6,19 +6,12 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import type { Context } from 'hono';
-import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { getDbPool } from './db.js';
+import { type AuthContext, jwtSecret, hasDatabase, jsonError, getAuth as getAuthBase, requireAuth } from './helpers.js';
 
 // ── Types ────────────────────────────────────────────────────
-
-type AuthContext = {
-  userId: string;
-  email: string;
-  role: string;
-  organisationId: string;
-};
 
 type SSEClient = {
   id: string;
@@ -45,35 +38,18 @@ export function broadcastToSession(sessionId: string, event: string, data: unkno
 
 // ── Helpers ──────────────────────────────────────────────────
 
-function jsonError(c: Context, status: ContentfulStatusCode, code: string, message: string) {
-  return c.json({ success: false, error: { code, message } }, status);
-}
+// Workshop-specific auth that also accepts token from query params (for SSE EventSource)
+function getAuthWithQueryToken(c: Context): AuthContext | null {
+  // Try standard header-based auth first
+  const headerAuth = getAuthBase(c);
+  if (headerAuth) return headerAuth;
 
-function hasDatabase(): boolean {
-  return !!process.env.DATABASE_URL;
-}
-
-const jwtSecret = process.env.JWT_SECRET ?? 'dev_jwt_secret_change_me';
-
-function getAuth(c: Context): AuthContext | null {
-  // Check header first, then query param (for SSE EventSource)
-  let token: string | undefined;
-
-  const authHeader = c.req.header('authorization') ?? c.req.header('Authorization');
-  if (authHeader) {
-    const match = authHeader.match(/^Bearer\s+(.+)$/i);
-    if (match) token = match[1];
-  }
-
-  if (!token) {
-    const queryToken = c.req.query('token');
-    if (queryToken) token = queryToken;
-  }
-
-  if (!token) return null;
+  // Fall back to query param token (for SSE EventSource which can't set headers)
+  const queryToken = c.req.query('token');
+  if (!queryToken) return null;
 
   try {
-    const payload = jwt.verify(token, jwtSecret) as {
+    const payload = jwt.verify(queryToken, jwtSecret) as {
       sub: string;
       email: string;
       role: string;
@@ -88,12 +64,6 @@ function getAuth(c: Context): AuthContext | null {
   } catch {
     return null;
   }
-}
-
-function requireAuth(c: Context): AuthContext | Response {
-  const auth = getAuth(c);
-  if (!auth) return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid access token');
-  return auth;
 }
 
 // ── Workshop Hono App ────────────────────────────────────────
@@ -796,7 +766,7 @@ workshop.post('/certificates', async (c) => {
 // ── SSE Events endpoint ──────────────────────────────────────
 
 workshop.get('/sessions/:sessionId/events', async (c) => {
-  const auth = getAuth(c);
+  const auth = getAuthWithQueryToken(c);
   if (!auth) return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid access token');
 
   const sessionId = c.req.param('sessionId');

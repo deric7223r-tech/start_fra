@@ -1,25 +1,10 @@
 /// <reference types="jest" />
 
-import app from '../src/index';
+import { app, createAuthenticatedUser } from './helpers';
 
 async function signup() {
-  const email = `test+tok+${Date.now()}+${Math.random().toString(36).slice(2)}@example.com`;
-  const res = await app.request('http://localhost/api/v1/auth/signup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email,
-      password: 'SecurePass123!',
-      name: 'Token User',
-      organisationName: 'Token Org',
-    }),
-  });
-  const json = (await res.json()) as any;
-  return {
-    accessToken: json.data.accessToken as string,
-    refreshToken: json.data.refreshToken as string,
-    email,
-  };
+  const { accessToken, refreshToken, email } = await createAuthenticatedUser({ name: 'Token User', organisationName: 'Token Org' });
+  return { accessToken, refreshToken, email };
 }
 
 describe('Token refresh and session management', () => {

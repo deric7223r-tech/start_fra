@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import app from '../src/index';
+import { app } from './helpers';
 
 function post(path: string, body: unknown, headers: Record<string, string> = {}) {
   return app.request(`http://localhost/api/v1${path}`, {

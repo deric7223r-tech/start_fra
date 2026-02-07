@@ -1,10 +1,10 @@
 /// <reference types="jest" />
 
-import app from '../src/index';
+import { app, createAuthenticatedUser } from './helpers';
 
-// Helper to create a user and return tokens
+// Helper to create a user and return tokens (keeps res/json shape for auth-specific tests)
 async function signup(overrides: Record<string, unknown> = {}) {
-  const email = `test+${Date.now()}+${Math.random().toString(36).slice(2)}@example.com`;
+  const email = overrides.email as string ?? `test+${Date.now()}+${Math.random().toString(36).slice(2)}@example.com`;
   const res = await app.request('http://localhost/api/v1/auth/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

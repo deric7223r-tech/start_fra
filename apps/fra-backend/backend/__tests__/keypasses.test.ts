@@ -1,26 +1,10 @@
 /// <reference types="jest" />
 
-import app from '../src/index';
+import { app, createAuthenticatedUser, authHeaders } from './helpers';
 
-async function signup(overrides: Record<string, unknown> = {}) {
-  const email = `test+kp+${Date.now()}+${Math.random().toString(36).slice(2)}@example.com`;
-  const res = await app.request('http://localhost/api/v1/auth/signup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email,
-      password: 'SecurePass123!',
-      name: 'KP User',
-      organisationName: 'KP Org',
-      ...overrides,
-    }),
-  });
-  const json = (await res.json()) as any;
-  return { accessToken: json.data.accessToken as string, email, organisationId: json.data.organisation.organisationId as string };
-}
-
-function authHeaders(token: string) {
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+async function signup() {
+  const { accessToken, email, organisationId } = await createAuthenticatedUser({ name: 'KP User', organisationName: 'KP Org' });
+  return { accessToken, email, organisationId };
 }
 
 describe('Keypasses endpoints', () => {

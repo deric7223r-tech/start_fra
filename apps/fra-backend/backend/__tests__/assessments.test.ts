@@ -1,25 +1,10 @@
 /// <reference types="jest" />
 
-import app from '../src/index';
+import { app, createAuthenticatedUser, authHeaders } from './helpers';
 
 async function signup() {
-  const email = `test+${Date.now()}+${Math.random().toString(36).slice(2)}@example.com`;
-  const res = await app.request('http://localhost/api/v1/auth/signup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email,
-      password: 'SecurePass123!',
-      name: 'Test User',
-      organisationName: 'Assess Org',
-    }),
-  });
-  const json = (await res.json()) as any;
-  return { accessToken: json.data.accessToken as string, email };
-}
-
-function authHeaders(token: string) {
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+  const { accessToken, email } = await createAuthenticatedUser({ organisationName: 'Assess Org' });
+  return { accessToken, email };
 }
 
 describe('Assessments endpoints', () => {
