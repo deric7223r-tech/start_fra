@@ -6,10 +6,10 @@
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import type { Context } from 'hono';
-import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
 import { z } from 'zod';
 import { getDbPool } from './db.js';
-import { type AuthContext, jwtSecret, hasDatabase, jsonError, getAuth as getAuthBase, requireAuth } from './helpers.js';
+import { type AuthContext, hasDatabase, jsonError, getAuth as getAuthBase, requireAuth } from './helpers.js';
 import { getRedis } from './redis.js';
 
 // ── Types ────────────────────────────────────────────────────
@@ -194,7 +194,7 @@ workshop.post('/sessions', async (c) => {
 
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
-  const sessionCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const sessionCode = crypto.randomBytes(4).toString('hex').toUpperCase().substring(0, 6);
 
   const pool = getDbPool();
   const res = await pool.query(
@@ -785,7 +785,7 @@ workshop.post('/certificates', async (c) => {
   if (existing.rows[0]) return c.json({ success: true, data: existing.rows[0] });
 
   // Generate certificate number server-side
-  const certNumber = `FRA-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+  const certNumber = `FRA-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
   const res = await pool.query(
     `INSERT INTO certificates (user_id, session_id, certificate_number)

@@ -4,15 +4,8 @@ import { colors, spacing } from '@/constants/theme';
 import ProgressBar from './ProgressBar';
 
 // All sections in order for the training app (7 sections)
-const ALL_SECTIONS = [
-  'welcome',
-  'why-it-matters',
-  'key-concepts',
-  'scenario',
-  'best-practices',
-  'quiz',
-  'completion',
-] as const;
+// IDs match the numeric string IDs passed by the app ('0' through '6')
+const ALL_SECTIONS = ['0', '1', '2', '3', '4', '5', '6'] as const;
 
 const TOTAL_SECTIONS = ALL_SECTIONS.length;
 

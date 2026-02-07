@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
+import { hasDatabase, requireAuth } from '../helpers.js';
 import type { AssessmentStatus } from '../types.js';
 import { assessmentsById } from '../stores.js';
 import { dbListAssessmentsByOrganisation } from '../db/index.js';

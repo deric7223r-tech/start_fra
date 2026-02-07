@@ -46,6 +46,7 @@ coverage/
 package-lock.json
 yarn.lock
 bun.lockb
+bun.lock
 
 # Expo
 *.jks

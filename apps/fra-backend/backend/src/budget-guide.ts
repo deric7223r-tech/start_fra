@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { getDbPool } from './db.js';
-import { type AuthContext, hasDatabase, jsonError, requireAuth } from './helpers.js';
+import { hasDatabase, jsonError, requireAuth } from './helpers.js';
 
 // ── Budget Guide Hono App ────────────────────────────────────
 

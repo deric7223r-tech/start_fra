@@ -51,7 +51,7 @@ export default function CertificateScreen() {
       }
     };
     ensureCertificate();
-  }, [isComplete, certificateNumber]);
+  }, [isComplete, certificateNumber, completeCourse]);
 
   const handleBackToHome = () => {
     router.navigate('/home');
