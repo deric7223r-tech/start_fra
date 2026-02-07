@@ -1,15 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import type {
-  Profile,
-  WorkshopSession,
   WorkshopProgress,
-  Poll,
-  Question,
-  ActionPlan,
   ActionItem,
-  Certificate,
   QuizQuestion,
-  CaseStudy,
   OrgSector,
   AppRole,
 } from '@/types/workshop';
