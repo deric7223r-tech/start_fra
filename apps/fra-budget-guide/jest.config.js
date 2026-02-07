@@ -3,7 +3,7 @@ module.exports = {
     '^.+\\.(js|jsx|ts|tsx)$': '<rootDir>/jest-transformer.js',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-native-community|expo|@expo|lucide-react-native)/)',
+    'node_modules/(?!(react-native|@react-native|@react-native-community|expo|@expo|lucide-react-native|@nkzw)/)',
   ],
   collectCoverageFrom: [
     '**/*.{js,jsx,ts,tsx}',
@@ -36,5 +36,13 @@ module.exports = {
   haste: {
     defaultPlatform: 'ios',
     platforms: ['android', 'ios', 'native'],
+  },
+  coverageThreshold: {
+    global: {
+      branches: 30,
+      functions: 30,
+      lines: 30,
+      statements: 30,
+    },
   },
 };

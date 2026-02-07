@@ -1,6 +1,6 @@
 import { useApp, UserRole } from '@/contexts/AppContext';
 import { useRouter } from 'expo-router';
-import { Shield, FileText, Users, CreditCard, FileSignature, CheckSquare } from 'lucide-react-native';
+import { Shield } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -13,46 +13,7 @@ import ScreenContainer from '@/components/ScreenContainer';
 import ActionButton from '@/components/ActionButton';
 import InfoBanner from '@/components/InfoBanner';
 import { colors, spacing, borderRadius } from '@/constants/theme';
-
-interface RoleOption {
-  id: UserRole;
-  title: string;
-  icon: React.ComponentType<{ color: string; size: number }>;
-  description: string;
-}
-
-const roleOptions: RoleOption[] = [
-  {
-    id: 'procurement',
-    title: 'Procurement & Suppliers',
-    icon: FileText,
-    description: 'Managing suppliers, purchase orders, and procurement decisions',
-  },
-  {
-    id: 'invoices',
-    title: 'Invoices & Payments',
-    icon: CreditCard,
-    description: 'Approving invoices and authorizing payments',
-  },
-  {
-    id: 'payroll',
-    title: 'Payroll & Timesheets',
-    icon: Users,
-    description: 'Managing payroll, approving timesheets and HR functions',
-  },
-  {
-    id: 'expenses',
-    title: 'Expenses',
-    icon: FileSignature,
-    description: 'Reviewing and approving employee expense claims',
-  },
-  {
-    id: 'contracts',
-    title: 'Contracts',
-    icon: CheckSquare,
-    description: 'Managing and approving contracts with third parties',
-  },
-];
+import { roleOptions } from '@/constants/data/role-options';
 
 export default function RoleSelectionScreen() {
   const { selectedRoles, updateRoles, isLoading } = useApp();

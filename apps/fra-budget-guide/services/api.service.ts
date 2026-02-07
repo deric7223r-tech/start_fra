@@ -5,13 +5,15 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '@/constants/api';
+import { createLogger } from '@/utils/logger';
+const logger = createLogger('ApiService');
 
 interface ApiRequestOptions extends RequestInit {
   requiresAuth?: boolean;
   timeout?: number;
 }
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
@@ -44,7 +46,7 @@ class ApiService {
       this.accessToken = accessToken;
       this.refreshToken = refreshToken;
     } catch (error) {
-      console.error('Failed to load tokens:', error);
+      logger.error('Failed to load tokens', error);
     }
   }
 
@@ -121,16 +123,16 @@ class ApiService {
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId);
 
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         return { success: false, error: { code: 'TIMEOUT', message: 'Request timed out' } };
       }
 
       return {
         success: false,
-        error: { code: 'NETWORK_ERROR', message: error.message || 'Network request failed' },
+        error: { code: 'NETWORK_ERROR', message: (error instanceof Error ? error.message : 'Network request failed') },
       };
     }
   }
@@ -165,7 +167,7 @@ class ApiService {
     return this.makeRequest<T>(endpoint, { method: 'GET', ...options });
   }
 
-  async post<T>(endpoint: string, data?: any, options?: ApiRequestOptions): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, data?: Record<string, unknown>, options?: ApiRequestOptions): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
@@ -173,7 +175,7 @@ class ApiService {
     });
   }
 
-  async patch<T>(endpoint: string, data?: any, options?: ApiRequestOptions): Promise<ApiResponse<T>> {
+  async patch<T>(endpoint: string, data?: Record<string, unknown>, options?: ApiRequestOptions): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,

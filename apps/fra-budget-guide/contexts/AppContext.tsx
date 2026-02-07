@@ -1,6 +1,8 @@
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
+import { createLogger } from '@/utils/logger';
+const logger = createLogger('AppContext');
 
 export type UserRole = 
   | 'procurement'
@@ -75,7 +77,7 @@ export const [AppContext, useApp] = createContextHook(() => {
         setContactDetails(JSON.parse(contactsData));
       }
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('Failed to load data', error);
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +88,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     try {
       await AsyncStorage.setItem('selectedRoles', JSON.stringify(roles));
     } catch (error) {
-      console.error('Error saving roles:', error);
+      logger.error('Failed to save roles', error);
     }
   };
 
@@ -100,7 +102,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     try {
       await AsyncStorage.setItem('watchItems', JSON.stringify(newItems));
     } catch (error) {
-      console.error('Error saving watch items:', error);
+      logger.error('Failed to save watch items', error);
     }
   };
 
@@ -117,7 +119,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     try {
       await AsyncStorage.setItem('pledge', JSON.stringify(pledgeData));
     } catch (error) {
-      console.error('Error saving pledge:', error);
+      logger.error('Failed to save pledge', error);
     }
   };
 
@@ -131,7 +133,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     try {
       await AsyncStorage.setItem('completedChannels', JSON.stringify(newChannels));
     } catch (error) {
-      console.error('Error saving completed channels:', error);
+      logger.error('Failed to save completed channels', error);
     }
   };
 
@@ -145,7 +147,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     try {
       await AsyncStorage.setItem('contactDetails', JSON.stringify(newDetails));
     } catch (error) {
-      console.error('Error saving contact details:', error);
+      logger.error('Failed to save contact details', error);
     }
   };
 

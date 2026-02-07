@@ -11,6 +11,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiService } from '@/services/api.service';
 import { API_CONFIG } from '@/constants/api';
 import { useApp } from './AppContext';
+import { createLogger } from '@/utils/logger';
+const logger = createLogger('BudgetGuideContext');
 
 const SYNC_QUEUE_KEY = 'budget_guide_sync_queue';
 const SYNC_DEBOUNCE_MS = 5000;
@@ -73,7 +75,7 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
         setSyncQueue(queue);
       }
     } catch (error) {
-      console.error('Failed to load sync queue:', error);
+      logger.error('Failed to load sync queue', error);
     }
   };
 
@@ -82,7 +84,7 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
       await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
       setSyncQueue(queue);
     } catch (error) {
-      console.error('Failed to save sync queue:', error);
+      logger.error('Failed to save sync queue', error);
     }
   };
 

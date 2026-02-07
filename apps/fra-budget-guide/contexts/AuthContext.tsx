@@ -2,6 +2,8 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useCallback, useEffect, useState } from 'react';
 import { apiService } from '@/services/api.service';
 import { API_CONFIG } from '@/constants/api';
+import { createLogger } from '@/utils/logger';
+const logger = createLogger('AuthContext');
 
 interface User {
   userId: string;
@@ -9,6 +11,20 @@ interface User {
   name: string;
   role: string;
   organisationId: string;
+}
+
+interface AuthMeResponse {
+  userId: string;
+  email: string;
+  name: string;
+  role: string;
+  organisationId: string;
+}
+
+interface AuthTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
 }
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
@@ -26,7 +42,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         return;
       }
 
-      const result = await apiService.get<any>(API_CONFIG.ENDPOINTS.AUTH.ME, {
+      const result = await apiService.get<AuthMeResponse>(API_CONFIG.ENDPOINTS.AUTH.ME, {
         requiresAuth: true,
       });
 
@@ -34,7 +50,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         setUser(result.data);
       }
     } catch (error) {
-      console.error('Failed to restore session:', error);
+      logger.error('Failed to restore session', error);
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +59,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const signIn = useCallback(
     async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        const result = await apiService.post<any>(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
+        const result = await apiService.post<AuthTokenResponse>(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
           email,
           password,
         });
@@ -59,7 +75,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           error: result.error?.message || 'Invalid email or password',
         };
       } catch (error) {
-        console.error('Sign in error:', error);
+        logger.error('Sign in failed', error);
         return { success: false, error: 'Failed to sign in' };
       }
     },
@@ -74,7 +90,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       organisationName: string
     ): Promise<{ success: boolean; error?: string }> => {
       try {
-        const result = await apiService.post<any>(API_CONFIG.ENDPOINTS.AUTH.SIGNUP, {
+        const result = await apiService.post<AuthTokenResponse>(API_CONFIG.ENDPOINTS.AUTH.SIGNUP, {
           email,
           password,
           name,
@@ -92,7 +108,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           error: result.error?.message || 'Failed to create account',
         };
       } catch (error) {
-        console.error('Signup error:', error);
+        logger.error('Sign up failed', error);
         return { success: false, error: 'Failed to create account' };
       }
     },

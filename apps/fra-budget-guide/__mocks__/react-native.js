@@ -12,6 +12,12 @@ const Image = 'Image';
 const TextInput = 'TextInput';
 const ActivityIndicator = 'ActivityIndicator';
 const Switch = 'Switch';
+const Modal = 'Modal';
+
+const Linking = {
+  openURL: jest.fn(),
+  canOpenURL: jest.fn(() => Promise.resolve(true)),
+};
 
 const StyleSheet = {
   create: (styles) => styles,
@@ -139,6 +145,8 @@ module.exports = {
   TextInput,
   ActivityIndicator,
   Switch,
+  Modal,
+  Linking,
   StyleSheet,
   Platform,
   Dimensions,

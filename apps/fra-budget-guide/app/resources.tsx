@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, Phone, ExternalLink, Home, Edit3 } from 'lucide-react-native';
+import { BookOpen, Home, Edit3 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -7,113 +7,22 @@ import {
   View,
   TouchableOpacity,
   Linking,
-  TextInput,
-  Modal,
 } from 'react-native';
 import { useApp } from '@/contexts/AppContext';
 
 import ScreenContainer from '@/components/ScreenContainer';
 import ActionButton from '@/components/ActionButton';
+import EditContactModal from '@/components/EditContactModal';
 import { colors, spacing, borderRadius } from '@/constants/theme';
+import { resources } from '@/constants/data/resources';
 
-interface ResourceItem {
-  name: string;
-  contact: string;
-  description?: string;
-  editable?: boolean;
-}
-
-interface Resource {
-  title: string;
-  icon: React.ComponentType<{ color: string; size: number }>;
-  items: ResourceItem[];
-}
-
-const resources: Resource[] = [
-  {
-    title: 'Internal Contacts',
-    icon: Phone,
-    items: [
-      {
-        name: 'Fraud Risk Owner',
-        contact: 'fraudRiskOwner',
-        description: 'Primary contact for fraud concerns',
-        editable: true,
-      },
-      {
-        name: 'Whistleblowing Hotline',
-        contact: 'whistleblowingHotline',
-        description: 'Anonymous reporting channel',
-        editable: true,
-      },
-      {
-        name: 'Internal Audit',
-        contact: 'internalAudit',
-        description: 'Control reviews and investigations',
-        editable: true,
-      },
-      {
-        name: 'HR Department',
-        contact: 'hrDepartment',
-        description: 'Employment and conduct matters',
-        editable: true,
-      },
-    ],
-  },
-  {
-    title: 'External Reporting',
-    icon: ExternalLink,
-    items: [
-      {
-        name: 'Action Fraud',
-        contact: '0300 123 2040',
-        description: 'www.actionfraud.police.uk',
-      },
-      {
-        name: 'Serious Fraud Office',
-        contact: 'www.sfo.gov.uk',
-        description: 'Major/complex fraud cases',
-      },
-      {
-        name: 'HMRC Fraud Hotline',
-        contact: '0800 788 887',
-        description: 'Tax-related fraud',
-      },
-    ],
-  },
-  {
-    title: 'Training & Resources',
-    icon: BookOpen,
-    items: [
-      {
-        name: 'ACFE Resources',
-        contact: 'www.acfe.com',
-        description: 'Global fraud statistics and training',
-      },
-      {
-        name: 'CIPFA Guidance',
-        contact: 'www.cipfa.org',
-        description: 'Public sector fraud prevention',
-      },
-      {
-        name: 'Stop FRA Platform',
-        contact: 'stopFraPlatform',
-        description: 'Automated fraud risk assessment tools',
-        editable: true,
-      },
-    ],
-  },
-];
+type ContactKey = 'fraudRiskOwner' | 'whistleblowingHotline' | 'internalAudit' | 'hrDepartment' | 'stopFraPlatform';
 
 export default function ResourcesScreen() {
   const router = useRouter();
   const { contactDetails, updateContactDetail } = useApp();
-  const [editingContact, setEditingContact] = useState<{
-    key: keyof typeof contactDetails;
-    name: string;
-    currentValue: string;
-  } | null>(null);
-  const [inputValue, setInputValue] = useState('');
+  const [editingContactKey, setEditingContactKey] = useState<ContactKey | null>(null);
+  const [editingContactLabel, setEditingContactLabel] = useState('');
 
   const handleLink = (url: string) => {
     if (url.startsWith('www.')) {
@@ -121,23 +30,9 @@ export default function ResourcesScreen() {
     }
   };
 
-  const handleEditContact = (key: keyof typeof contactDetails, name: string) => {
-    const currentValue = contactDetails[key];
-    setInputValue(currentValue);
-    setEditingContact({ key, name, currentValue });
-  };
-
-  const handleSaveContact = () => {
-    if (editingContact && inputValue.trim()) {
-      updateContactDetail(editingContact.key, inputValue.trim());
-      setEditingContact(null);
-      setInputValue('');
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingContact(null);
-    setInputValue('');
+  const handleEditContact = (key: ContactKey, label: string) => {
+    setEditingContactKey(key);
+    setEditingContactLabel(label);
   };
 
   const getContactValue = (contact: string, editable?: boolean) => {
@@ -251,48 +146,17 @@ export default function ResourcesScreen() {
         onPress={() => router.push('/')}
       />
 
-      <Modal
-        visible={editingContact !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={handleCancelEdit}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edit Contact Details</Text>
-            <Text style={styles.modalSubtitle}>{editingContact?.name}</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={inputValue}
-              onChangeText={setInputValue}
-              placeholder="Enter contact details (name, email, phone, URL)"
-              placeholderTextColor={colors.textFaint}
-              multiline
-              autoFocus
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={handleCancelEdit}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel editing"
-              >
-                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={handleSaveContact}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Save contact details"
-              >
-                <Text style={styles.modalButtonTextSave}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <EditContactModal
+        visible={editingContactKey !== null}
+        label={editingContactLabel}
+        currentValue={editingContactKey ? contactDetails[editingContactKey] : ''}
+        placeholder="Enter contact details (name, email, phone, URL)"
+        onSave={(value) => {
+          if (editingContactKey) updateContactDetail(editingContactKey, value);
+          setEditingContactKey(null);
+        }}
+        onCancel={() => setEditingContactKey(null)}
+      />
     </ScreenContainer>
   );
 }
@@ -404,67 +268,5 @@ const styles = StyleSheet.create({
     color: colors.successDark,
     textAlign: 'center',
     lineHeight: 20,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    width: '100%',
-    maxWidth: 400,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: colors.textMuted,
-    marginBottom: spacing.md,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.sm,
-    padding: spacing.md - 4,
-    fontSize: 15,
-    color: colors.text,
-    minHeight: 80,
-    textAlignVertical: 'top',
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: spacing.md - 4,
-  },
-  modalButton: {
-    flex: 1,
-    borderRadius: borderRadius.sm,
-    padding: spacing.md - 4,
-    alignItems: 'center',
-  },
-  modalButtonCancel: {
-    backgroundColor: colors.backgroundAlt,
-  },
-  modalButtonSave: {
-    backgroundColor: colors.primary,
-  },
-  modalButtonTextCancel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  modalButtonTextSave: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.surface,
   },
 });
