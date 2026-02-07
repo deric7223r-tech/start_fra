@@ -11,6 +11,7 @@ const logger = createLogger('ApiService');
 interface ApiRequestOptions extends RequestInit {
   requiresAuth?: boolean;
   timeout?: number;
+  retried?: boolean;
 }
 
 interface ApiResponse<T = unknown> {
@@ -104,11 +105,11 @@ class ApiService {
       clearTimeout(timeoutId);
       const data: ApiResponse<T> = await response.json();
 
-      // Handle 401 — try refresh
-      if (response.status === 401 && requiresAuth && this.refreshToken) {
+      // Handle 401 — try refresh (once only)
+      if (response.status === 401 && requiresAuth && this.refreshToken && !options?.retried) {
         const refreshed = await this.refreshAccessToken();
         if (refreshed) {
-          return this.makeRequest<T>(endpoint, options);
+          return this.makeRequest<T>(endpoint, { ...options, retried: true });
         }
       }
 

@@ -12,6 +12,7 @@ const logger = createLogger('ApiService');
 interface ApiRequestOptions extends RequestInit {
   requiresAuth?: boolean;
   timeout?: number;
+  retried?: boolean;
 }
 
 interface ApiResponse<T = unknown> {
@@ -73,6 +74,10 @@ class ApiService {
     }
   }
 
+  getRefreshToken(): string | null {
+    return this.refreshToken;
+  }
+
   /**
    * Clear JWT tokens from memory and storage
    */
@@ -131,12 +136,11 @@ class ApiService {
       // Parse JSON response
       const data: ApiResponse<T> = await response.json();
 
-      // Handle 401 Unauthorized - try to refresh token
-      if (response.status === 401 && requiresAuth && this.refreshToken) {
+      // Handle 401 Unauthorized - try to refresh token (once only)
+      if (response.status === 401 && requiresAuth && this.refreshToken && !options?.retried) {
         const refreshed = await this.refreshAccessToken();
         if (refreshed) {
-          // Retry original request with new token
-          return this.makeRequest<T>(endpoint, options);
+          return this.makeRequest<T>(endpoint, { ...options, retried: true });
         }
       }
 

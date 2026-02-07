@@ -117,7 +117,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const signOut = useCallback(async () => {
     try {
-      await apiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, undefined, {
+      const currentRefreshToken = apiService.getRefreshToken();
+      await apiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, { refreshToken: currentRefreshToken }, {
         requiresAuth: true,
       });
     } catch {

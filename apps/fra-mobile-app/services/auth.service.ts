@@ -122,8 +122,8 @@ class AuthService {
    */
   async logout(): Promise<void> {
     try {
-      // Call logout endpoint (optional - JWT is stateless)
-      await apiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, {}, { requiresAuth: true });
+      const refreshToken = apiService.getRefreshToken();
+      await apiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, { refreshToken }, { requiresAuth: true });
     } catch (error) {
       logger.error('Logout API call failed:', error);
     } finally {
