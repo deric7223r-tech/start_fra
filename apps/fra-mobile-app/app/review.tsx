@@ -14,7 +14,11 @@ export default function ReviewScreen() {
     setIsSubmitting(true);
     try {
       submitAssessment();
-      router.push('/packages');
+      if (assessment.payment?.packageType) {
+        router.push('/payment');
+      } else {
+        router.push('/packages');
+      }
     } catch {
       Alert.alert(
         'Submission Failed',

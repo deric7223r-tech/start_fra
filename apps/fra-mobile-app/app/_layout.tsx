@@ -94,6 +94,14 @@ function RootLayoutNav() {
         options={{ title: "Choose Package" }}
       />
       <Stack.Screen
+        name="package-professional"
+        options={{ title: "Professional Package", headerShown: false }}
+      />
+      <Stack.Screen
+        name="package-enterprise"
+        options={{ title: "Enterprise Package", headerShown: false }}
+      />
+      <Stack.Screen
         name="payment"
         options={{ title: "Payment" }}
       />

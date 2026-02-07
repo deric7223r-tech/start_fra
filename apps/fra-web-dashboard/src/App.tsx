@@ -17,6 +17,8 @@ const Resources = lazy(() => import("./pages/Resources"));
 const Certificate = lazy(() => import("./pages/Certificate"));
 const ActionPlan = lazy(() => import("./pages/ActionPlan"));
 const Facilitator = lazy(() => import("./pages/Facilitator"));
+const PackageProfessional = lazy(() => import("./pages/PackageProfessional"));
+const PackageEnterprise = lazy(() => import("./pages/PackageEnterprise"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -54,6 +56,8 @@ const App = () => (
                 <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
                 <Route path="/certificate" element={<ProtectedRoute><Certificate /></ProtectedRoute>} />
                 <Route path="/action-plan" element={<ProtectedRoute><ActionPlan /></ProtectedRoute>} />
+                <Route path="/package/professional" element={<PackageProfessional />} />
+                <Route path="/package/enterprise" element={<PackageEnterprise />} />
                 <Route path="/facilitator" element={<ProtectedRoute requiredRole="facilitator"><Facilitator /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -300,6 +300,179 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Packages / Pricing Section */}
+      <section className="py-20 lg:py-32">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
+              Choose Your Package
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Select the plan that best fits your organisation's fraud risk
+              management needs — from a one-off assessment to full enterprise
+              coverage.
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            {/* ---- Package 1: Starter ---- */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full flex flex-col border shadow-md">
+                <CardHeader className="pb-4">
+                  <div className="mb-3">
+                    <span className="inline-block rounded-full bg-muted px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Package 1
+                    </span>
+                  </div>
+                  <CardTitle className="text-2xl">Starter</CardTitle>
+                  <CardDescription>
+                    Ideal for a one-time fraud risk health-check
+                  </CardDescription>
+                  <div className="pt-4">
+                    <span className="text-4xl font-bold">£795</span>
+                    <span className="ml-1 text-sm text-muted-foreground">
+                      one-time
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex flex-col flex-1">
+                  <ul className="space-y-3 mb-8 text-left flex-1">
+                    {[
+                      'Single fraud risk assessment',
+                      'Comprehensive PDF report',
+                      'ECCTA compliance snapshot',
+                      '1 key-pass included',
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to="/auth?mode=signup">
+                      Start Assessment
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* ---- Package 2: Professional (Most Popular) ---- */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.15 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full flex flex-col ring-2 ring-primary shadow-xl relative">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                  <span className="inline-block rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground">
+                    Most Popular
+                  </span>
+                </div>
+                <CardHeader className="pb-4 pt-8">
+                  <div className="mb-3">
+                    <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary">
+                      Package 2
+                    </span>
+                  </div>
+                  <CardTitle className="text-2xl">Professional</CardTitle>
+                  <CardDescription>
+                    Ongoing protection with training &amp; support
+                  </CardDescription>
+                  <div className="pt-4">
+                    <span className="text-4xl font-bold">£1,995</span>
+                    <span className="ml-1 text-sm text-muted-foreground">
+                      / year
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex flex-col flex-1">
+                  <ul className="space-y-3 mb-8 text-left flex-1">
+                    {[
+                      'Everything in Starter',
+                      'Fraud awareness training workshop',
+                      '50 key-passes included',
+                      'Quarterly reassessment',
+                      'Email support',
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-sm">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full" asChild>
+                    <Link to="/package/professional">
+                      Choose Professional
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* ---- Package 3: Enterprise ---- */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <Card className="h-full flex flex-col border-2 border-amber-500 shadow-md">
+                <CardHeader className="pb-4">
+                  <div className="mb-3">
+                    <span className="inline-block rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
+                      Package 3
+                    </span>
+                  </div>
+                  <CardTitle className="text-2xl">Enterprise</CardTitle>
+                  <CardDescription>
+                    Full-scale fraud risk management for large organisations
+                  </CardDescription>
+                  <div className="pt-4">
+                    <span className="text-4xl font-bold">£4,995</span>
+                    <span className="ml-1 text-sm text-muted-foreground">
+                      / year
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex flex-col flex-1">
+                  <ul className="space-y-3 mb-8 text-left flex-1">
+                    {[
+                      'Everything in Professional',
+                      'Full management dashboard',
+                      'Unlimited key-passes',
+                      'Organisation risk register',
+                      'API access',
+                      'Priority support',
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                        <span className="text-sm">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full bg-amber-500 text-white hover:bg-amber-600" asChild>
+                    <Link to="/package/enterprise">
+                      Choose Enterprise
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 lg:py-32">
         <div className="container">

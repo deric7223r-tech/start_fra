@@ -27,6 +27,8 @@ function RootLayoutNav() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="package-info" options={{ title: "Professional Package" }} />
+      <Stack.Screen name="package-enterprise" options={{ title: "Enterprise Package" }} />
       <Stack.Screen name="legal" options={{ title: "Legal & Ethical Duties" }} />
       <Stack.Screen name="fraud-basics" options={{ title: "Fraud Basics" }} />
       <Stack.Screen name="scenarios" options={{ title: "Fraud Scenarios" }} />

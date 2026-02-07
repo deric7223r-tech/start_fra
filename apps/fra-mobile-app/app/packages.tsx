@@ -94,6 +94,10 @@ export default function PackagesScreen() {
   ], [orgSize]);
 
   const handleSelectPackage = async (pkg: PackageOption) => {
+    if (pkg.id === 'with-awareness') {
+      router.push('/package-professional');
+      return;
+    }
     selectPackage(pkg.id, pkg.price);
     router.push('/payment');
   };
