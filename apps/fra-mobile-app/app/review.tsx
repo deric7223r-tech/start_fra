@@ -63,7 +63,7 @@ export default function ReviewScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.intro}>Review your answers before submitting</Text>
+        <Text style={styles.intro} accessibilityRole="header">Review your answers before submitting</Text>
         <Text style={styles.subtitle}>Tap any section to edit your responses</Text>
 
         <Text style={styles.groupTitle}>Core Assessment</Text>
@@ -76,6 +76,8 @@ export default function ReviewScreen() {
                 style={styles.sectionCard}
                 onPress={() => router.push(section.route as Href)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`${section.title}, ${getSectionSummary(section.key)}`}
               >
                 <View style={styles.sectionIcon}>
                   <IconComponent size={20} color={colors.govBlue} />
@@ -97,6 +99,8 @@ export default function ReviewScreen() {
             <TouchableOpacity
               style={styles.editLink}
               onPress={() => router.push('/priorities')}
+              accessibilityRole="button"
+              accessibilityLabel="Edit priorities"
             >
               <Text style={styles.editLinkText}>Edit priorities</Text>
             </TouchableOpacity>
@@ -113,6 +117,8 @@ export default function ReviewScreen() {
                 style={styles.sectionCard}
                 onPress={() => router.push(section.route as Href)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`${section.title}, Completed`}
               >
                 <View style={styles.sectionIcon}>
                   <IconComponent size={20} color={colors.govBlue} />
@@ -134,6 +140,8 @@ export default function ReviewScreen() {
           onPress={handleSubmit}
           disabled={isSubmitting}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Submit and Continue"
         >
           {isSubmitting ? (
             <ActivityIndicator color={colors.white} />

@@ -46,7 +46,7 @@ export default function OrganisationScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.intro}>Tell us about your organisation</Text>
+        <Text style={styles.intro} accessibilityRole="header">Tell us about your organisation</Text>
 
         <View style={styles.field}>
           <Text style={styles.label}>Organisation name *</Text>
@@ -59,6 +59,7 @@ export default function OrganisationScreen() {
             }}
             placeholder="Enter organisation name"
             placeholderTextColor={colors.govGrey3}
+            accessibilityLabel="Organisation name"
           />
           {errors.name && <Text style={styles.errorText}>Please enter organisation name</Text>}
         </View>
@@ -77,6 +78,9 @@ export default function OrganisationScreen() {
                 setErrors((prev) => ({ ...prev, type: false }));
               }}
               activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityLabel={type.label}
+              accessibilityState={{ selected: assessment.organisation.type === type.value }}
             >
               <View style={styles.radio}>
                 {assessment.organisation.type === type.value && <View style={styles.radioInner} />}
@@ -103,6 +107,9 @@ export default function OrganisationScreen() {
                 setErrors((prev) => ({ ...prev, employeeCount: false }));
               }}
               activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityLabel={`${count.label} employees`}
+              accessibilityState={{ selected: assessment.organisation.employeeCount === count.value }}
             >
               <View style={styles.radio}>
                 {assessment.organisation.employeeCount === count.value && <View style={styles.radioInner} />}
@@ -123,6 +130,7 @@ export default function OrganisationScreen() {
             onChangeText={(text) => updateAssessment({ organisation: { ...assessment.organisation, region: text } })}
             placeholder="e.g. United Kingdom, England, Wales"
             placeholderTextColor={colors.govGrey3}
+            accessibilityLabel="Main country or region of operation"
           />
         </View>
 
@@ -137,10 +145,11 @@ export default function OrganisationScreen() {
             multiline
             numberOfLines={4}
             textAlignVertical="top"
+            accessibilityLabel="Main activities or services"
           />
         </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Next">
           <Text style={styles.nextButtonText}>Next</Text>
         </TouchableOpacity>
       </ScrollView>

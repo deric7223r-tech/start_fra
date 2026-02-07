@@ -28,7 +28,7 @@ export default function PaymentsModuleScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <DollarSign size={32} color={colors.govBlue} />
-          <Text style={styles.title}>Payments Risk Module</Text>
+          <Text style={styles.title} accessibilityRole="header">Payments Risk Module</Text>
         </View>
 
         <Text style={styles.intro}>
@@ -115,10 +115,11 @@ export default function PaymentsModuleScreen() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            accessibilityLabel="Additional notes or concerns"
           />
         </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Continue to Training and Awareness">
           <Text style={styles.nextButtonText}>Continue to Training & Awareness</Text>
         </TouchableOpacity>
       </ScrollView>

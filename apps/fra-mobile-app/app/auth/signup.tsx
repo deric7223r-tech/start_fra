@@ -82,7 +82,7 @@ export default function SignUpScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Create your account</Text>
+          <Text style={styles.title} accessibilityRole="header">Create your account</Text>
           <Text style={styles.subtitle}>Start managing fraud risk today</Text>
         </View>
 
@@ -97,6 +97,7 @@ export default function SignUpScreen() {
                 onChangeText={setOrgName}
                 placeholder="Your organisation"
                 placeholderTextColor={colors.govGrey3}
+                accessibilityLabel="Organisation name"
               />
             </View>
           </View>
@@ -114,6 +115,7 @@ export default function SignUpScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                accessibilityLabel="Work email address"
               />
             </View>
           </View>
@@ -129,6 +131,7 @@ export default function SignUpScreen() {
                 placeholder="Min 8 chars, uppercase, number, special char"
                 placeholderTextColor={colors.govGrey3}
                 secureTextEntry
+                accessibilityLabel="Password"
               />
             </View>
             {password.length > 0 && (
@@ -163,6 +166,7 @@ export default function SignUpScreen() {
                 placeholder="Re-enter password"
                 placeholderTextColor={colors.govGrey3}
                 secureTextEntry
+                accessibilityLabel="Confirm password"
               />
             </View>
           </View>
@@ -171,6 +175,9 @@ export default function SignUpScreen() {
             style={styles.termsRow}
             onPress={() => setAcceptTerms(!acceptTerms)}
             activeOpacity={0.7}
+            accessibilityRole="checkbox"
+            accessibilityLabel="I accept the terms and conditions and privacy policy"
+            accessibilityState={{ checked: acceptTerms }}
           >
             <View style={[styles.checkbox, acceptTerms && styles.checkboxChecked]}>
               {acceptTerms && <Check size={16} color={colors.white} strokeWidth={3} />}
@@ -185,6 +192,8 @@ export default function SignUpScreen() {
             onPress={handleSignUp}
             disabled={isLoading}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Create Account"
           >
             {isLoading ? (
               <ActivityIndicator color={colors.white} />
@@ -196,7 +205,7 @@ export default function SignUpScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
+          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Sign in">
             <Text style={styles.footerLink}>Sign in</Text>
           </TouchableOpacity>
         </View>

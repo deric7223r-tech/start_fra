@@ -28,7 +28,7 @@ export default function FraudResponseScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <AlertOctagon size={32} color={colors.govRed} />
-          <Text style={styles.title}>Fraud Response Plan</Text>
+          <Text style={styles.title} accessibilityRole="header">Fraud Response Plan</Text>
         </View>
 
         <Text style={styles.intro}>
@@ -140,10 +140,11 @@ export default function FraudResponseScreen() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            accessibilityLabel="Response Plan Notes"
           />
         </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Continue to Action Plan">
           <Text style={styles.nextButtonText}>Continue to Action Plan</Text>
         </TouchableOpacity>
       </ScrollView>

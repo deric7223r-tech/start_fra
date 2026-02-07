@@ -38,7 +38,7 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Sign in to your account</Text>
+          <Text style={styles.title} accessibilityRole="header">Sign in to your account</Text>
           <Text style={styles.subtitle}>Access your fraud risk assessments</Text>
         </View>
 
@@ -56,6 +56,7 @@ export default function LoginScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                accessibilityLabel="Email address"
               />
             </View>
           </View>
@@ -71,6 +72,7 @@ export default function LoginScreen() {
                 placeholder="Enter your password"
                 placeholderTextColor={colors.govGrey3}
                 secureTextEntry
+                accessibilityLabel="Password"
               />
             </View>
           </View>
@@ -80,6 +82,8 @@ export default function LoginScreen() {
             onPress={handleSignIn}
             disabled={isLoading}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Sign In"
           >
             {isLoading ? (
               <ActivityIndicator color={colors.white} />
@@ -88,7 +92,7 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.forgotPasswordButton} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.forgotPasswordButton} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Forgot password">
             <Text style={styles.forgotPasswordText}>Forgot password?</Text>
           </TouchableOpacity>
         </View>
@@ -103,6 +107,8 @@ export default function LoginScreen() {
           style={styles.createAccountButton}
           onPress={() => router.push('/auth/signup')}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Create new account"
         >
           <Text style={styles.createAccountText}>Create new account</Text>
         </TouchableOpacity>
@@ -111,6 +117,8 @@ export default function LoginScreen() {
           style={styles.keyPassButton}
           onPress={() => router.push('/auth/keypass')}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Use company access code"
         >
           <Text style={styles.keyPassText}>Use company access code</Text>
         </TouchableOpacity>

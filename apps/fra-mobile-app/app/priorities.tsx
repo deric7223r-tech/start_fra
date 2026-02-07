@@ -18,7 +18,7 @@ export default function PrioritiesScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.intro}>What matters most to you?</Text>
+        <Text style={styles.intro} accessibilityRole="header">What matters most to you?</Text>
         <Text style={styles.subtitle}>
           Describe the 2–3 most important things you want to protect or improve
         </Text>
@@ -36,10 +36,11 @@ export default function PrioritiesScreen() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            accessibilityLabel="Your priorities"
           />
         </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Review Answers">
           <Text style={styles.nextButtonText}>Review Answers</Text>
         </TouchableOpacity>
       </ScrollView>

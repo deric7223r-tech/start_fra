@@ -28,7 +28,7 @@ export default function ComplianceMappingScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <FileCheck size={32} color={colors.govBlue} />
-          <Text style={styles.title}>Compliance Mapping</Text>
+          <Text style={styles.title} accessibilityRole="header">Compliance Mapping</Text>
         </View>
 
         <Text style={styles.intro}>
@@ -119,10 +119,11 @@ export default function ComplianceMappingScreen() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            accessibilityLabel="Compliance Notes"
           />
         </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Continue to Fraud Response Plan">
           <Text style={styles.nextButtonText}>Continue to Fraud Response Plan</Text>
         </TouchableOpacity>
       </ScrollView>

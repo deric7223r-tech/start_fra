@@ -64,7 +64,7 @@ export default function FeedbackScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.intro}>Your feedback</Text>
+        <Text style={styles.intro} accessibilityRole="header">Your feedback</Text>
         <Text style={styles.subtitle}>
           Help us improve this Fraud Risk Assessment app by sharing your experience.
         </Text>
@@ -78,6 +78,9 @@ export default function FeedbackScreen() {
                 style={styles.starButton}
                 onPress={() => setRating(star)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Rate ${star} out of 5, ${ratingLabels[star - 1]}`}
+                accessibilityState={{ selected: rating === star }}
               >
                 <Star
                   size={40}
@@ -105,6 +108,7 @@ export default function FeedbackScreen() {
             multiline
             numberOfLines={4}
             textAlignVertical="top"
+            accessibilityLabel="What worked well for you"
           />
         </View>
 
@@ -120,6 +124,7 @@ export default function FeedbackScreen() {
             multiline
             numberOfLines={4}
             textAlignVertical="top"
+            accessibilityLabel="What could we improve or add"
           />
         </View>
 
@@ -127,6 +132,9 @@ export default function FeedbackScreen() {
           style={styles.consentContainer}
           onPress={() => setConsentFollowUp(!consentFollowUp)}
           activeOpacity={0.7}
+          accessibilityRole="checkbox"
+          accessibilityLabel="I am happy to be contacted about my feedback"
+          accessibilityState={{ checked: consentFollowUp }}
         >
           <View style={styles.checkbox}>
             {consentFollowUp && <View style={styles.checkboxInner} />}
@@ -141,6 +149,8 @@ export default function FeedbackScreen() {
           onPress={handleSubmit}
           disabled={isSubmitting}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Submit Feedback"
         >
           {isSubmitting ? (
             <ActivityIndicator color={colors.white} />
@@ -149,7 +159,7 @@ export default function FeedbackScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Skip for now">
           <Text style={styles.skipButtonText}>Skip for now</Text>
         </TouchableOpacity>
       </ScrollView>

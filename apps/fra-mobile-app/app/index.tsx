@@ -48,7 +48,7 @@ export default function HomeScreen() {
             <Text style={styles.heroBadgeText}>UK GovS-013 & ECCTA 2023 Compliant</Text>
           </View>
 
-          <Text style={styles.heroTitle}>Fraud Risk Assessment</Text>
+          <Text style={styles.heroTitle} accessibilityRole="header">Fraud Risk Assessment</Text>
           <Text style={styles.heroTitleAccent}>Made Accessible</Text>
 
           <Text style={styles.heroSubtitle}>
@@ -57,7 +57,7 @@ export default function HomeScreen() {
           </Text>
 
           <View style={styles.ctaRow}>
-            <TouchableOpacity style={styles.ctaPrimary} onPress={handleStartNew} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.ctaPrimary} onPress={handleStartNew} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="Get Started">
               <Text style={styles.ctaPrimaryText}>Get Started</Text>
               <ArrowRight size={18} color={colors.govBlue} />
             </TouchableOpacity>
@@ -66,20 +66,22 @@ export default function HomeScreen() {
               style={styles.ctaSecondary}
               onPress={() => router.push('/packages')}
               activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="View Pricing"
             >
               <Text style={styles.ctaSecondaryText}>View Pricing</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Why this matters</Text>
+            <Text style={styles.sectionTitle} accessibilityRole="header">Why this matters</Text>
             <Text style={styles.sectionBody}>
               Fraud prevention is now a governance expectation. This assessment helps you document risks, controls, and priorities in a clear format aligned with UK guidance.
             </Text>
           </View>
 
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>What you get</Text>
+            <Text style={styles.sectionTitle} accessibilityRole="header">What you get</Text>
             <View style={styles.bulletPoint}>
               <Text style={styles.bullet}>•</Text>
               <Text style={styles.bulletText}>Structured assessment across key risk areas</Text>

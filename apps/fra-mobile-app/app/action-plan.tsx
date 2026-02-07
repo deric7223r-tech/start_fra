@@ -49,7 +49,7 @@ export default function ActionPlanScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <ListChecks size={32} color={colors.govBlue} />
-        <Text style={styles.title}>Action Plan</Text>
+        <Text style={styles.title} accessibilityRole="header">Action Plan</Text>
       </View>
 
       <Text style={styles.intro}>
@@ -96,7 +96,7 @@ export default function ActionPlanScreen() {
         <Text style={styles.summaryItem}>• Key focus areas: Payments, Training, Monitoring</Text>
       </View>
 
-      <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Review Complete Assessment">
         <Text style={styles.nextButtonText}>Review Complete Assessment</Text>
       </TouchableOpacity>
     </ScrollView>

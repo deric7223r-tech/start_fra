@@ -101,7 +101,7 @@ export default function PackagesScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.intro}>Choose your FRA package</Text>
+        <Text style={styles.intro} accessibilityRole="header">Choose your FRA package</Text>
         <Text style={styles.subtitle}>
           Select the package that best fits your organisation&apos;s needs
         </Text>
@@ -167,6 +167,8 @@ export default function PackagesScreen() {
                 style={[styles.selectButton, pkg.recommended && styles.selectButtonRecommended]}
                 onPress={() => handleSelectPackage(pkg)}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={`Select ${pkg.name} Package, ${pkg.price.toLocaleString()} pounds ${pkg.billingPeriod === 'year' ? 'per year' : 'one-time'}`}
               >
                 <Text style={[styles.selectButtonText, pkg.recommended && styles.selectButtonTextRecommended]}>
                   Select Package

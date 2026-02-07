@@ -46,7 +46,7 @@ export default function KeyPassScreen() {
           <View style={styles.iconContainer}>
             <Key size={40} color={colors.govBlue} />
           </View>
-          <Text style={styles.title}>Use company access code</Text>
+          <Text style={styles.title} accessibilityRole="header">Use company access code</Text>
           <Text style={styles.subtitle}>
             If your organisation has purchased an FRA package, you can use the access code provided by your employer
           </Text>
@@ -66,6 +66,7 @@ export default function KeyPassScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                accessibilityLabel="Your work email"
               />
             </View>
           </View>
@@ -82,6 +83,7 @@ export default function KeyPassScreen() {
                 placeholderTextColor={colors.govGrey3}
                 autoCapitalize="characters"
                 autoCorrect={false}
+                accessibilityLabel="Company access code"
               />
             </View>
             <Text style={styles.hint}>
@@ -94,6 +96,8 @@ export default function KeyPassScreen() {
             onPress={handleKeyPassSignIn}
             disabled={isLoading}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Continue"
           >
             {isLoading ? (
               <ActivityIndicator color={colors.white} />
@@ -115,6 +119,8 @@ export default function KeyPassScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Back to sign in"
         >
           <Text style={styles.backButtonText}>Back to sign in</Text>
         </TouchableOpacity>

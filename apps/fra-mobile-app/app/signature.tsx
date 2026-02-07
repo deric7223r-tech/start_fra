@@ -140,7 +140,7 @@ export default function SignatureScreen() {
             <AlertCircle size={20} color={colors.warningOrange} />
             <Text style={styles.validationBannerText}>Signature Required for Validation</Text>
           </View>
-          <Text style={styles.title}>Sign your FRA assessment</Text>
+          <Text style={styles.title} accessibilityRole="header">Sign your FRA assessment</Text>
           <Text style={styles.subtitle}>
             Your employer signature is required to validate this assessment. Please review the summary below and sign to confirm that you have received, reviewed, and authorize this Fraud Risk Assessment.
           </Text>
@@ -192,6 +192,7 @@ export default function SignatureScreen() {
                 onChangeText={setSignatoryRole}
                 placeholder="e.g. Finance Director, CEO"
                 placeholderTextColor={colors.govGrey3}
+                accessibilityLabel="Role or Job title"
               />
             </View>
           </View>
@@ -208,6 +209,9 @@ export default function SignatureScreen() {
               style={[styles.modeButton, signatureMode === 'draw' && styles.modeButtonActive]}
               onPress={() => setSignatureMode('draw')}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Draw signature"
+              accessibilityState={{ selected: signatureMode === 'draw' }}
             >
               <Text style={[styles.modeButtonText, signatureMode === 'draw' && styles.modeButtonTextActive]}>
                 Draw
@@ -217,6 +221,9 @@ export default function SignatureScreen() {
               style={[styles.modeButton, signatureMode === 'type' && styles.modeButtonActive]}
               onPress={() => setSignatureMode('type')}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Type signature"
+              accessibilityState={{ selected: signatureMode === 'type' }}
             >
               <Text style={[styles.modeButtonText, signatureMode === 'type' && styles.modeButtonTextActive]}>
                 Type
@@ -230,7 +237,7 @@ export default function SignatureScreen() {
                 Draw your signature with your finger or stylus in the box below
               </Text>
               
-              <View style={styles.canvasContainer} {...panResponder.panHandlers}>
+              <View style={styles.canvasContainer} {...panResponder.panHandlers} accessibilityLabel="Signature drawing area" accessibilityHint="Draw your signature with your finger or stylus">
                 {paths.length === 0 && currentPath === '' && (
                   <View style={styles.placeholder} pointerEvents="none">
                     <PenTool size={48} color={colors.govGrey3} />
@@ -278,6 +285,7 @@ export default function SignatureScreen() {
                   placeholder="Type your full name"
                   placeholderTextColor={colors.govGrey3}
                   autoCapitalize="words"
+                  accessibilityLabel="Type your signature"
                 />
                 {typedSignature.trim().length > 0 && (
                   <View style={styles.typedPreview}>
@@ -293,6 +301,8 @@ export default function SignatureScreen() {
             style={styles.clearButton}
             onPress={handleClearSignature}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Clear signature"
           >
             <X size={16} color={colors.govBlue} />
             <Text style={styles.clearButtonText}>Clear</Text>
@@ -303,6 +313,9 @@ export default function SignatureScreen() {
           style={styles.consentRow}
           onPress={() => setConsentChecked(!consentChecked)}
           activeOpacity={0.7}
+          accessibilityRole="checkbox"
+          accessibilityLabel="I confirm that I am authorised to sign this assessment on behalf of my organisation"
+          accessibilityState={{ checked: consentChecked }}
         >
           <View style={[styles.checkbox, consentChecked && styles.checkboxChecked]}>
             {consentChecked && <Check size={16} color={colors.white} strokeWidth={3} />}
@@ -316,6 +329,8 @@ export default function SignatureScreen() {
           style={styles.signButton}
           onPress={handleSignAndConfirm}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Sign and Validate Assessment"
         >
           <Shield size={20} color={colors.white} />
           <Text style={styles.signButtonText}>Sign and Validate Assessment</Text>
@@ -325,6 +340,8 @@ export default function SignatureScreen() {
           style={styles.viewReportButton}
           onPress={() => Alert.alert('FRA Report', 'Full report preview would open here')}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="View full FRA report"
         >
           <Text style={styles.viewReportButtonText}>View full FRA report</Text>
         </TouchableOpacity>

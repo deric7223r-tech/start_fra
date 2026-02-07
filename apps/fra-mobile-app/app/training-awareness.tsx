@@ -32,7 +32,7 @@ export default function TrainingAwarenessScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <GraduationCap size={32} color={colors.govBlue} />
-          <Text style={styles.title}>Training & Awareness</Text>
+          <Text style={styles.title} accessibilityRole="header">Training & Awareness</Text>
         </View>
 
         <Text style={styles.intro}>
@@ -102,6 +102,7 @@ export default function TrainingAwarenessScreen() {
             placeholder="e.g. 92"
             placeholderTextColor={colors.govGrey3}
             keyboardType="numeric"
+            accessibilityLabel="Overall Training Completion Rate percentage"
           />
         </View>
 
@@ -119,10 +120,11 @@ export default function TrainingAwarenessScreen() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            accessibilityLabel="Training Notes"
           />
         </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Continue to Monitoring and Evaluation">
           <Text style={styles.nextButtonText}>Continue to Monitoring & Evaluation</Text>
         </TouchableOpacity>
       </ScrollView>

@@ -30,7 +30,7 @@ export default function MonitoringEvaluationScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <BarChart3 size={32} color={colors.govBlue} />
-          <Text style={styles.title}>Monitoring & Evaluation</Text>
+          <Text style={styles.title} accessibilityRole="header">Monitoring & Evaluation</Text>
         </View>
 
         <Text style={styles.intro}>
@@ -109,6 +109,7 @@ export default function MonitoringEvaluationScreen() {
             onChangeText={setResponsiblePerson}
             placeholder="e.g. Head of Internal Audit, CFO"
             placeholderTextColor={colors.govGrey3}
+            accessibilityLabel="Responsible Person"
           />
         </View>
 
@@ -126,10 +127,11 @@ export default function MonitoringEvaluationScreen() {
             multiline
             numberOfLines={6}
             textAlignVertical="top"
+            accessibilityLabel="Monitoring Notes"
           />
         </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Continue to Compliance Mapping">
           <Text style={styles.nextButtonText}>Continue to Compliance Mapping</Text>
         </TouchableOpacity>
       </ScrollView>

@@ -131,7 +131,7 @@ export default function PaymentScreen() {
         <View style={styles.formSection}>
           <View style={styles.sectionHeader}>
             <CreditCard size={20} color={colors.govBlue} />
-            <Text style={styles.sectionTitle}>Card Details</Text>
+            <Text style={styles.sectionTitle} accessibilityRole="header">Card Details</Text>
           </View>
 
           <View style={styles.field}>
@@ -144,6 +144,7 @@ export default function PaymentScreen() {
               placeholderTextColor={colors.govGrey3}
               keyboardType="number-pad"
               maxLength={19}
+              accessibilityLabel="Card number"
             />
           </View>
 
@@ -158,6 +159,7 @@ export default function PaymentScreen() {
                 placeholderTextColor={colors.govGrey3}
                 keyboardType="number-pad"
                 maxLength={5}
+                accessibilityLabel="Expiry date"
               />
             </View>
 
@@ -172,6 +174,7 @@ export default function PaymentScreen() {
                 keyboardType="number-pad"
                 maxLength={3}
                 secureTextEntry
+                accessibilityLabel="CVC"
               />
             </View>
           </View>
@@ -185,6 +188,7 @@ export default function PaymentScreen() {
               placeholder="Name as it appears on card"
               placeholderTextColor={colors.govGrey3}
               autoCapitalize="words"
+              accessibilityLabel="Cardholder name"
             />
           </View>
         </View>
@@ -194,6 +198,8 @@ export default function PaymentScreen() {
           onPress={handlePayment}
           disabled={isProcessing}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={isProcessing ? 'Processing payment' : `Pay ${assessment.payment.price.toLocaleString()} pounds`}
         >
           {isProcessing ? (
             <ActivityIndicator color={colors.white} />
