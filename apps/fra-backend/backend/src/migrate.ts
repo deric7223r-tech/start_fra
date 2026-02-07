@@ -1,6 +1,9 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { getDbPool } from './db.js';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('migrate');
 
 async function main() {
   const migrationsDir = join(process.cwd(), 'migrations');
@@ -9,7 +12,7 @@ async function main() {
     .sort((a, b) => a.localeCompare(b));
 
   if (files.length === 0) {
-    console.log('No migrations found');
+    logger.info('No migrations found');
     return;
   }
 
@@ -19,15 +22,15 @@ async function main() {
   for (const file of files) {
     const fullPath = join(migrationsDir, file);
     const sql = readFileSync(fullPath, 'utf8');
-    console.log(`Applying migration ${file}`);
+    logger.info(`Applying migration ${file}`);
     await pool.query(sql);
   }
 
-  console.log('Migrations applied');
+  logger.info('Migrations applied');
   await pool.end();
 }
 
 main().catch((err) => {
-  console.error('Migration failed:', err);
+  logger.error('Migration failed', { error: String(err) });
   process.exit(1);
 });

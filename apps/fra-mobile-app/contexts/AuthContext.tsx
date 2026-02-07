@@ -194,8 +194,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         setOrganisation(updated);
         logger.info('Organisation updated locally');
 
-        // TODO: Sync with backend
-        // await apiService.patch(`/api/v1/organisations/${organisation.organisationId}`, updates);
+        // Sync with backend (best-effort; endpoint may not exist yet)
+        if (apiService.isAuthenticated()) {
+          await apiService.patch(
+            `/api/v1/organisations/${organisation.organisationId}`,
+            updates as unknown as Record<string, unknown>,
+            { requiresAuth: true }
+          ).catch((err: unknown) => logger.warn('Backend org sync unavailable', { error: String(err) }));
+        }
       } catch (error) {
         logger.error('Failed to update organisation:', error);
       }

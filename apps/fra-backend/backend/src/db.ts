@@ -1,5 +1,8 @@
 import { Pool } from 'pg';
 import dns from 'node:dns';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('db');
 
 let pool: Pool | null = null;
 
@@ -25,7 +28,7 @@ export function getDbPool(): Pool {
   });
 
   pool.on('error', (err) => {
-    console.error(JSON.stringify({ ts: new Date().toISOString(), level: 'error', component: 'pg_pool', error: err.message }));
+    logger.error('Unexpected pool error', { error: err.message });
   });
 
   return pool;

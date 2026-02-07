@@ -20,6 +20,9 @@ import {
   setPasswordResetToken, getPasswordResetUserId, deletePasswordResetToken,
 } from '../db/index.js';
 import { issueTokens, publicUser } from '../auth-utils.js';
+import { createLogger } from '../logger.js';
+
+const logger = createLogger('auth');
 
 // ── Auth helpers ────────────────────────────────────────────────
 
@@ -305,7 +308,7 @@ auth.post('/auth/refresh', async (c) => {
     });
   } catch {
     if (hasDatabase()) {
-      await dbDeleteRefreshToken(refreshToken).catch(() => undefined);
+      await dbDeleteRefreshToken(refreshToken).catch((err) => logger.warn('Failed to delete refresh token during cleanup', { error: String(err) }));
     } else {
       refreshTokenAllowlist.delete(refreshToken);
     }
