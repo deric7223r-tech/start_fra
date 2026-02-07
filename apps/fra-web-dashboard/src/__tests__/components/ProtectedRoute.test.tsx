@@ -11,10 +11,11 @@ vi.mock('@/hooks/useAuth', () => ({
 }));
 
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import type { AppRole } from '@/types/workshop';
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-function renderRoute(initialPath: string, requiredRole?: string) {
+function renderRoute(initialPath: string, requiredRole?: AppRole) {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialPath]}>
@@ -22,7 +23,7 @@ function renderRoute(initialPath: string, requiredRole?: string) {
           <Route
             path="/protected"
             element={
-              <ProtectedRoute requiredRole={requiredRole as any}>
+              <ProtectedRoute requiredRole={requiredRole}>
                 <div>Protected Content</div>
               </ProtectedRoute>
             }
