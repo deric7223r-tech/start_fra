@@ -58,7 +58,7 @@ export default function Workshop() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Loading" />
         </div>
       </Layout>
     );
@@ -143,7 +143,7 @@ export default function Workshop() {
             </div>
           </div>
           
-          <nav className="flex-1 overflow-y-auto p-2">
+          <nav className="flex-1 overflow-y-auto p-2" aria-label="Workshop sections">
             {workshopSections.map((section, index) => {
               const isComplete = progress?.completed_sections?.includes(section.id);
               const isCurrent = index === currentSlide;
@@ -152,9 +152,11 @@ export default function Workshop() {
                 <button
                   key={section.id}
                   onClick={() => goToSlide(index)}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  aria-label={`Section ${index + 1}: ${section.title}${isComplete ? ' (completed)' : ''}`}
                   className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
-                    isCurrent 
-                      ? 'bg-primary text-primary-foreground' 
+                    isCurrent
+                      ? 'bg-primary text-primary-foreground'
                       : isComplete
                         ? 'hover:bg-muted text-foreground'
                         : 'hover:bg-muted text-muted-foreground'
@@ -479,6 +481,8 @@ export default function Workshop() {
                   <button
                     key={index}
                     onClick={() => goToSlide(index)}
+                    aria-label={`Go to section ${index + 1}`}
+                    aria-current={index === currentSlide ? 'step' : undefined}
                     className={`h-2 w-2 rounded-full transition-colors ${
                       index === currentSlide
                         ? 'bg-primary'

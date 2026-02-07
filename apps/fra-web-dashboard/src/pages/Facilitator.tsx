@@ -5,12 +5,23 @@ import { useAuth } from '@/hooks/useAuth';
 import { api, connectSSE } from '@/lib/api';
 import { logger } from '@/lib/logger';
 import { Layout } from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { WorkshopSession, Poll, Question } from '@/types/workshop';
 import {
   Plus,
@@ -223,7 +234,7 @@ export default function Facilitator() {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Loading" />
         </div>
       </Layout>
     );
@@ -294,10 +305,15 @@ export default function Facilitator() {
                       {sessions.map(s => (
                         <div
                           key={s.id}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Select session: ${s.title}`}
+                          aria-current={activeSession?.id === s.id ? 'true' : undefined}
                           className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                             activeSession?.id === s.id ? 'border-primary bg-primary/5' : 'hover:bg-muted'
                           }`}
                           onClick={() => setActiveSession(s)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveSession(s); } }}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-medium text-sm">{s.title}</span>
@@ -312,6 +328,7 @@ export default function Facilitator() {
                             <button
                               onClick={(e) => { e.stopPropagation(); copySessionCode(s.session_code); }}
                               className="hover:text-foreground"
+                              aria-label={`Copy session code ${s.session_code}`}
                             >
                               <Copy className="h-3 w-3" />
                             </button>
@@ -345,20 +362,38 @@ export default function Facilitator() {
                             <button
                               onClick={() => copySessionCode(activeSession.session_code)}
                               className="ml-2 text-muted-foreground hover:text-foreground"
+                              aria-label="Copy session code"
                             >
                               <Copy className="h-3.5 w-3.5 inline" />
                             </button>
                           </CardDescription>
                         </div>
                         {activeSession.is_active && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => endSession(activeSession.id)}
-                          >
-                            <Square className="mr-2 h-4 w-4" />
-                            End Session
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">
+                                <Square className="mr-2 h-4 w-4" />
+                                End Session
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>End this session?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will disconnect all {participantCount} participant{participantCount !== 1 ? 's' : ''} and close any active polls. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className={buttonVariants({ variant: 'destructive' })}
+                                  onClick={() => endSession(activeSession.id)}
+                                >
+                                  End Session
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                     </CardHeader>
@@ -447,13 +482,27 @@ export default function Facilitator() {
                                 {poll.is_active ? (
                                   <div className="flex items-center gap-2">
                                     <Badge className="bg-success text-success-foreground">Live</Badge>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => closePoll(poll.id)}
-                                    >
-                                      <XCircle className="h-4 w-4" />
-                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="sm" aria-label="Close poll">
+                                          <XCircle className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Close this poll?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Participants will no longer be able to submit responses. Results will still be visible.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => closePoll(poll.id)}>
+                                            Close Poll
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
                                   </div>
                                 ) : (
                                   <Badge variant="secondary">Closed</Badge>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { api, setTokens, clearTokens, hasStoredTokens } from '@/lib/api';
 import { Profile, AppRole } from '@/types/workshop';
 
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const signUp = async (email: string, password: string, metadata: SignUpMetadata) => {
+  const signUp = useCallback(async (email: string, password: string, metadata: SignUpMetadata) => {
     try {
       const data = await api.post<AuthResponse>('/api/v1/auth/signup', {
         email,
@@ -140,9 +140,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       return { error: err as Error };
     }
-  };
+  }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     try {
       const data = await api.post<AuthResponse>('/api/v1/auth/login', {
         email,
@@ -159,9 +159,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       return { error: err as Error };
     }
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       await api.post('/api/v1/auth/logout', {});
     } catch {
@@ -171,22 +171,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setProfile(null);
     setRoles([]);
-  };
+  }, []);
 
-  const hasRole = (role: AppRole) => roles.includes(role);
+  const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
+
+  const value = useMemo(() => ({
+    user,
+    profile,
+    roles,
+    isLoading,
+    signUp,
+    signIn,
+    signOut,
+    hasRole,
+    refreshProfile,
+  }), [user, profile, roles, isLoading, signUp, signIn, signOut, hasRole, refreshProfile]);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      profile,
-      roles,
-      isLoading,
-      signUp,
-      signIn,
-      signOut,
-      hasRole,
-      refreshProfile,
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

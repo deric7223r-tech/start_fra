@@ -22,6 +22,7 @@
     "@react-native-community/netinfo": "^11.4.1",
     "@shopify/react-native-skia": "^2.4.18",
     "@stardazed/streams-text-encoding": "^1.0.2",
+    "@stopfra/shared": "workspace:^",
     "@stopfra/ui-core": "workspace:*",
     "@tanstack/react-query": "^5.83.0",
     "@ungap/structured-clone": "^1.3.0",

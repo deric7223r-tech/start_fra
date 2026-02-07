@@ -18,6 +18,10 @@
     "./utils": {
       "import": "./src/utils/index.ts",
       "types": "./src/utils/index.ts"
+    },
+    "./logger": {
+      "import": "./src/logger.ts",
+      "types": "./src/logger.ts"
     }
   },
   "scripts": {

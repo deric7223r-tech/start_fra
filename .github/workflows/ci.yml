@@ -90,3 +90,9 @@ jobs:
 
       - name: Build backend
         run: cd apps/fra-backend/backend && npm run build
+
+      - name: Export budget guide (web)
+        run: cd apps/fra-budget-guide && npx expo export --platform web
+
+      - name: Export training app (web)
+        run: cd apps/fra-training-app && npx expo export --platform web

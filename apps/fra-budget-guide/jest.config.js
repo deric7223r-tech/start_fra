@@ -25,6 +25,7 @@ module.exports = {
     '.*/Libraries/NativeComponent/ViewConfigIgnore(\\.js)?$': '<rootDir>/__mocks__/react-native/Libraries/NativeComponent/ViewConfigIgnore.js',
     '\\.svg$': '<rootDir>/__mocks__/svgMock.js',
     '\\.(png|jpg|jpeg|gif)$': '<rootDir>/__mocks__/fileMock.js',
+    '^@stopfra/shared/(.*)$': '<rootDir>/../../packages/shared/src/$1',
     '^@/(.*)$': '<rootDir>/$1',
     '^@/components/(.*)$': '<rootDir>/components/$1',
     '^@/contexts/(.*)$': '<rootDir>/contexts/$1',

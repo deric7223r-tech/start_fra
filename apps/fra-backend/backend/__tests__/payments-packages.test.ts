@@ -224,6 +224,23 @@ describe('Payments & Packages endpoints', () => {
       });
       expect(res.status).toBe(400);
     });
+
+    it('rejects webhook in production when STRIPE_WEBHOOK_SECRET is missing', async () => {
+      const origEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      try {
+        const res = await app.request('http://localhost/api/v1/webhooks/stripe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'payment_intent.succeeded', data: {} }),
+        });
+        expect(res.status).toBe(500);
+        const json = (await res.json()) as any;
+        expect(json.error.code).toBe('CONFIGURATION_ERROR');
+      } finally {
+        process.env.NODE_ENV = origEnv;
+      }
+    });
   });
 
   // ── Analytics & Reports ────────────────────────────────────────
