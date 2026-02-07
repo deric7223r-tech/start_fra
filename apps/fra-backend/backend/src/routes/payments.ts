@@ -1,10 +1,13 @@
 import crypto from 'node:crypto';
 import { Hono } from 'hono';
 import { getAuth, hasDatabase, jsonError, requireAuth } from '../helpers.js';
+import { createLogger } from '../logger.js';
 import {
   paymentCreateIntentSchema, purchasesCreateSchema, purchasesConfirmSchema,
   stripeWebhookSchema, FALLBACK_PACKAGES,
 } from '../types.js';
+
+const logger = createLogger('payments');
 import type { Assessment, Purchase } from '../types.js';
 import { assessmentsById, purchasesById } from '../stores.js';
 import { getClientIp } from '../middleware.js';
@@ -260,8 +263,11 @@ payments.post('/webhooks/stripe', async (c) => {
     if (!verifyStripeSignature(rawBody, sigHeader, webhookSecret)) {
       return jsonError(c, 400, 'SIGNATURE_INVALID', 'Invalid Stripe webhook signature');
     }
+  } else if (process.env.NODE_ENV === 'production') {
+    logger.error('STRIPE_WEBHOOK_SECRET is not set — rejecting webhook in production');
+    return jsonError(c, 500, 'CONFIGURATION_ERROR', 'Webhook signature verification is not configured');
   } else {
-    console.warn('WARNING: STRIPE_WEBHOOK_SECRET is not set — skipping webhook signature verification. Do NOT run in production without it.');
+    logger.warn('STRIPE_WEBHOOK_SECRET is not set — skipping webhook signature verification');
   }
 
   let body: unknown;
@@ -274,7 +280,7 @@ payments.post('/webhooks/stripe', async (c) => {
   const eventData = parsed.data.data as Record<string, unknown> | undefined;
   const now = new Date().toISOString();
 
-  console.log(JSON.stringify({ ts: now, event: 'stripe_webhook', type: eventType }));
+  logger.info('Stripe webhook received', { type: eventType });
 
   switch (eventType) {
     case 'checkout.session.completed': {
@@ -291,7 +297,7 @@ payments.post('/webhooks/stripe', async (c) => {
           const existing = purchasesById.get(purchaseId);
           if (existing) { existing.status = 'succeeded'; existing.confirmedAt = now; }
         }
-        console.log(JSON.stringify({ ts: now, event: 'purchase_status_updated', purchaseId, status: 'succeeded', paymentIntentId }));
+        logger.info('Purchase status updated', { purchaseId, status: 'succeeded', paymentIntentId });
       }
       break;
     }
@@ -306,13 +312,13 @@ payments.post('/webhooks/stripe', async (c) => {
         if (hasDatabase()) {
           // In DB mode, we rely on checkout.session.completed for status updates.
           // Log the confirmation for auditing purposes.
-          console.log(JSON.stringify({ ts: now, event: 'payment_intent_confirmed', paymentIntentId: piId }));
+          logger.info('Payment intent confirmed', { paymentIntentId: piId });
         } else {
           const purchase = Array.from(purchasesById.values()).find((p) => p.paymentIntentId === piId);
           if (purchase && purchase.status !== 'succeeded') {
             purchase.status = 'succeeded';
             purchase.confirmedAt = now;
-            console.log(JSON.stringify({ ts: now, event: 'purchase_confirmed_via_intent', purchaseId: purchase.id, paymentIntentId: piId }));
+            logger.info('Purchase confirmed via intent', { purchaseId: purchase.id, paymentIntentId: piId });
           }
         }
       }
@@ -321,7 +327,7 @@ payments.post('/webhooks/stripe', async (c) => {
 
     default: {
       // Acknowledge unhandled event types
-      console.log(JSON.stringify({ ts: now, event: 'stripe_webhook_unhandled', type: eventType }));
+      logger.info('Unhandled Stripe webhook event', { type: eventType });
       break;
     }
   }

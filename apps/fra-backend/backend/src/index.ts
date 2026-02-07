@@ -4,8 +4,11 @@ import { Hono } from 'hono';
 import { getDbPool, closeDbPool } from './db.js';
 import { getRedis } from './redis.js';
 import { DEV_JWT_SECRET, jwtSecret, hasDatabase } from './helpers.js';
+import { createLogger } from './logger.js';
 import { DEV_REFRESH_SECRET, refreshSecret } from './types.js';
 import { applyGlobalMiddleware, applyApiMiddleware } from './middleware.js';
+
+const logger = createLogger('server');
 import authRoutes from './routes/auth.js';
 import assessmentRoutes from './routes/assessments.js';
 import keypassRoutes from './routes/keypasses.js';
@@ -25,15 +28,13 @@ const allowedOrigins = applyGlobalMiddleware(app);
 // ── Global error handler ────────────────────────────────────────
 app.onError((err, c) => {
   const requestId = (c.get('requestId' as never) as string) ?? 'unknown';
-  console.error(JSON.stringify({
-    ts: new Date().toISOString(),
-    level: 'error',
+  logger.error('Unhandled error', {
     rid: requestId,
     method: c.req.method,
     path: c.req.path,
     error: err.message,
     stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined,
-  }));
+  });
   return c.json(
     { success: false, error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } },
     500
@@ -118,15 +119,15 @@ if (!process.env.JEST_WORKER_ID && process.env.NODE_ENV !== 'test') {
   const server = serve({ fetch: app.fetch, port, hostname });
 
   const shutdown = async (signal: string) => {
-    console.log(JSON.stringify({ ts: new Date().toISOString(), level: 'info', message: `${signal} received, shutting down gracefully` }));
+    logger.info(`${signal} received, shutting down gracefully`);
     server.close(async () => {
       await closeDbPool();
-      console.log(JSON.stringify({ ts: new Date().toISOString(), level: 'info', message: 'Shutdown complete' }));
+      logger.info('Shutdown complete');
       process.exit(0);
     });
     // Force exit after 10s if graceful shutdown stalls
     const forceExitTimer = setTimeout(() => {
-      console.error(JSON.stringify({ ts: new Date().toISOString(), level: 'error', message: 'Forced shutdown after timeout' }));
+      logger.error('Forced shutdown after timeout');
       process.exit(1);
     }, 10_000) as NodeJS.Timeout;
     forceExitTimer.unref();

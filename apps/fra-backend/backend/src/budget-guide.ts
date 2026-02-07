@@ -35,7 +35,7 @@ budgetGuide.post('/progress', async (c) => {
   if (auth instanceof Response) return auth;
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
 
-  const body = await c.req.json();
+  const body = await c.req.json().catch(() => null);
   const schema = z.object({
     selectedRoles: z.array(z.string()).optional(),
   });
@@ -62,7 +62,7 @@ budgetGuide.patch('/progress', async (c) => {
   if (auth instanceof Response) return auth;
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
 
-  const body = await c.req.json();
+  const body = await c.req.json().catch(() => null);
   const schema = z.object({
     selectedRoles: z.array(z.string()).optional(),
     completedScreens: z.array(z.string()).optional(),
@@ -136,7 +136,7 @@ budgetGuide.post('/pledge', async (c) => {
   if (auth instanceof Response) return auth;
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
 
-  const body = await c.req.json();
+  const body = await c.req.json().catch(() => null);
   const schema = z.object({
     signature: z.string().min(1, 'Signature is required'),
   });
@@ -180,7 +180,7 @@ budgetGuide.post('/analytics', async (c) => {
   if (auth instanceof Response) return auth;
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
 
-  const body = await c.req.json();
+  const body = await c.req.json().catch(() => null);
   const schema = z.object({
     quizScores: z.record(z.string(), z.unknown()).optional(),
     timeSpentSeconds: z.number().int().min(0).optional(),

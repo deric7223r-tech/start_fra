@@ -1,10 +1,13 @@
 import type { Hono, Context } from 'hono';
 import { cors } from 'hono/cors';
 import { jsonError } from './helpers.js';
+import { createLogger } from './logger.js';
 import { getRedis } from './redis.js';
 import { MAX_BODY_BYTES, CSRF_SAFE_METHODS } from './types.js';
 import type { RateLimitConfig } from './types.js';
 import { rateLimitBuckets } from './stores.js';
+
+const logger = createLogger('middleware');
 
 // ── Security helpers ────────────────────────────────────────────
 
@@ -101,13 +104,7 @@ export function applyGlobalMiddleware(app: Hono) {
   // allow any origin. Log a warning and deny all cross-origin requests.
   const isProduction = process.env.NODE_ENV === 'production';
   if (isProduction && allowedOrigins.length === 0) {
-    console.warn(
-      JSON.stringify({
-        ts: new Date().toISOString(),
-        level: 'warn',
-        message: 'CORS_ORIGINS is empty in production. All cross-origin requests will be denied. Set CORS_ORIGINS to allow specific origins.',
-      })
-    );
+    logger.warn('CORS_ORIGINS is empty in production — all cross-origin requests will be denied');
   }
 
   app.use(
@@ -175,9 +172,9 @@ export function applyGlobalMiddleware(app: Hono) {
         rid: requestId,
       };
       if (c.res.status >= 400) {
-        console.error(JSON.stringify(logEntry));
+        logger.error('Request failed', logEntry);
       } else {
-        console.log(JSON.stringify(logEntry));
+        logger.info('Request completed', logEntry);
       }
     }
   });

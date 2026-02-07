@@ -1,5 +1,8 @@
 import { getDbPool } from '../db.js';
 import { hasDatabase } from '../helpers.js';
+import { createLogger } from '../logger.js';
+
+const logger = createLogger('audit');
 
 export async function auditLog(event: {
   eventType: string;
@@ -24,7 +27,8 @@ export async function auditLog(event: {
         event.details ?? {}, event.ipAddress ?? null, event.userAgent ?? null,
       ]
     );
-  } catch {
-    // Audit log failures must not break the request
+  } catch (err) {
+    // Audit log failures must not break the request, but should be logged
+    logger.error('Failed to write audit log', { eventType: event.eventType, error: String(err) });
   }
 }

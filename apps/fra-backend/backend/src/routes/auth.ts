@@ -394,7 +394,7 @@ auth.post('/auth/reset-password', async (c) => {
 
 auth.get('/debug/db/ping', async (c) => {
   if (process.env.NODE_ENV === 'production') {
-    return c.json({ error: 'Not found' }, 404);
+    return jsonError(c, 404, 'NOT_FOUND', 'Not found');
   }
 
   const authCtx = requireAuth(c);

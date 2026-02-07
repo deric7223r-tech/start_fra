@@ -10,7 +10,10 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { getDbPool } from './db.js';
 import { type AuthContext, hasDatabase, jsonError, getAuth as getAuthBase, requireAuth } from './helpers.js';
+import { createLogger } from './logger.js';
 import { getRedis } from './redis.js';
+
+const logger = createLogger('workshop');
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -31,7 +34,8 @@ export function broadcastToSession(sessionId: string, event: string, data: unkno
   for (const client of clients) {
     try {
       client.write(event, data);
-    } catch {
+    } catch (err) {
+      logger.warn('SSE client write failed, removing client', { sessionId, clientId: client.id, error: String(err) });
       clients.delete(client);
     }
   }
@@ -311,9 +315,10 @@ workshop.post('/sessions/:id/join', async (c) => {
   const pool = getDbPool();
   const sessionId = c.req.param('id');
 
-  // Verify session exists
-  const check = await pool.query('SELECT id FROM workshop_sessions WHERE id = $1', [sessionId]);
+  // Verify session exists and is active
+  const check = await pool.query('SELECT id, is_active FROM workshop_sessions WHERE id = $1', [sessionId]);
   if (!check.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  if (!check.rows[0].is_active) return jsonError(c, 400, 'SESSION_ENDED', 'Session is no longer active');
 
   await pool.query(
     'INSERT INTO session_participants (session_id, user_id) VALUES ($1, $2) ON CONFLICT (session_id, user_id) DO NOTHING',
@@ -554,11 +559,18 @@ workshop.post('/polls/:pollId/respond', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
+  const pollId = c.req.param('pollId');
+
+  // Verify poll exists and is active
+  const pollCheck = await pool.query('SELECT is_active FROM polls WHERE id = $1', [pollId]);
+  if (!pollCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Poll not found');
+  if (!pollCheck.rows[0].is_active) return jsonError(c, 400, 'POLL_CLOSED', 'Poll is no longer active');
+
   await pool.query(
     `INSERT INTO poll_responses (poll_id, user_id, selected_option)
      VALUES ($1, $2, $3)
      ON CONFLICT (poll_id, user_id) DO UPDATE SET selected_option = $3`,
-    [c.req.param('pollId'), auth.userId, parsed.data.selectedOption]
+    [pollId, auth.userId, parsed.data.selectedOption]
   );
 
   return c.json({ success: true });
@@ -642,34 +654,46 @@ workshop.post('/questions/:questionId/upvote', async (c) => {
 
   const pool = getDbPool();
   const questionId = c.req.param('questionId');
+  const client = await pool.connect();
 
-  // Check if already upvoted
-  const existing = await pool.query(
-    'SELECT id FROM question_upvotes WHERE question_id = $1 AND user_id = $2 LIMIT 1',
-    [questionId, auth.userId]
-  );
+  try {
+    await client.query('BEGIN');
 
-  if (existing.rows[0]) {
-    // Remove upvote
-    await pool.query('DELETE FROM question_upvotes WHERE id = $1', [existing.rows[0].id]);
-    await pool.query('UPDATE questions SET upvotes = GREATEST(upvotes - 1, 0) WHERE id = $1', [questionId]);
-  } else {
-    // Add upvote
-    await pool.query(
-      'INSERT INTO question_upvotes (question_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+    // Check if already upvoted
+    const existing = await client.query(
+      'SELECT id FROM question_upvotes WHERE question_id = $1 AND user_id = $2 LIMIT 1',
       [questionId, auth.userId]
     );
-    await pool.query('UPDATE questions SET upvotes = upvotes + 1 WHERE id = $1', [questionId]);
-  }
 
-  // Get updated question
-  const updated = await pool.query('SELECT * FROM questions WHERE id = $1', [questionId]);
-  if (updated.rows[0]) {
-    // Get session_id for broadcast
-    broadcastToSession(updated.rows[0].session_id, 'question_updated', updated.rows[0]);
-  }
+    if (existing.rows[0]) {
+      // Remove upvote
+      await client.query('DELETE FROM question_upvotes WHERE id = $1', [existing.rows[0].id]);
+      await client.query('UPDATE questions SET upvotes = GREATEST(upvotes - 1, 0) WHERE id = $1', [questionId]);
+    } else {
+      // Add upvote
+      await client.query(
+        'INSERT INTO question_upvotes (question_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [questionId, auth.userId]
+      );
+      await client.query('UPDATE questions SET upvotes = upvotes + 1 WHERE id = $1', [questionId]);
+    }
 
-  return c.json({ success: true, data: updated.rows[0] ?? null });
+    // Get updated question
+    const updated = await client.query('SELECT * FROM questions WHERE id = $1', [questionId]);
+
+    await client.query('COMMIT');
+
+    if (updated.rows[0]) {
+      broadcastToSession(updated.rows[0].session_id, 'question_updated', updated.rows[0]);
+    }
+
+    return c.json({ success: true, data: updated.rows[0] ?? null });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 });
 
 // ── Action Plans endpoints ───────────────────────────────────
@@ -845,7 +869,8 @@ workshop.get('/sessions/:sessionId/events', async (c) => {
     const heartbeat = setInterval(() => {
       try {
         stream.writeSSE({ event: 'heartbeat', data: JSON.stringify({ ts: Date.now() }), id: crypto.randomUUID() });
-      } catch {
+      } catch (err) {
+        logger.warn('SSE heartbeat failed, closing client', { sessionId, clientId, error: String(err) });
         clearInterval(heartbeat);
         client.close();
       }

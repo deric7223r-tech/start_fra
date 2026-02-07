@@ -9,7 +9,7 @@ import {
 
 const assessments = new Hono();
 
-assessments.get('/assessments', (c) => {
+assessments.get('/assessments', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -18,13 +18,11 @@ assessments.get('/assessments', (c) => {
     return c.json({ success: true, data: items });
   }
 
-  return (async () => {
-    const items = await dbListAssessmentsByOrganisation(auth.organisationId);
-    return c.json({ success: true, data: items });
-  })();
+  const items = await dbListAssessmentsByOrganisation(auth.organisationId);
+  return c.json({ success: true, data: items });
 });
 
-assessments.get('/assessments/organisation/:orgId', (c) => {
+assessments.get('/assessments/organisation/:orgId', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -36,10 +34,8 @@ assessments.get('/assessments/organisation/:orgId', (c) => {
     return c.json({ success: true, data: items });
   }
 
-  return (async () => {
-    const items = await dbListAssessmentsByOrganisation(orgId);
-    return c.json({ success: true, data: items });
-  })();
+  const items = await dbListAssessmentsByOrganisation(orgId);
+  return c.json({ success: true, data: items });
 });
 
 assessments.post('/assessments', async (c) => {
@@ -70,7 +66,7 @@ assessments.post('/assessments', async (c) => {
   return c.json({ success: true, data: assessment }, 201);
 });
 
-assessments.get('/assessments/:id', (c) => {
+assessments.get('/assessments/:id', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -85,13 +81,11 @@ assessments.get('/assessments/:id', (c) => {
     return c.json({ success: true, data: assessment });
   }
 
-  return (async () => {
-    const assessment = await dbGetAssessmentById(id);
-    if (!assessment || assessment.organisationId !== auth.organisationId) {
-      return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
-    }
-    return c.json({ success: true, data: assessment });
-  })();
+  const assessment = await dbGetAssessmentById(id);
+  if (!assessment || assessment.organisationId !== auth.organisationId) {
+    return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
+  }
+  return c.json({ success: true, data: assessment });
 });
 
 assessments.patch('/assessments/:id', async (c) => {
@@ -139,7 +133,7 @@ assessments.patch('/assessments/:id', async (c) => {
   return c.json({ success: true, data: updated });
 });
 
-assessments.post('/assessments/:id/submit', (c) => {
+assessments.post('/assessments/:id/submit', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -163,22 +157,20 @@ assessments.post('/assessments/:id/submit', (c) => {
     return c.json({ success: true, data: updated });
   }
 
-  return (async () => {
-    const existing = await dbGetAssessmentById(id);
-    if (!existing || existing.organisationId !== auth.organisationId) {
-      return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
-    }
+  const existing = await dbGetAssessmentById(id);
+  if (!existing || existing.organisationId !== auth.organisationId) {
+    return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
+  }
 
-    const now = new Date().toISOString();
-    const updated = await dbUpdateAssessment(id, {
-      status: 'submitted',
-      submittedAt: now,
-      updatedAt: now,
-    });
+  const now = new Date().toISOString();
+  const updated = await dbUpdateAssessment(id, {
+    status: 'submitted',
+    submittedAt: now,
+    updatedAt: now,
+  });
 
-    if (!updated) return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
-    return c.json({ success: true, data: updated });
-  })();
+  if (!updated) return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
+  return c.json({ success: true, data: updated });
 });
 
 export default assessments;
