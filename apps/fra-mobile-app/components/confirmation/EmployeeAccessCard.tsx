@@ -16,7 +16,8 @@ export default function EmployeeAccessCard({
   keyPassesUsed,
   onShareError,
 }: EmployeeAccessCardProps) {
-  const accessLink = `https://rork.app/employee-access/${organisationId}`;
+  const baseUrl = process.env.EXPO_PUBLIC_APP_URL || 'https://rork.app';
+  const accessLink = `${baseUrl}/employee-access/${organisationId}`;
   const availablePasses = keyPassesAllocated - keyPassesUsed;
 
   const handleCopyLink = () => {

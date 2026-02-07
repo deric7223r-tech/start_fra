@@ -138,8 +138,8 @@ export default function SectionScreen() {
           accessibilityRole="list"
           accessibilityLabel="Key points"
         >
-          {content.keyPoints.map((point, index) => (
-            <View key={index} accessibilityRole="none">
+          {content.keyPoints.map((point) => (
+            <View key={point} accessibilityRole="none">
               <KeyPointItem text={point} />
             </View>
           ))}

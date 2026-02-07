@@ -74,7 +74,7 @@ export default function QuizScreen() {
         accessibilityLabel="Answer options"
       >
         {question.options.map((option, index) => (
-          <View key={index} style={styles.optionItem}>
+          <View key={option} style={styles.optionItem}>
             <QuizOption
               label={option}
               state={getOptionState(index)}

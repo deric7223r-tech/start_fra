@@ -150,7 +150,7 @@ export default function ActionPlanScreen() {
             <View style={styles.itemsList}>
               {items.map((item, index) => (
                 <View
-                  key={index}
+                  key={`${category.key}-${index}`}
                   style={styles.itemRow}
                   accessibilityRole="none"
                 >

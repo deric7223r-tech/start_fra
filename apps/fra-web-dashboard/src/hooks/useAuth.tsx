@@ -97,7 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setProfile(mapProfile(data.profile));
       setRoles((data.workshopRoles ?? []) as AppRole[]);
-    } catch {
+    } catch (err) {
+      console.warn('[useAuth] Failed to hydrate session, clearing tokens', err);
       clearTokens();
       setUser(null);
       setProfile(null);

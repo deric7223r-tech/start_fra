@@ -250,7 +250,7 @@ export default function Workshop() {
                       <ul className="space-y-3">
                         {currentSection?.keyPoints.map((point, index) => (
                           <motion.li
-                            key={index}
+                            key={point}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.1 }}
@@ -297,8 +297,8 @@ export default function Workshop() {
                           disabled={quizSubmitted}
                         >
                           {currentQuiz.options.map((option, index) => (
-                            <div 
-                              key={index}
+                            <div
+                              key={option}
                               className={`flex items-center space-x-2 p-3 rounded-lg border transition-colors ${
                                 quizSubmitted
                                   ? index === currentQuiz.correctAnswer
@@ -477,9 +477,9 @@ export default function Workshop() {
               </Button>
 
               <div className="flex items-center gap-2">
-                {workshopSections.map((_, index) => (
+                {workshopSections.map((section, index) => (
                   <button
-                    key={index}
+                    key={section.id}
                     onClick={() => goToSlide(index)}
                     aria-label={`Go to section ${index + 1}`}
                     aria-current={index === currentSlide ? 'step' : undefined}

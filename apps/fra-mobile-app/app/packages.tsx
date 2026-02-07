@@ -145,8 +145,8 @@ export default function PackagesScreen() {
               )}
 
               <View style={styles.featuresContainer}>
-                {pkg.features.map((feature, index) => (
-                  <View key={index} style={styles.featureRow}>
+                {pkg.features.map((feature) => (
+                  <View key={feature} style={styles.featureRow}>
                     <View style={styles.checkIcon}>
                       <Check size={16} color={colors.white} strokeWidth={3} />
                     </View>

@@ -35,7 +35,7 @@ export default function ActionPlanScreen() {
     const priorityColor = priority === 'high' ? colors.govRed : priority === 'medium' ? colors.warningOrange : colors.successGreen;
     
     return (
-      <View key={index} style={[styles.actionCard, { borderLeftColor: priorityColor }]}>
+      <View key={action.title} style={[styles.actionCard, { borderLeftColor: priorityColor }]}>
         <Text style={styles.actionTitle}>{action.title}</Text>
         <View style={styles.actionMeta}>
           <Text style={styles.metaItem}>👤 {action.owner}</Text>
