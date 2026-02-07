@@ -11,7 +11,8 @@
     "start": "node --enable-source-maps dist/index.js",
     "lint": "eslint src",
     "test": "jest -c jest.config.cjs",
-    "test:coverage": "jest -c jest.config.cjs --coverage --forceExit"
+    "test:coverage": "jest -c jest.config.cjs --coverage --forceExit",
+    "test:watch": "jest -c jest.config.cjs --watch"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",
