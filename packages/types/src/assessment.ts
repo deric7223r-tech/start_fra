@@ -1,11 +1,14 @@
+/** Risk severity level. One of 'HIGH', 'MEDIUM', or 'LOW'. */
 export type RiskLevel = 'HIGH' | 'MEDIUM' | 'LOW';
 
+/** Strength rating for an internal control. One of 'VERY_STRONG', 'REASONABLY_STRONG', 'SOME_GAPS', or 'WEAK'. */
 export type ControlStrength =
   | 'VERY_STRONG'
   | 'REASONABLY_STRONG'
   | 'SOME_GAPS'
   | 'WEAK';
 
+/** Identifier for each of the 13 fraud risk assessment modules. */
 export type AssessmentModule =
   | 'risk-appetite'
   | 'fraud-triangle'
@@ -21,12 +24,14 @@ export type AssessmentModule =
   | 'training-awareness'
   | 'compliance-mapping';
 
+/** Lifecycle status of an assessment. One of 'draft', 'in_progress', 'submitted', or 'completed'. */
 export type AssessmentStatus =
   | 'draft'
   | 'in_progress'
   | 'submitted'
   | 'completed';
 
+/** An individual risk entry in the risk register, capturing impact, likelihood, control strength, and mitigation details. */
 export interface RiskRegisterItem {
   id: string;
   assessmentId: string;
@@ -45,6 +50,7 @@ export interface RiskRegisterItem {
   updatedAt: string;
 }
 
+/** A single answer to an assessment question, associated with a specific module. */
 export interface AssessmentAnswer {
   id: string;
   assessmentId: string;
@@ -56,6 +62,7 @@ export interface AssessmentAnswer {
   updatedAt: string;
 }
 
+/** A fraud risk assessment belonging to an organisation, tracking status, risk scoring, and report generation. */
 export interface Assessment {
   id: string;
   organisationId: string;
@@ -73,6 +80,7 @@ export interface Assessment {
   updatedAt: string;
 }
 
+/** Tracks module-level completion progress for an assessment. */
 export interface AssessmentProgress {
   assessmentId: string;
   completedModules: AssessmentModule[];

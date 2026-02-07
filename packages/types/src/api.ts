@@ -1,3 +1,4 @@
+/** Generic API response wrapper containing success status, optional data, error, and pagination metadata. */
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
@@ -5,12 +6,14 @@ export interface ApiResponse<T = unknown> {
   meta?: ApiMeta;
 }
 
+/** Structured API error with a machine-readable code, human-readable message, and optional details. */
 export interface ApiError {
   code: string;
   message: string;
   details?: Record<string, unknown>;
 }
 
+/** Pagination metadata returned with list endpoints. */
 export interface ApiMeta {
   page?: number;
   limit?: number;
@@ -18,6 +21,7 @@ export interface ApiMeta {
   totalPages?: number;
 }
 
+/** Query parameters for paginated API requests, including sort options. */
 export interface PaginationParams {
   page?: number;
   limit?: number;
@@ -25,7 +29,7 @@ export interface PaginationParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-// Package types
+/** An assessment package available for purchase, defining price, key-pass allocation, and features. */
 export interface Package {
   id: number;
   name: string;
@@ -37,7 +41,7 @@ export interface Package {
   isActive: boolean;
 }
 
-// Purchase types
+/** Payment status for a purchase. One of 'pending', 'processing', 'completed', 'failed', or 'refunded'. */
 export type PaymentStatus =
   | 'pending'
   | 'processing'
@@ -45,6 +49,7 @@ export type PaymentStatus =
   | 'failed'
   | 'refunded';
 
+/** A record of a package purchase by an organisation, including payment status and key-pass count. */
 export interface Purchase {
   id: string;
   organisationId: string;
@@ -58,7 +63,7 @@ export interface Purchase {
   completedAt?: string;
 }
 
-// Dashboard types
+/** Aggregated dashboard metrics for an organisation, summarising assessments, risk distribution, and key-pass usage. */
 export interface DashboardMetrics {
   organisationId: string;
   totalAssessments: number;
@@ -71,7 +76,7 @@ export interface DashboardMetrics {
   keyPassesRemaining: number;
 }
 
-// Feedback types
+/** User-submitted feedback for the platform or a specific assessment, with rating and category. */
 export interface Feedback {
   id: string;
   userId: string;
@@ -82,7 +87,7 @@ export interface Feedback {
   createdAt: string;
 }
 
-// Signature types
+/** A digital signature captured for an assessment, including provenance metadata. */
 export interface Signature {
   id: string;
   assessmentId: string;

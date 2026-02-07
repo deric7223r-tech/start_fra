@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorkshopProgress } from '@/hooks/useWorkshopProgress';
 import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,7 +65,8 @@ export default function ActionPlan() {
         });
       }
     } catch (err) {
-      console.error('Error fetching action plan:', err);
+      logger.error('Error fetching action plan', err);
+      toast.error('Failed to load action plan');
     }
 
     setIsLoading(false);
@@ -113,7 +115,8 @@ export default function ActionPlan() {
         actionItems: updatedItems,
       });
     } catch (err) {
-      console.error('Error updating action plan:', err);
+      logger.error('Error updating action plan', err);
+      toast.error('Failed to update action item');
     }
   };
 

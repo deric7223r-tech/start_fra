@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from './useAuth';
+import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 import { WorkshopProgress } from '@/types/workshop';
 
 type ProgressRow = {
@@ -62,7 +64,8 @@ export function useWorkshopProgress(sessionId?: string | null) {
         setProgress(mapProgress(newData));
       }
     } catch (err) {
-      console.error('Error fetching progress:', err);
+      logger.error('Error fetching progress', err);
+      toast.error('Failed to load progress');
     }
 
     setIsLoading(false);
@@ -77,7 +80,8 @@ export function useWorkshopProgress(sessionId?: string | null) {
       });
       setProgress(prev => prev ? { ...prev, current_section: sectionId } : null);
     } catch (err) {
-      console.error('Error updating section:', err);
+      logger.error('Error updating section', err);
+      toast.error('Failed to update section');
     }
   };
 
@@ -94,7 +98,8 @@ export function useWorkshopProgress(sessionId?: string | null) {
       });
       setProgress(prev => prev ? { ...prev, completed_sections: newCompletedSections } : null);
     } catch (err) {
-      console.error('Error completing section:', err);
+      logger.error('Error completing section', err);
+      toast.error('Failed to save progress');
     }
   };
 
@@ -109,7 +114,8 @@ export function useWorkshopProgress(sessionId?: string | null) {
       });
       setProgress(prev => prev ? { ...prev, quiz_scores: newScores } : null);
     } catch (err) {
-      console.error('Error saving quiz score:', err);
+      logger.error('Error saving quiz score', err);
+      toast.error('Failed to save quiz score');
     }
   };
 
@@ -124,7 +130,8 @@ export function useWorkshopProgress(sessionId?: string | null) {
       });
       setProgress(prev => prev ? { ...prev, scenario_choices: newChoices } : null);
     } catch (err) {
-      console.error('Error saving scenario choice:', err);
+      logger.error('Error saving scenario choice', err);
+      toast.error('Failed to save choice');
     }
   };
 
@@ -139,7 +146,8 @@ export function useWorkshopProgress(sessionId?: string | null) {
       });
       setProgress(prev => prev ? { ...prev, completed_at: completedAt } : null);
     } catch (err) {
-      console.error('Error marking complete:', err);
+      logger.error('Error marking complete', err);
+      toast.error('Failed to complete workshop');
     }
   };
 

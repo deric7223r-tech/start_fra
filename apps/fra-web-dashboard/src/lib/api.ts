@@ -2,6 +2,8 @@
 // Stop FRA - API Client (replaces Supabase client)
 // ============================================================
 
+import { logger } from './logger';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const TOKEN_KEY = 'fra_access_token';
 const REFRESH_KEY = 'fra_refresh_token';
@@ -135,7 +137,7 @@ export function connectSSE(path: string, handlers: SSEHandlers): () => void {
 
   es.onerror = () => {
     // EventSource auto-reconnects; we just log
-    console.warn('SSE connection error, reconnecting...');
+    logger.warn('SSE connection error, reconnecting...');
   };
 
   // Return cleanup function

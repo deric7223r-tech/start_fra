@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api, connectSSE } from '@/lib/api';
 import { useAuth } from './useAuth';
+import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 import { WorkshopSession, Poll, Question } from '@/types/workshop';
 
 export function useSession(sessionCode?: string) {
@@ -73,7 +75,8 @@ export function useSession(sessionCode?: string) {
         fetchParticipantCountById(data.id),
       ]);
     } catch (err) {
-      console.error('Error fetching session:', err);
+      logger.error('Error fetching session', err);
+      toast.error('Failed to load session');
       setError((err as Error).message || 'Failed to load session');
     }
 
@@ -134,7 +137,7 @@ export function useSession(sessionCode?: string) {
       await api.post(`/api/v1/workshop/sessions/${session.id}/join`, {});
       return { error: null };
     } catch (err) {
-      console.error('Error joining session:', err);
+      logger.error('Error joining session', err);
       return { error: (err as Error).message };
     }
   };
@@ -148,7 +151,7 @@ export function useSession(sessionCode?: string) {
       });
       return { error: null };
     } catch (err) {
-      console.error('Error submitting poll response:', err);
+      logger.error('Error submitting poll response', err);
       return { error: (err as Error).message };
     }
   };
@@ -162,7 +165,7 @@ export function useSession(sessionCode?: string) {
       });
       return { error: null };
     } catch (err) {
-      console.error('Error submitting question:', err);
+      logger.error('Error submitting question', err);
       return { error: (err as Error).message };
     }
   };
@@ -175,7 +178,7 @@ export function useSession(sessionCode?: string) {
       await fetchQuestions();
       return { error: null };
     } catch (err) {
-      console.error('Error upvoting question:', err);
+      logger.error('Error upvoting question', err);
       return { error: (err as Error).message };
     }
   };

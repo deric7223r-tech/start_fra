@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorkshopProgress } from '@/hooks/useWorkshopProgress';
 import { api } from '@/lib/api';
+import { logger } from '@/lib/logger';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,7 @@ export default function Certificate() {
   const navigate = useNavigate();
   const [certificate, setCertificate] = useState<CertificateType | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoadingCert, setIsLoadingCert] = useState(true);
   const certificateRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,8 +43,11 @@ export default function Certificate() {
         setCertificate(certs[0]);
       }
     } catch (err) {
-      console.error('Error fetching certificate:', err);
+      logger.error('Error fetching certificate', err);
+      toast.error('Failed to load certificate');
     }
+
+    setIsLoadingCert(false);
   };
 
   const generateCertificate = async () => {
@@ -56,7 +61,7 @@ export default function Certificate() {
       toast.success('Certificate generated!');
     } catch (err) {
       toast.error('Failed to generate certificate');
-      console.error(err);
+      logger.error('Error generating certificate', err);
     }
 
     setIsGenerating(false);
@@ -123,6 +128,16 @@ export default function Certificate() {
   };
 
   if (!user || !profile) return null;
+
+  if (isLoadingCert) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
 
   const isCompleted = progress?.completed_at !== null;
 

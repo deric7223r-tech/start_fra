@@ -52,7 +52,7 @@ export function Header() {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Button variant="ghost" className="relative h-9 w-9 rounded-full" aria-label="User menu">
                     <Avatar className="h-9 w-9">
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {profile?.full_name ? getInitials(profile.full_name) : <User className="h-4 w-4" />}

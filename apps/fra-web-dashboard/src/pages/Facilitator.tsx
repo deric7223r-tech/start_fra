@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { api, connectSSE } from '@/lib/api';
+import { logger } from '@/lib/logger';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,7 +99,8 @@ export default function Facilitator() {
       const active = data.find(s => s.is_active);
       if (active) setActiveSession(active);
     } catch (err) {
-      console.error('Error fetching sessions:', err);
+      logger.error('Error fetching sessions', err);
+      toast.error('Failed to load sessions');
     }
     setIsLoading(false);
   };
@@ -153,7 +155,7 @@ export default function Facilitator() {
       toast.success(`Session created! Code: ${data.session_code}`);
     } catch (err) {
       toast.error('Failed to create session');
-      console.error(err);
+      logger.error('Error creating session', err);
     }
     setIsCreating(false);
   };

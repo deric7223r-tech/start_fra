@@ -134,6 +134,7 @@ export default function Index() {
                       onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
                       className="text-center text-lg font-mono tracking-widest uppercase"
                       maxLength={6}
+                      aria-label="Session code"
                     />
                     <Button onClick={handleJoinSession} disabled={!sessionCode.trim()}>
                       Join
