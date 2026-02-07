@@ -103,7 +103,7 @@ export default function PackageProfessionalScreen() {
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle} accessibilityRole="header">Why upgrade to Professional?</Text>
             <Text style={styles.sectionBody}>
-              Under the ECCTA 2023 "failure to prevent fraud" offence, organisations must demonstrate "reasonable procedures" — including staff training. The Professional package provides the training evidence auditors and regulators expect, plus key-passes so employees can complete their own fraud risk assessments.
+              Under the ECCTA 2023 &ldquo;failure to prevent fraud&rdquo; offence, organisations must demonstrate &ldquo;reasonable procedures&rdquo; — including staff training. The Professional package provides the training evidence auditors and regulators expect, plus key-passes so employees can complete their own fraud risk assessments.
             </Text>
           </View>
 

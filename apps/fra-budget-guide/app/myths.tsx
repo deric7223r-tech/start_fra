@@ -12,7 +12,7 @@ import ScreenContainer from '@/components/ScreenContainer';
 import ActionButton from '@/components/ActionButton';
 import InfoBanner from '@/components/InfoBanner';
 import { colors, spacing, borderRadius, shadows } from '@/constants/theme';
-import { myths, Myth } from '@/constants/data/myths';
+import { myths } from '@/constants/data/myths';
 
 export default function MythsScreen() {
   const router = useRouter();

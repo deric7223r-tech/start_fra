@@ -18,7 +18,7 @@ import type {
  * Format: fra-{timestamp}-{random alphanumeric}
  */
 export function generateId(): string {
-  return `fra-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `fra-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**

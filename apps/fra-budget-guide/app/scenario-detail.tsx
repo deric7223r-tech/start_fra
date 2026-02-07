@@ -10,7 +10,7 @@ import {
 import ScreenContainer from '@/components/ScreenContainer';
 import ActionButton from '@/components/ActionButton';
 import { colors, spacing, borderRadius } from '@/constants/theme';
-import { Scenario, scenarioData } from '@/constants/data/scenarios';
+import { scenarioData } from '@/constants/data/scenarios';
 
 export default function ScenarioDetailScreen() {
   const params = useLocalSearchParams<{ category: string }>();

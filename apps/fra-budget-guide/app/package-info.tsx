@@ -6,7 +6,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 import ScreenContainer from '@/components/ScreenContainer';
 import { colors, spacing, borderRadius } from '@/constants/theme';
@@ -38,7 +37,7 @@ export default function PackageInfoScreen() {
       </View>
 
       <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>What's included</Text>
+        <Text style={styles.sectionTitle}>What&apos;s included</Text>
 
         <View style={styles.featureCard}>
           <View style={styles.featureIconCircle}>
@@ -109,7 +108,7 @@ export default function PackageInfoScreen() {
       <View style={styles.complianceCard}>
         <Text style={styles.complianceTitle}>Why training matters</Text>
         <Text style={styles.complianceBody}>
-          Under the ECCTA 2023 "failure to prevent fraud" offence, organisations must demonstrate "reasonable procedures" — including staff training. This package provides the evidence auditors and regulators expect.
+          Under the ECCTA 2023 &ldquo;failure to prevent fraud&rdquo; offence, organisations must demonstrate &ldquo;reasonable procedures&rdquo; — including staff training. This package provides the evidence auditors and regulators expect.
         </Text>
       </View>
 

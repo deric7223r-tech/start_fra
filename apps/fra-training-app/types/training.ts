@@ -5,15 +5,6 @@ export interface QuizQuestion {
   explanation: string;
 }
 
-export interface CaseStudy {
-  id: string;
-  title: string;
-  sector: string;
-  scenario: string;
-  questions: string[];
-  learningPoints: string[];
-}
-
 export interface ScenarioOption {
   id: string;
   text: string;

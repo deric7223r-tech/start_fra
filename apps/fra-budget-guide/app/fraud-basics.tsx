@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import ScreenContainer from '@/components/ScreenContainer';
 import ActionButton from '@/components/ActionButton';
-import InfoBanner from '@/components/InfoBanner';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 
 export default function FraudBasicsScreen() {

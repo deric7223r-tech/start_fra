@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { Check, Users } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import type { PackageType, EmployeeCount, OrganisationSize } from '@/types/assessment';

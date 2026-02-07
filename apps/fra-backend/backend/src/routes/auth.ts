@@ -3,11 +3,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDbPool } from '../db.js';
 import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
-import { jwtSecret } from '../helpers.js';
 import { getRedis } from '../redis.js';
 import {
   signupSchema, loginSchema, refreshSchema, forgotPasswordSchema, resetPasswordSchema,
-  refreshSecret, accessTokenExpiry, refreshTokenExpiry,
+  refreshSecret,
   LOCKOUT_PREFIX, LOCKOUT_MAX_ATTEMPTS, LOCKOUT_WINDOW_SECONDS,
 } from '../types.js';
 import type { User, Organisation } from '../types.js';
@@ -20,6 +19,7 @@ import {
   auditLog,
   setPasswordResetToken, getPasswordResetUserId, deletePasswordResetToken,
 } from '../db/index.js';
+import { issueTokens, publicUser } from '../auth-utils.js';
 
 // ── Auth helpers ────────────────────────────────────────────────
 
@@ -50,45 +50,6 @@ async function clearFailedLogins(email: string): Promise<void> {
   const redis = getRedis();
   if (!redis) return;
   await redis.del(`${LOCKOUT_PREFIX}${email.toLowerCase()}`);
-}
-
-function issueTokens(user: User) {
-  const accessToken = jwt.sign(
-    {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-      organisationId: user.organisationId,
-    },
-    jwtSecret,
-    { expiresIn: accessTokenExpiry }
-  );
-
-  const refreshToken = jwt.sign(
-    {
-      sub: user.id,
-      type: 'refresh',
-    },
-    refreshSecret,
-    { expiresIn: refreshTokenExpiry }
-  );
-
-  if (!hasDatabase()) {
-    refreshTokenAllowlist.add(refreshToken);
-  }
-
-  return { accessToken, refreshToken };
-}
-
-export function publicUser(user: User) {
-  return {
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    organisationId: user.organisationId,
-    createdAt: user.createdAt,
-  };
 }
 
 // ── Routes ──────────────────────────────────────────────────────
@@ -361,20 +322,31 @@ auth.post('/auth/forgot-password', async (c) => {
 
   const emailLc = parsed.data.email.toLowerCase();
   const user = hasDatabase() ? await dbGetUserByEmail(emailLc) : usersByEmail.get(emailLc);
+
+  let resetToken: string | undefined;
+
   if (user) {
-    const token = crypto.randomUUID();
-    await setPasswordResetToken(token, user.id);
+    resetToken = crypto.randomUUID();
+    await setPasswordResetToken(resetToken, user.id);
 
     await auditLog({
       eventType: 'auth.forgot_password', actorEmail: emailLc,
       resourceType: 'user', resourceId: user.id, ipAddress: getClientIp(c),
     });
-
-    return c.json({ success: true, data: { resetToken: token } });
   }
 
-  // Return success even if email not found (prevent enumeration)
-  return c.json({ success: true });
+  // Always return the same message to prevent email enumeration
+  const response: Record<string, unknown> = {
+    success: true,
+    message: 'If an account with that email exists, a password reset link has been sent.',
+  };
+
+  // Only expose token in development for testing
+  if (process.env.NODE_ENV !== 'production' && resetToken) {
+    response.resetToken = resetToken;
+  }
+
+  return c.json(response);
 });
 
 auth.post('/auth/reset-password', async (c) => {
@@ -421,6 +393,10 @@ auth.post('/auth/reset-password', async (c) => {
 });
 
 auth.get('/debug/db/ping', async (c) => {
+  if (process.env.NODE_ENV === 'production') {
+    return c.json({ error: 'Not found' }, 404);
+  }
+
   const authCtx = requireAuth(c);
   if (authCtx instanceof Response) return authCtx;
 

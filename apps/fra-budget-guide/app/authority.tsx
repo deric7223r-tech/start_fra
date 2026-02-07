@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Shield, AlertCircle } from 'lucide-react-native';
+import { Shield } from 'lucide-react-native';
 import React from 'react';
 import {
   StyleSheet,

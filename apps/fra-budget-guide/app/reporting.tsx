@@ -13,7 +13,7 @@ import ActionButton from '@/components/ActionButton';
 import InfoBanner from '@/components/InfoBanner';
 import EditContactModal from '@/components/EditContactModal';
 import { colors, spacing, borderRadius } from '@/constants/theme';
-import { steps, ContactInfo, contacts } from '@/constants/data/reporting';
+import { steps, contacts } from '@/constants/data/reporting';
 
 type ContactKey = 'fraudRiskOwner' | 'whistleblowingHotline' | 'internalAudit' | 'hrDepartment' | 'stopFraPlatform';
 

@@ -3,12 +3,9 @@ import bcrypt from 'bcryptjs';
 import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
 import { keypassGenerateSchema, keypassValidateSchema, keypassUseSchema } from '../types.js';
 import type { User, Keypass } from '../types.js';
-import { usersByEmail, refreshTokenAllowlist, organisationsById, keypassesByCode } from '../stores.js';
+import { usersByEmail, organisationsById, keypassesByCode } from '../stores.js';
 import { getClientIp, rateLimit } from '../middleware.js';
 import { generateKeypassCode } from '../s3.js';
-import { jwtSecret } from '../helpers.js';
-import { refreshSecret, accessTokenExpiry, refreshTokenExpiry } from '../types.js';
-import jwt from 'jsonwebtoken';
 import {
   dbGetUserByEmail, dbInsertUser,
   dbInsertKeypass, dbGetKeypassByCode, dbUpdateKeypassStatus, dbListKeypassesByOrganisation,
@@ -17,47 +14,7 @@ import {
   auditLog,
 } from '../db/index.js';
 import type { KeypassStatus } from '../types.js';
-
-// ── Auth helpers (duplicated locally to avoid circular deps) ─────
-
-function issueTokens(user: User) {
-  const accessToken = jwt.sign(
-    {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-      organisationId: user.organisationId,
-    },
-    jwtSecret,
-    { expiresIn: accessTokenExpiry }
-  );
-
-  const refreshToken = jwt.sign(
-    {
-      sub: user.id,
-      type: 'refresh',
-    },
-    refreshSecret,
-    { expiresIn: refreshTokenExpiry }
-  );
-
-  if (!hasDatabase()) {
-    refreshTokenAllowlist.add(refreshToken);
-  }
-
-  return { accessToken, refreshToken };
-}
-
-function publicUser(user: User) {
-  return {
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    organisationId: user.organisationId,
-    createdAt: user.createdAt,
-  };
-}
+import { issueTokens, publicUser } from '../auth-utils.js';
 
 // ── Keypass creation helper ──────────────────────────────────────
 

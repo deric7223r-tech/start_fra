@@ -3,9 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AlertCircle, CheckCircle, Clock, PenTool, ArrowRight, ChevronDown, ChevronUp, Key, Users, TrendingUp, FileText, Info, RefreshCw, AlertTriangle, Zap } from 'lucide-react-native';
 import colors from '@/constants/colors';
-import type { TabType, VisibleMetrics } from './types';
+import type { TabType, VisibleMetrics, EmployeeData } from './types';
 import { completionByDepartment, completionTrend } from './mockData';
-import type { EmployeeData } from './types';
 
 interface RiskDistribution {
   high: number;

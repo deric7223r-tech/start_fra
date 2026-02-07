@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import ActionButton from '@/components/ActionButton';
 import InfoBanner from '@/components/InfoBanner';
 import ProgressHeader from '@/components/ProgressHeader';
-import { colors, spacing, borderRadius } from '@/constants/theme';
+import { colors, spacing } from '@/constants/theme';
 
 interface RedFlag {
   id: string;
