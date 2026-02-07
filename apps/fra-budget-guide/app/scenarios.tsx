@@ -13,10 +13,12 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenContainer from '@/components/ScreenContainer';
+import ActionButton from '@/components/ActionButton';
+import InfoBanner from '@/components/InfoBanner';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 
 interface ScenarioCategory {
   id: string;
@@ -87,150 +89,123 @@ export default function ScenariosScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.header}>
-          <AlertCircle color="#dc2626" size={40} />
-          <Text style={styles.title}>Fraud Scenarios You Will Encounter</Text>
-          <Text style={styles.subtitle}>
-            Real-world fraud examples with red flags and prevention strategies
-          </Text>
-        </View>
+    <ScreenContainer screenId="scenarios">
+      <View style={styles.header}>
+        <AlertCircle color={colors.danger} size={40} />
+        <Text style={styles.title}>Fraud Scenarios You Will Encounter</Text>
+        <Text style={styles.subtitle}>
+          Real-world fraud examples with red flags and prevention strategies
+        </Text>
+      </View>
 
-        {selectedRoles.length > 0 && (
-          <View style={styles.priorityBanner}>
-            <Text style={styles.priorityText}>
-              Categories relevant to your role are shown first
-            </Text>
-          </View>
-        )}
+      {selectedRoles.length > 0 && (
+        <InfoBanner
+          message="Categories relevant to your role are shown first"
+          variant="info"
+        />
+      )}
 
-        <View style={styles.categoriesContainer}>
-          {sortedCategories.map((category) => {
-            const Icon = category.icon;
-            const relevant = isRelevant(category);
+      <View style={styles.categoriesContainer}>
+        {sortedCategories.map((category) => {
+          const Icon = category.icon;
+          const relevant = isRelevant(category);
 
-            return (
-              <TouchableOpacity
-                key={category.id}
-                style={[styles.categoryCard, relevant && styles.categoryCardRelevant]}
-                onPress={() =>
-                  router.push({
-                    pathname: '/scenario-detail',
-                    params: { category: category.id },
-                  })
-                }
-                activeOpacity={0.7}
-              >
-                <View style={styles.categoryHeader}>
-                  <View
-                    style={[styles.iconCircle, relevant && styles.iconCircleRelevant]}
-                  >
-                    <Icon color={relevant ? '#dc2626' : '#64748b'} size={28} />
-                  </View>
-                  <View style={styles.categoryInfo}>
-                    <View style={styles.titleRow}>
-                      <Text style={styles.categoryTitle}>{category.title}</Text>
-                      {relevant && <View style={styles.relevantBadge} />}
-                    </View>
-                    <Text style={styles.categoryDescription}>
-                      {category.description}
-                    </Text>
-                    <Text style={styles.scenarioCount}>
-                      {category.scenarioCount} scenario{category.scenarioCount > 1 ? 's' : ''}
-                    </Text>
-                  </View>
+          return (
+            <TouchableOpacity
+              key={category.id}
+              style={[styles.categoryCard, relevant && styles.categoryCardRelevant]}
+              onPress={() =>
+                router.push({
+                  pathname: '/scenario-detail',
+                  params: { category: category.id },
+                })
+              }
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`${category.title}: ${category.description}. ${category.scenarioCount} scenarios.${relevant ? ' Relevant to your role.' : ''}`}
+            >
+              <View style={styles.categoryHeader}>
+                <View
+                  style={[styles.iconCircle, relevant && styles.iconCircleRelevant]}
+                >
+                  <Icon color={relevant ? colors.danger : colors.textMuted} size={28} />
                 </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                <View style={styles.categoryInfo}>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.categoryTitle}>{category.title}</Text>
+                    {relevant && <View style={styles.relevantBadge} />}
+                  </View>
+                  <Text style={styles.categoryDescription}>
+                    {category.description}
+                  </Text>
+                  <Text style={styles.scenarioCount}>
+                    {category.scenarioCount} scenario{category.scenarioCount > 1 ? 's' : ''}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => router.push('/red-flags')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.continueButtonText}>Continue to Red Flags</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+      <ActionButton
+        label="Continue to Red Flags"
+        onPress={() => router.push('/red-flags')}
+      />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
     textAlign: 'center',
     marginTop: 12,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 15,
-    color: '#64748b',
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 21,
   },
-  priorityBanner: {
-    backgroundColor: '#eff6ff',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#1e40af',
-  },
-  priorityText: {
-    fontSize: 14,
-    color: '#1e40af',
-    fontWeight: '600',
-  },
   categoriesContainer: {
-    gap: 16,
-    marginBottom: 24,
+    gap: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
   },
   categoryCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   categoryCardRelevant: {
-    borderColor: '#fecaca',
-    backgroundColor: '#fef2f2',
+    borderColor: colors.dangerLighter,
+    backgroundColor: colors.dangerLightest,
   },
   categoryHeader: {
     flexDirection: 'row',
-    padding: 16,
+    padding: spacing.md,
   },
   iconCircle: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: colors.backgroundAlt,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: spacing.md,
   },
   iconCircleRelevant: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: colors.dangerLight,
   },
   categoryInfo: {
     flex: 1,
@@ -243,35 +218,24 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#0f172a',
-    marginRight: 8,
+    color: colors.text,
+    marginRight: spacing.sm,
   },
   relevantBadge: {
     width: 8,
     height: 8,
-    borderRadius: 4,
-    backgroundColor: '#dc2626',
+    borderRadius: spacing.xs,
+    backgroundColor: colors.danger,
   },
   categoryDescription: {
     fontSize: 14,
-    color: '#64748b',
+    color: colors.textMuted,
     lineHeight: 19,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   scenarioCount: {
     fontSize: 13,
-    color: '#94a3b8',
+    color: colors.textFaint,
     fontWeight: '500',
-  },
-  continueButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
   },
 });

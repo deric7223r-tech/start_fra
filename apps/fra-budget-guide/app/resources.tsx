@@ -5,14 +5,16 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
   Linking,
   TextInput,
   Modal,
 } from 'react-native';
 import { useApp } from '@/contexts/AppContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
+import ScreenContainer from '@/components/ScreenContainer';
+import ActionButton from '@/components/ActionButton';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 
 interface ResourceItem {
   name: string;
@@ -153,103 +155,101 @@ export default function ResourcesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.header}>
-          <BookOpen color="#1e40af" size={48} />
-          <Text style={styles.title}>Resources & Support</Text>
-          <Text style={styles.subtitle}>
-            Contacts and tools to help you prevent fraud
-          </Text>
-        </View>
+    <ScreenContainer screenId="resources">
+      <View style={styles.header}>
+        <BookOpen color={colors.primary} size={48} />
+        <Text style={styles.title}>Resources & Support</Text>
+        <Text style={styles.subtitle}>
+          Contacts and tools to help you prevent fraud
+        </Text>
+      </View>
 
-        <View style={styles.sectionsContainer}>
-          {resources.map((resource, index) => {
-            const Icon = resource.icon;
+      <View style={styles.sectionsContainer}>
+        {resources.map((resource, index) => {
+          const Icon = resource.icon;
 
-            return (
-              <View key={index} style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <View style={styles.sectionIconCircle}>
-                    <Icon color="#1e40af" size={24} />
-                  </View>
-                  <Text style={styles.sectionTitle}>{resource.title}</Text>
+          return (
+            <View key={index} style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionIconCircle}>
+                  <Icon color={colors.primary} size={24} />
                 </View>
+                <Text style={styles.sectionTitle}>{resource.title}</Text>
+              </View>
 
-                <View style={styles.itemsContainer}>
-                  {resource.items.map((item, itemIndex) => {
-                    const contactValue = getContactValue(item.contact, item.editable);
-                    const isEmpty = isContactEmpty(item.contact, item.editable);
-                    const isLink = item.contact.startsWith('www.');
+              <View style={styles.itemsContainer}>
+                {resource.items.map((item, itemIndex) => {
+                  const contactValue = getContactValue(item.contact, item.editable);
+                  const isEmpty = isContactEmpty(item.contact, item.editable);
+                  const isLink = item.contact.startsWith('www.');
 
-                    return (
-                      <View key={itemIndex} style={styles.resourceCard}>
-                        <Text style={styles.resourceName}>{item.name}</Text>
-                        {item.editable ? (
-                          <TouchableOpacity
-                            onPress={() => handleEditContact(item.contact as keyof typeof contactDetails, item.name)}
-                            activeOpacity={0.7}
-                          >
-                            <View style={styles.contactEditRow}>
-                              <Text
-                                style={[
-                                  styles.resourceContact,
-                                  isEmpty && styles.resourceContactPlaceholder,
-                                ]}
-                              >
-                                {contactValue}
-                              </Text>
-                              <Edit3 color={isEmpty ? '#94a3b8' : '#1e40af'} size={14} />
-                            </View>
-                          </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity
-                            onPress={() => {
-                              if (isLink) {
-                                handleLink(item.contact);
-                              }
-                            }}
-                            disabled={!isLink}
-                          >
+                  return (
+                    <View key={itemIndex} style={styles.resourceCard}>
+                      <Text style={styles.resourceName}>{item.name}</Text>
+                      {item.editable ? (
+                        <TouchableOpacity
+                          onPress={() => handleEditContact(item.contact as keyof typeof contactDetails, item.name)}
+                          activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Edit contact details for ${item.name}`}
+                        >
+                          <View style={styles.contactEditRow}>
                             <Text
                               style={[
                                 styles.resourceContact,
-                                isLink && styles.resourceContactLink,
+                                isEmpty && styles.resourceContactPlaceholder,
                               ]}
                             >
-                              {item.contact}
+                              {contactValue}
                             </Text>
-                          </TouchableOpacity>
-                        )}
-                        {item.description && (
-                          <Text style={styles.resourceDescription}>{item.description}</Text>
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
+                            <Edit3 color={isEmpty ? colors.textFaint : colors.primary} size={14} />
+                          </View>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          onPress={() => {
+                            if (isLink) {
+                              handleLink(item.contact);
+                            }
+                          }}
+                          disabled={!isLink}
+                          accessibilityRole={isLink ? 'link' : 'none'}
+                          accessibilityLabel={isLink ? `Open ${item.name} website` : undefined}
+                        >
+                          <Text
+                            style={[
+                              styles.resourceContact,
+                              isLink && styles.resourceContactLink,
+                            ]}
+                          >
+                            {item.contact}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                      {item.description && (
+                        <Text style={styles.resourceDescription}>{item.description}</Text>
+                      )}
+                    </View>
+                  );
+                })}
               </View>
-            );
-          })}
-        </View>
+            </View>
+          );
+        })}
+      </View>
 
-        <View style={styles.completionCard}>
-          <Home color="#059669" size={32} />
-          <Text style={styles.completionTitle}>You have completed the guidance</Text>
-          <Text style={styles.completionText}>
-            You can return anytime to review scenarios, checklists, or take the pledge.
-          </Text>
-        </View>
+      <View style={styles.completionCard}>
+        <Home color={colors.success} size={32} />
+        <Text style={styles.completionTitle}>You have completed the guidance</Text>
+        <Text style={styles.completionText}>
+          You can return anytime to review scenarios, checklists, or take the pledge.
+        </Text>
+      </View>
 
-        <TouchableOpacity
-          style={styles.homeButton}
-          onPress={() => router.push('/')}
-          activeOpacity={0.8}
-        >
-          <Home color="#ffffff" size={20} />
-          <Text style={styles.homeButtonText}>Return to Start</Text>
-        </TouchableOpacity>
-      </ScrollView>
+      <ActionButton
+        label="Return to Start"
+        onPress={() => router.push('/')}
+      />
 
       <Modal
         visible={editingContact !== null}
@@ -266,7 +266,7 @@ export default function ResourcesScreen() {
               value={inputValue}
               onChangeText={setInputValue}
               placeholder="Enter contact details (name, email, phone, URL)"
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={colors.textFaint}
               multiline
               autoFocus
             />
@@ -275,6 +275,8 @@ export default function ResourcesScreen() {
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={handleCancelEdit}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel editing"
               >
                 <Text style={styles.modalButtonTextCancel}>Cancel</Text>
               </TouchableOpacity>
@@ -282,6 +284,8 @@ export default function ResourcesScreen() {
                 style={[styles.modalButton, styles.modalButtonSave]}
                 onPress={handleSaveContact}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Save contact details"
               >
                 <Text style={styles.modalButtonTextSave}>Save</Text>
               </TouchableOpacity>
@@ -289,82 +293,71 @@ export default function ResourcesScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xl,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
     textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: spacing.md - 4,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 15,
-    color: '#64748b',
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 21,
   },
   sectionsContainer: {
-    gap: 24,
-    marginBottom: 32,
+    gap: spacing.lg,
+    marginBottom: spacing.xl,
   },
   section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     padding: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   sectionIconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#eff6ff',
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: spacing.md - 4,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
   },
   itemsContainer: {
-    gap: 16,
+    gap: spacing.md,
   },
   resourceCard: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.sm,
     padding: 14,
   },
   resourceName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0f172a',
+    color: colors.text,
     marginBottom: 6,
   },
   contactEditRow: {
@@ -374,109 +367,95 @@ const styles = StyleSheet.create({
   },
   resourceContact: {
     fontSize: 14,
-    color: '#64748b',
-    marginBottom: 4,
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
     flex: 1,
   },
   resourceContactLink: {
-    color: '#1e40af',
+    color: colors.primary,
     textDecorationLine: 'underline',
   },
   resourceContactPlaceholder: {
-    color: '#94a3b8',
+    color: colors.textFaint,
     fontStyle: 'italic',
   },
   resourceDescription: {
     fontSize: 13,
-    color: '#64748b',
+    color: colors.textMuted,
     fontStyle: 'italic',
   },
   completionCard: {
-    backgroundColor: '#d1fae5',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: colors.successLight,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   completionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#065f46',
-    marginTop: 12,
-    marginBottom: 8,
+    color: colors.successDarker,
+    marginTop: spacing.md - 4,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   completionText: {
     fontSize: 14,
-    color: '#047857',
+    color: colors.successDark,
     textAlign: 'center',
     lineHeight: 20,
   },
-  homeButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  homeButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     width: '100%',
     maxWidth: 400,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 4,
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#64748b',
-    marginBottom: 16,
+    color: colors.textMuted,
+    marginBottom: spacing.md,
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: colors.border,
+    borderRadius: borderRadius.sm,
+    padding: spacing.md - 4,
     fontSize: 15,
-    color: '#0f172a',
+    color: colors.text,
     minHeight: 80,
     textAlignVertical: 'top',
     marginBottom: 20,
   },
   modalButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md - 4,
   },
   modalButton: {
     flex: 1,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: borderRadius.sm,
+    padding: spacing.md - 4,
     alignItems: 'center',
   },
   modalButtonCancel: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: colors.backgroundAlt,
   },
   modalButtonSave: {
-    backgroundColor: '#1e40af',
+    backgroundColor: colors.primary,
   },
   modalButtonTextCancel: {
     fontSize: 16,
@@ -486,6 +465,6 @@ const styles = StyleSheet.create({
   modalButtonTextSave: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#ffffff',
+    color: colors.surface,
   },
 });

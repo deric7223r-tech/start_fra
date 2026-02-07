@@ -9,6 +9,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useApp } from '@/contexts/AppContext';
+import ActionButton from '@/components/ActionButton';
+import InfoBanner from '@/components/InfoBanner';
+import ProgressHeader from '@/components/ProgressHeader';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 
 interface ChecklistItem {
   id: string;
@@ -91,12 +96,19 @@ const checklists: Checklist[] = [
 
 export default function ChecklistsScreen() {
   const router = useRouter();
+  const { completedChannels } = useApp();
   const [selectedChecklist, setSelectedChecklist] = useState<string | null>('payments');
 
   const activeChecklist = checklists.find((c) => c.id === selectedChecklist);
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
+        <ProgressHeader
+          completedScreens={completedChannels.map((c) => c.channelId)}
+          currentScreen="checklists"
+        />
+      </View>
       <View style={styles.selectorContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.selectorContent}>
           {checklists.map((checklist) => {
@@ -109,8 +121,10 @@ export default function ChecklistsScreen() {
                 style={[styles.selectorButton, isActive && styles.selectorButtonActive]}
                 onPress={() => setSelectedChecklist(checklist.id)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Select checklist: ${checklist.title}`}
               >
-                <Icon color={isActive ? '#ffffff' : '#1e40af'} size={20} />
+                <Icon color={isActive ? colors.surface : colors.primary} size={20} />
                 <Text style={[styles.selectorText, isActive && styles.selectorTextActive]}>
                   {checklist.title}
                 </Text>
@@ -123,16 +137,15 @@ export default function ChecklistsScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
         {activeChecklist && (
           <>
-            <View style={styles.banner}>
-              <Text style={styles.bannerText}>
-                Never change bank details based on email alone.
-              </Text>
-            </View>
+            <InfoBanner
+              message="Never change bank details based on email alone."
+              variant="danger"
+            />
 
             <View style={styles.checklistCard}>
               <View style={styles.checklistHeader}>
                 <View style={styles.iconCircle}>
-                  {React.createElement(activeChecklist.icon, { color: '#1e40af', size: 28 })}
+                  {React.createElement(activeChecklist.icon, { color: colors.primary, size: 28 })}
                 </View>
                 <Text style={styles.checklistTitle}>{activeChecklist.title}</Text>
               </View>
@@ -149,21 +162,19 @@ export default function ChecklistsScreen() {
               </View>
             </View>
 
-            <View style={styles.noteCard}>
-              <Text style={styles.noteText}>
-                Use these checklists daily at the point of approval to ensure consistent fraud prevention.
-              </Text>
-            </View>
+            <InfoBanner
+              message="Use these checklists daily at the point of approval to ensure consistent fraud prevention."
+              variant="info"
+            />
           </>
         )}
 
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => router.push('/authority')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.continueButtonText}>View Authority Limits</Text>
-        </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          <ActionButton
+            label="View Authority Limits"
+            onPress={() => router.push('/authority')}
+          />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -172,39 +183,39 @@ export default function ChecklistsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.background,
   },
   selectorContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: colors.border,
   },
   selectorContent: {
-    padding: 16,
+    padding: spacing.md,
     gap: 12,
   },
   selectorButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eff6ff',
-    borderRadius: 8,
+    backgroundColor: colors.primaryLight,
+    borderRadius: borderRadius.sm,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    gap: 8,
+    gap: spacing.sm,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: colors.primaryBorder,
   },
   selectorButtonActive: {
-    backgroundColor: '#1e40af',
-    borderColor: '#1e40af',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   selectorText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1e40af',
+    color: colors.primary,
   },
   selectorTextActive: {
-    color: '#ffffff',
+    color: colors.surface,
   },
   scrollView: {
     flex: 1,
@@ -213,24 +224,13 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  banner: {
-    backgroundColor: '#dc2626',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 20,
-  },
-  bannerText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#ffffff',
-    textAlign: 'center',
-  },
   checklistCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     padding: 20,
+    marginTop: spacing.md,
     marginBottom: 20,
   },
   checklistHeader: {
@@ -241,8 +241,8 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: '#eff6ff',
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -251,10 +251,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
   },
   itemsContainer: {
-    gap: 16,
+    gap: spacing.md,
   },
   checklistItem: {
     flexDirection: 'row',
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#1e40af',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -273,36 +273,15 @@ const styles = StyleSheet.create({
   checkboxNumber: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.surface,
   },
   itemText: {
     flex: 1,
     fontSize: 15,
-    color: '#334155',
+    color: colors.textSecondary,
     lineHeight: 21,
   },
-  noteCard: {
-    backgroundColor: '#eff6ff',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 20,
-  },
-  noteText: {
-    fontSize: 14,
-    color: '#1e40af',
-    fontWeight: '500',
-    lineHeight: 19,
-    textAlign: 'center',
-  },
-  continueButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+  buttonContainer: {
+    marginTop: spacing.md,
   },
 });

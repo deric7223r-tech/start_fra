@@ -5,10 +5,12 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenContainer from '@/components/ScreenContainer';
+import ActionButton from '@/components/ActionButton';
+import InfoBanner from '@/components/InfoBanner';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 
 interface ContentBlock {
   id: string;
@@ -26,9 +28,9 @@ const contentBlocks: ContentBlock[] = [
     summary: 'Under the Economic Crime & Corporate Transparency Act 2023 (effective September 2025)',
     details: [
       'If fraud is committed for the organisation\'s benefit and you failed to prevent it through reasonable procedures, the organisation can face:',
-      '• Unlimited fines',
-      '• Director disqualification',
-      '• Criminal conviction',
+      '\u2022 Unlimited fines',
+      '\u2022 Director disqualification',
+      '\u2022 Criminal conviction',
     ],
   },
   {
@@ -37,10 +39,10 @@ const contentBlocks: ContentBlock[] = [
     icon: AlertCircle,
     summary: 'If you knowingly participate in or facilitate fraud',
     details: [
-      '• Criminal prosecution (Fraud Act 2006)',
-      '• Dismissal for gross misconduct',
-      '• Civil recovery of losses',
-      '• Professional disqualification',
+      '\u2022 Criminal prosecution (Fraud Act 2006)',
+      '\u2022 Dismissal for gross misconduct',
+      '\u2022 Civil recovery of losses',
+      '\u2022 Professional disqualification',
     ],
   },
   {
@@ -67,123 +69,94 @@ export default function LegalScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>
-            Fraud prevention is a leadership responsibility, not optional compliance.
-          </Text>
-        </View>
+    <ScreenContainer screenId="legal">
+      <InfoBanner
+        message="Fraud prevention is a leadership responsibility, not optional compliance."
+        variant="danger"
+      />
 
-        <View style={styles.blocksContainer}>
-          {contentBlocks.map((block) => {
-            const isExpanded = expandedBlocks.includes(block.id);
-            const Icon = block.icon;
+      <View style={styles.blocksContainer}>
+        {contentBlocks.map((block) => {
+          const isExpanded = expandedBlocks.includes(block.id);
+          const Icon = block.icon;
 
-            return (
-              <View key={block.id} style={styles.card}>
-                <TouchableOpacity
-                  style={styles.cardHeader}
-                  onPress={() => toggleBlock(block.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.iconCircle}>
-                    <Icon color="#dc2626" size={24} />
-                  </View>
-                  <View style={styles.cardHeaderText}>
-                    <Text style={styles.cardTitle}>{block.title}</Text>
-                    <Text style={styles.cardSummary}>{block.summary}</Text>
-                  </View>
-                  <ChevronRight
-                    color="#64748b"
-                    size={20}
-                    style={[
-                      styles.chevron,
-                      isExpanded && styles.chevronExpanded,
-                    ]}
-                  />
-                </TouchableOpacity>
+          return (
+            <View key={block.id} style={styles.card}>
+              <TouchableOpacity
+                style={styles.cardHeader}
+                onPress={() => toggleBlock(block.id)}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`${block.title}: ${block.summary}. Tap to ${isExpanded ? 'collapse' : 'expand'} details.`}
+              >
+                <View style={styles.iconCircle}>
+                  <Icon color={colors.danger} size={24} />
+                </View>
+                <View style={styles.cardHeaderText}>
+                  <Text style={styles.cardTitle}>{block.title}</Text>
+                  <Text style={styles.cardSummary}>{block.summary}</Text>
+                </View>
+                <ChevronRight
+                  color={colors.textMuted}
+                  size={20}
+                  style={[
+                    styles.chevron,
+                    isExpanded && styles.chevronExpanded,
+                  ]}
+                />
+              </TouchableOpacity>
 
-                {isExpanded && (
-                  <View style={styles.cardDetails}>
-                    {block.details.map((detail, index) => (
-                      <Text key={index} style={styles.detailText}>
-                        {detail}
-                      </Text>
-                    ))}
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
+              {isExpanded && (
+                <View style={styles.cardDetails}>
+                  {block.details.map((detail, index) => (
+                    <Text key={index} style={styles.detailText}>
+                      {detail}
+                    </Text>
+                  ))}
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </View>
 
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => router.push('/fraud-basics')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.continueButtonText}>Continue to Fraud Basics</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.textButton}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.textButtonText}>Back to Role Selection</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+      <ActionButton
+        label="Continue to Fraud Basics"
+        onPress={() => router.push('/fraud-basics')}
+      />
+      <View style={styles.buttonSpacer} />
+      <ActionButton
+        label="Back to Role Selection"
+        onPress={() => router.back()}
+        variant="text"
+      />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  banner: {
-    backgroundColor: '#dc2626',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-  },
-  bannerText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
   blocksContainer: {
-    gap: 16,
-    marginBottom: 24,
+    gap: spacing.md,
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: spacing.md,
   },
   iconCircle: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: '#fee2e2',
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.dangerLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -194,49 +167,31 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0f172a',
-    marginBottom: 4,
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
   cardSummary: {
     fontSize: 14,
-    color: '#64748b',
+    color: colors.textMuted,
     lineHeight: 18,
   },
   chevron: {
-    marginLeft: 8,
+    marginLeft: spacing.sm,
   },
   chevronExpanded: {
     transform: [{ rotate: '90deg' }],
   },
   cardDetails: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
     gap: 12,
   },
   detailText: {
     fontSize: 14,
-    color: '#334155',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
-  continueButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  textButton: {
-    padding: 12,
-    alignItems: 'center',
-  },
-  textButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1e40af',
+  buttonSpacer: {
+    marginBottom: spacing.xs,
   },
 });

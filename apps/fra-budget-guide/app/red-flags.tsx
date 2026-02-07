@@ -1,6 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { useRouter } from 'expo-router';
-import { Eye, User, ChevronRight } from 'lucide-react-native';
+import { Eye, User } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -10,6 +10,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ActionButton from '@/components/ActionButton';
+import InfoBanner from '@/components/InfoBanner';
+import ProgressHeader from '@/components/ProgressHeader';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 
 interface RedFlag {
   id: string;
@@ -112,7 +116,7 @@ const redFlags: RedFlag[] = [
 
 export default function RedFlagsScreen() {
   const router = useRouter();
-  const { isWatched, toggleWatchItem } = useApp();
+  const { isWatched, toggleWatchItem, completedChannels } = useApp();
   const [activeTab, setActiveTab] = useState<'people' | 'transactions'>('people');
 
   const filteredFlags = redFlags.filter((flag) => flag.category === activeTab);
@@ -123,13 +127,21 @@ export default function RedFlagsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
+        <ProgressHeader
+          completedScreens={completedChannels.map((c) => c.channelId)}
+          currentScreen="red-flags"
+        />
+      </View>
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'people' && styles.tabActive]}
           onPress={() => setActiveTab('people')}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="People and Behaviour tab"
         >
-          <User color={activeTab === 'people' ? '#1e40af' : '#64748b'} size={20} />
+          <User color={activeTab === 'people' ? colors.primary : colors.textMuted} size={20} />
           <Text style={[styles.tabText, activeTab === 'people' && styles.tabTextActive]}>
             People & Behaviour
           </Text>
@@ -138,8 +150,10 @@ export default function RedFlagsScreen() {
           style={[styles.tab, activeTab === 'transactions' && styles.tabActive]}
           onPress={() => setActiveTab('transactions')}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Transactions tab"
         >
-          <Eye color={activeTab === 'transactions' ? '#1e40af' : '#64748b'} size={20} />
+          <Eye color={activeTab === 'transactions' ? colors.primary : colors.textMuted} size={20} />
           <Text style={[styles.tabText, activeTab === 'transactions' && styles.tabTextActive]}>
             Transactions
           </Text>
@@ -147,11 +161,10 @@ export default function RedFlagsScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.warningBanner}>
-          <Text style={styles.warningText}>
-            Red flags are indicators, not proof. Report concerns — do not investigate.
-          </Text>
-        </View>
+        <InfoBanner
+          message="Red flags are indicators, not proof. Report concerns — do not investigate."
+          variant="warning"
+        />
 
         <View style={styles.flagsContainer}>
           {filteredFlags.map((flag) => {
@@ -163,26 +176,24 @@ export default function RedFlagsScreen() {
                 style={[styles.flagCard, watched && styles.flagCardWatched]}
                 onPress={() => handleToggleWatch(flag)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`${watched ? 'Unwatch' : 'Watch'} red flag: ${flag.text}`}
               >
                 <Text style={[styles.flagText, watched && styles.flagTextWatched]}>
                   {flag.text}
                 </Text>
                 <View style={[styles.watchIndicator, watched && styles.watchIndicatorActive]}>
-                  <Text style={styles.watchText}>{watched ? '★' : '☆'}</Text>
+                  <Text style={styles.watchText}>{watched ? '\u2605' : '\u2606'}</Text>
                 </View>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        <TouchableOpacity
-          style={styles.continueButton}
+        <ActionButton
+          label="View Approval Checklists"
           onPress={() => router.push('/checklists')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.continueButtonText}>View Approval Checklists</Text>
-          <ChevronRight color="#ffffff" size={20} />
-        </TouchableOpacity>
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -191,34 +202,34 @@ export default function RedFlagsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.background,
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: colors.border,
   },
   tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    gap: 8,
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#1e40af',
+    borderBottomColor: colors.primary,
   },
   tabText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#64748b',
+    color: colors.textMuted,
   },
   tabTextActive: {
-    color: '#1e40af',
+    color: colors.primary,
   },
   scrollView: {
     flex: 1,
@@ -227,46 +238,33 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  warningBanner: {
-    backgroundColor: '#fef3c7',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
-  },
-  warningText: {
-    fontSize: 14,
-    color: '#92400e',
-    fontWeight: '600',
-    lineHeight: 19,
-  },
   flagsContainer: {
     gap: 12,
-    marginBottom: 24,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
   },
   flagCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
+    borderColor: colors.border,
+    padding: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
   },
   flagCardWatched: {
-    borderColor: '#f59e0b',
-    backgroundColor: '#fffbeb',
+    borderColor: colors.warning,
+    backgroundColor: colors.warningLighter,
   },
   flagText: {
     flex: 1,
     fontSize: 14,
-    color: '#334155',
+    color: colors.textSecondary,
     lineHeight: 19,
   },
   flagTextWatched: {
     fontWeight: '600',
-    color: '#0f172a',
+    color: colors.text,
   },
   watchIndicator: {
     marginLeft: 12,
@@ -276,20 +274,6 @@ const styles = StyleSheet.create({
   },
   watchText: {
     fontSize: 24,
-    color: '#f59e0b',
-  },
-  continueButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginRight: 8,
+    color: colors.warning,
   },
 });

@@ -5,10 +5,11 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenContainer from '@/components/ScreenContainer';
+import ActionButton from '@/components/ActionButton';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 
 interface Scenario {
   id: string;
@@ -236,137 +237,123 @@ export default function ScenarioDetailScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        {scenarios.map((scenario) => (
-          <View key={scenario.id} style={styles.scenarioContainer}>
-            <Text style={styles.scenarioTitle}>{scenario.title}</Text>
+    <ScreenContainer>
+      {scenarios.map((scenario) => (
+        <View key={scenario.id} style={styles.scenarioContainer}>
+          <Text style={styles.scenarioTitle}>{scenario.title}</Text>
 
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <AlertCircle color="#0f172a" size={20} />
-                <Text style={styles.sectionTitle}>How It Works</Text>
-              </View>
-              <Text style={styles.sectionText}>{scenario.howItWorks}</Text>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <AlertCircle color={colors.text} size={20} />
+              <Text style={styles.sectionTitle}>How It Works</Text>
             </View>
-
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Eye color="#dc2626" size={20} />
-                <Text style={styles.sectionTitle}>Red Flags</Text>
-              </View>
-              {scenario.redFlags.map((flag, index) => (
-                <View key={index} style={styles.listItem}>
-                  <View style={styles.bulletRed} />
-                  <Text style={styles.listText}>{flag}</Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <CheckCircle2 color="#059669" size={20} />
-                <Text style={styles.sectionTitle}>What To Do</Text>
-              </View>
-              {scenario.whatToDo.map((action, index) => (
-                <View key={index} style={styles.listItem}>
-                  <View style={styles.bulletGreen} />
-                  <Text style={styles.listText}>{action}</Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Shield color="#1e40af" size={20} />
-                <Text style={styles.sectionTitle}>Controls</Text>
-              </View>
-              {scenario.controls.map((control, index) => (
-                <View key={index} style={styles.listItem}>
-                  <View style={styles.bulletBlue} />
-                  <Text style={styles.listText}>{control}</Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.exampleCard}>
-              <Text style={styles.exampleTitle}>Real Example</Text>
-              <Text style={styles.exampleText}>{scenario.example}</Text>
-            </View>
-
-            {scenario.decision && (
-              <View style={styles.decisionCard}>
-                <Text style={styles.decisionPrompt}>{scenario.decision.prompt}</Text>
-                <View style={styles.optionsContainer}>
-                  {scenario.decision.options.map((option, index) => {
-                    const isSelected = selectedAnswers[scenario.id] === index;
-                    const showResult = showFeedback[scenario.id];
-                    const isCorrect = option.correct;
-
-                    return (
-                      <View key={index}>
-                        <TouchableOpacity
-                          style={[
-                            styles.optionButton,
-                            isSelected && showResult && isCorrect && styles.optionButtonCorrect,
-                            isSelected && showResult && !isCorrect && styles.optionButtonWrong,
-                          ]}
-                          onPress={() => handleAnswer(scenario.id, index)}
-                          disabled={showFeedback[scenario.id]}
-                          activeOpacity={0.7}
-                        >
-                          <Text
-                            style={[
-                              styles.optionText,
-                              isSelected && showResult && styles.optionTextSelected,
-                            ]}
-                          >
-                            {option.text}
-                          </Text>
-                        </TouchableOpacity>
-                        {isSelected && showResult && (
-                          <View
-                            style={[
-                              styles.feedbackCard,
-                              isCorrect ? styles.feedbackCorrect : styles.feedbackWrong,
-                            ]}
-                          >
-                            <Text style={styles.feedbackText}>{option.feedback}</Text>
-                          </View>
-                        )}
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
+            <Text style={styles.sectionText}>{scenario.howItWorks}</Text>
           </View>
-        ))}
 
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => router.push('/checklists')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.continueButtonText}>View Approval Checklists</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Eye color={colors.danger} size={20} />
+              <Text style={styles.sectionTitle}>Red Flags</Text>
+            </View>
+            {scenario.redFlags.map((flag, index) => (
+              <View key={index} style={styles.listItem}>
+                <View style={styles.bulletRed} />
+                <Text style={styles.listText}>{flag}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <CheckCircle2 color={colors.success} size={20} />
+              <Text style={styles.sectionTitle}>What To Do</Text>
+            </View>
+            {scenario.whatToDo.map((action, index) => (
+              <View key={index} style={styles.listItem}>
+                <View style={styles.bulletGreen} />
+                <Text style={styles.listText}>{action}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Shield color={colors.primary} size={20} />
+              <Text style={styles.sectionTitle}>Controls</Text>
+            </View>
+            {scenario.controls.map((control, index) => (
+              <View key={index} style={styles.listItem}>
+                <View style={styles.bulletBlue} />
+                <Text style={styles.listText}>{control}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.exampleCard}>
+            <Text style={styles.exampleTitle}>Real Example</Text>
+            <Text style={styles.exampleText}>{scenario.example}</Text>
+          </View>
+
+          {scenario.decision && (
+            <View style={styles.decisionCard}>
+              <Text style={styles.decisionPrompt}>{scenario.decision.prompt}</Text>
+              <View style={styles.optionsContainer}>
+                {scenario.decision.options.map((option, index) => {
+                  const isSelected = selectedAnswers[scenario.id] === index;
+                  const showResult = showFeedback[scenario.id];
+                  const isCorrect = option.correct;
+
+                  return (
+                    <View key={index}>
+                      <TouchableOpacity
+                        style={[
+                          styles.optionButton,
+                          isSelected && showResult && isCorrect && styles.optionButtonCorrect,
+                          isSelected && showResult && !isCorrect && styles.optionButtonWrong,
+                        ]}
+                        onPress={() => handleAnswer(scenario.id, index)}
+                        disabled={showFeedback[scenario.id]}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Answer option: ${option.text}`}
+                      >
+                        <Text
+                          style={[
+                            styles.optionText,
+                            isSelected && showResult && styles.optionTextSelected,
+                          ]}
+                        >
+                          {option.text}
+                        </Text>
+                      </TouchableOpacity>
+                      {isSelected && showResult && (
+                        <View
+                          style={[
+                            styles.feedbackCard,
+                            isCorrect ? styles.feedbackCorrect : styles.feedbackWrong,
+                          ]}
+                        >
+                          <Text style={styles.feedbackText}>{option.feedback}</Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+        </View>
+      ))}
+
+      <ActionButton
+        label="View Approval Checklists"
+        onPress={() => router.push('/checklists')}
+      />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -374,15 +361,15 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#64748b',
+    color: colors.textMuted,
   },
   scenarioContainer: {
-    marginBottom: 32,
+    marginBottom: spacing.xl,
   },
   scenarioTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
     marginBottom: 20,
   },
   section: {
@@ -391,35 +378,35 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0f172a',
-    marginLeft: 8,
+    color: colors.text,
+    marginLeft: spacing.sm,
   },
   sectionText: {
     fontSize: 14,
-    color: '#334155',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   listItem: {
     flexDirection: 'row',
-    marginBottom: 8,
-    paddingLeft: 8,
+    marginBottom: spacing.sm,
+    paddingLeft: spacing.sm,
   },
   listText: {
     flex: 1,
     fontSize: 14,
-    color: '#334155',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   bulletRed: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#dc2626',
+    backgroundColor: colors.danger,
     marginTop: 7,
     marginRight: 10,
   },
@@ -427,7 +414,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#059669',
+    backgroundColor: colors.success,
     marginTop: 7,
     marginRight: 10,
   },
@@ -435,94 +422,82 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#1e40af',
+    backgroundColor: colors.primary,
     marginTop: 7,
     marginRight: 10,
   },
   exampleCard: {
-    backgroundColor: '#fef3c7',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.warningLight,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
     marginBottom: 20,
     borderLeftWidth: 4,
-    borderLeftColor: '#f59e0b',
+    borderLeftColor: colors.warning,
   },
   exampleTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#92400e',
-    marginBottom: 8,
+    color: colors.warningDarker,
+    marginBottom: spacing.sm,
   },
   exampleText: {
     fontSize: 14,
-    color: '#78350f',
+    color: colors.warningDarkest,
     lineHeight: 20,
   },
   decisionCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    padding: 16,
+    borderColor: colors.border,
+    padding: spacing.md,
   },
   decisionPrompt: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0f172a',
-    marginBottom: 16,
+    color: colors.text,
+    marginBottom: spacing.md,
   },
   optionsContainer: {
     gap: 12,
   },
   optionButton: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.sm,
     borderWidth: 2,
-    borderColor: '#cbd5e1',
+    borderColor: colors.borderLight,
     padding: 14,
   },
   optionButtonCorrect: {
-    borderColor: '#059669',
-    backgroundColor: '#d1fae5',
+    borderColor: colors.success,
+    backgroundColor: colors.successLight,
   },
   optionButtonWrong: {
-    borderColor: '#dc2626',
-    backgroundColor: '#fee2e2',
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerLight,
   },
   optionText: {
     fontSize: 14,
-    color: '#0f172a',
+    color: colors.text,
     lineHeight: 19,
   },
   optionTextSelected: {
     fontWeight: '600',
   },
   feedbackCard: {
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 8,
+    borderRadius: borderRadius.sm,
+    padding: spacing.md,
+    marginTop: spacing.sm,
   },
   feedbackCorrect: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: colors.successLight,
   },
   feedbackWrong: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: colors.dangerLight,
   },
   feedbackText: {
     fontSize: 13,
-    color: '#0f172a',
+    color: colors.text,
     lineHeight: 18,
-  },
-  continueButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
   },
 });

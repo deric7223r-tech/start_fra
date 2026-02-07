@@ -1,135 +1,119 @@
 import { useRouter } from 'expo-router';
-import { AlertTriangle, ChevronRight } from 'lucide-react-native';
+import { AlertTriangle } from 'lucide-react-native';
 import React from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
-  TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenContainer from '@/components/ScreenContainer';
+import ActionButton from '@/components/ActionButton';
+import InfoBanner from '@/components/InfoBanner';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 
 export default function FraudBasicsScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <AlertTriangle color="#f59e0b" size={48} />
-          </View>
-          <Text style={styles.title}>How Fraud Really Happens</Text>
-          <Text style={styles.subtitle}>The Fraud Triangle</Text>
+    <ScreenContainer screenId="fraud-basics">
+      <View style={styles.header}>
+        <View style={styles.iconContainer}>
+          <AlertTriangle color={colors.warning} size={48} />
         </View>
+        <Text style={styles.title}>How Fraud Really Happens</Text>
+        <Text style={styles.subtitle}>The Fraud Triangle</Text>
+      </View>
 
-        <View style={styles.triangleContainer}>
-          <View style={styles.triangleVisual}>
-            <View style={styles.triangleTop}>
-              <View style={styles.triangleNode}>
-                <Text style={styles.triangleNodeLabel}>PRESSURE</Text>
-                <Text style={styles.triangleNodeText}>Financial stress{'\n'}Unrealistic targets</Text>
-              </View>
+      <View style={styles.triangleContainer}>
+        <View style={styles.triangleVisual}>
+          <View style={styles.triangleTop}>
+            <View style={styles.triangleNode}>
+              <Text style={styles.triangleNodeLabel}>PRESSURE</Text>
+              <Text style={styles.triangleNodeText}>Financial stress{'\n'}Unrealistic targets</Text>
             </View>
-            <View style={styles.triangleBottom}>
-              <View style={[styles.triangleNode, styles.triangleNodeHighlight]}>
-                <Text style={[styles.triangleNodeLabel, styles.triangleNodeLabelHighlight]}>
-                  OPPORTUNITY
-                </Text>
-                <Text style={[styles.triangleNodeText, styles.triangleNodeTextHighlight]}>
-                  Weak controls{'\n'}Lack of oversight
-                </Text>
-              </View>
-              <View style={styles.triangleNode}>
-                <Text style={styles.triangleNodeLabel}>RATIONALIZATION</Text>
-                <Text style={styles.triangleNodeText}>Everyone does it{'\n'}I deserve this</Text>
-              </View>
+          </View>
+          <View style={styles.triangleBottom}>
+            <View style={[styles.triangleNode, styles.triangleNodeHighlight]}>
+              <Text style={[styles.triangleNodeLabel, styles.triangleNodeLabelHighlight]}>
+                OPPORTUNITY
+              </Text>
+              <Text style={[styles.triangleNodeText, styles.triangleNodeTextHighlight]}>
+                Weak controls{'\n'}Lack of oversight
+              </Text>
+            </View>
+            <View style={styles.triangleNode}>
+              <Text style={styles.triangleNodeLabel}>RATIONALIZATION</Text>
+              <Text style={styles.triangleNodeText}>Everyone does it{'\n'}I deserve this</Text>
             </View>
           </View>
         </View>
+      </View>
 
-        <View style={styles.insightCard}>
-          <Text style={styles.insightTitle}>Your Control Point</Text>
-          <Text style={styles.insightText}>
-            You cannot control employee financial pressures or their ability to rationalize.
-          </Text>
-          <Text style={[styles.insightText, styles.insightTextBold]}>
-            But you CAN remove opportunities through robust controls.
-          </Text>
-        </View>
+      <View style={styles.insightCard}>
+        <Text style={styles.insightTitle}>Your Control Point</Text>
+        <Text style={styles.insightText}>
+          You cannot control employee financial pressures or their ability to rationalize.
+        </Text>
+        <Text style={[styles.insightText, styles.insightTextBold]}>
+          But you CAN remove opportunities through robust controls.
+        </Text>
+      </View>
 
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Fraud occurs when three elements align:</Text>
-          <View style={styles.infoList}>
-            <View style={styles.infoItem}>
-              <View style={styles.bullet} />
-              <Text style={styles.infoText}>
-                <Text style={styles.infoBold}>Pressure:</Text> Financial difficulties, unrealistic performance targets, or personal problems
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <View style={[styles.bullet, styles.bulletHighlight]} />
-              <Text style={styles.infoText}>
-                <Text style={styles.infoBold}>Opportunity:</Text> Weak internal controls, lack of oversight, or trust without verification
-              </Text>
-            </View>
-            <View style={styles.infoItem}>
-              <View style={styles.bullet} />
-              <Text style={styles.infoText}>
-                <Text style={styles.infoBold}>Rationalization:</Text> Justifying dishonest behavior through mental gymnastics
-              </Text>
-            </View>
+      <View style={styles.infoCard}>
+        <Text style={styles.infoTitle}>Fraud occurs when three elements align:</Text>
+        <View style={styles.infoList}>
+          <View style={styles.infoItem}>
+            <View style={styles.bullet} />
+            <Text style={styles.infoText}>
+              <Text style={styles.infoBold}>Pressure:</Text> Financial difficulties, unrealistic performance targets, or personal problems
+            </Text>
+          </View>
+          <View style={styles.infoItem}>
+            <View style={[styles.bullet, styles.bulletHighlight]} />
+            <Text style={styles.infoText}>
+              <Text style={styles.infoBold}>Opportunity:</Text> Weak internal controls, lack of oversight, or trust without verification
+            </Text>
+          </View>
+          <View style={styles.infoItem}>
+            <View style={styles.bullet} />
+            <Text style={styles.infoText}>
+              <Text style={styles.infoBold}>Rationalization:</Text> Justifying dishonest behavior through mental gymnastics
+            </Text>
           </View>
         </View>
+      </View>
 
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => router.push('/scenarios')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.continueButtonText}>View Fraud Scenarios</Text>
-          <ChevronRight color="#ffffff" size={20} />
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+      <ActionButton
+        label="View Fraud Scenarios"
+        onPress={() => router.push('/scenarios')}
+      />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xl,
   },
   iconContainer: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#64748b',
+    color: colors.textMuted,
     textAlign: 'center',
   },
   triangleContainer: {
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   triangleVisual: {
     paddingVertical: 20,
@@ -143,77 +127,77 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   triangleNode: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
-    padding: 16,
+    borderColor: colors.border,
+    padding: spacing.md,
     width: 160,
     alignItems: 'center',
   },
   triangleNodeHighlight: {
-    borderColor: '#f59e0b',
-    backgroundColor: '#fffbeb',
+    borderColor: colors.warning,
+    backgroundColor: colors.warningLighter,
   },
   triangleNodeLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 8,
+    color: colors.text,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   triangleNodeLabelHighlight: {
-    color: '#f59e0b',
+    color: colors.warning,
   },
   triangleNodeText: {
     fontSize: 13,
-    color: '#64748b',
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 18,
   },
   triangleNodeTextHighlight: {
-    color: '#d97706',
+    color: colors.warningDark,
   },
   insightCard: {
-    backgroundColor: '#f59e0b',
-    borderRadius: 12,
+    backgroundColor: colors.warning,
+    borderRadius: borderRadius.md,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   insightTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.surface,
     marginBottom: 12,
     textAlign: 'center',
   },
   insightText: {
     fontSize: 15,
-    color: '#ffffff',
+    color: colors.surface,
     textAlign: 'center',
     lineHeight: 22,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   insightTextBold: {
     fontWeight: '700',
     marginBottom: 0,
   },
   infoCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   infoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0f172a',
-    marginBottom: 16,
+    color: colors.text,
+    marginBottom: spacing.md,
   },
   infoList: {
-    gap: 16,
+    gap: spacing.md,
   },
   infoItem: {
     flexDirection: 'row',
@@ -222,36 +206,22 @@ const styles = StyleSheet.create({
   bullet: {
     width: 8,
     height: 8,
-    borderRadius: 4,
-    backgroundColor: '#94a3b8',
+    borderRadius: spacing.xs,
+    backgroundColor: colors.textFaint,
     marginTop: 6,
     marginRight: 12,
   },
   bulletHighlight: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: colors.warning,
   },
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: '#334155',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   infoBold: {
     fontWeight: '600',
-    color: '#0f172a',
-  },
-  continueButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginRight: 8,
+    color: colors.text,
   },
 });

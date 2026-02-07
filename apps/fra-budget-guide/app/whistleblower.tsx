@@ -5,10 +5,12 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
-  TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
+import ScreenContainer from '@/components/ScreenContainer';
+import ActionButton from '@/components/ActionButton';
+import InfoBanner from '@/components/InfoBanner';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 
 const protections = [
   {
@@ -44,132 +46,107 @@ export default function WhistleblowerScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <ShieldCheck color="#059669" size={48} />
-          </View>
-          <Text style={styles.title}>You Are Protected</Text>
-          <Text style={styles.subtitle}>
-            Legal protections for raising concerns about fraud
-          </Text>
+    <ScreenContainer screenId="whistleblower">
+      <View style={styles.header}>
+        <View style={styles.iconContainer}>
+          <ShieldCheck color={colors.success} size={48} />
         </View>
+        <Text style={styles.title}>You Are Protected</Text>
+        <Text style={styles.subtitle}>
+          Legal protections for raising concerns about fraud
+        </Text>
+      </View>
 
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>
-            If you report fraud concerns in good faith, you are protected by law from retaliation.
-          </Text>
-        </View>
+      <View style={styles.bannerWrapper}>
+        <InfoBanner
+          message="If you report fraud concerns in good faith, you are protected by law from retaliation."
+          variant="success"
+        />
+      </View>
 
-        <View style={styles.sectionsContainer}>
-          {protections.map((section, index) => (
-            <View key={index} style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
-              <View style={styles.itemsContainer}>
-                {section.items.map((item, itemIndex) => (
-                  <View key={itemIndex} style={styles.item}>
-                    <View style={styles.itemBullet} />
-                    <Text style={styles.itemText}>{item}</Text>
-                  </View>
-                ))}
-              </View>
+      <View style={styles.sectionsContainer}>
+        {protections.map((section, index) => (
+          <View key={index} style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <View style={styles.itemsContainer}>
+              {section.items.map((item, itemIndex) => (
+                <View key={itemIndex} style={styles.item}>
+                  <View style={styles.itemBullet} />
+                  <Text style={styles.itemText}>{item}</Text>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          </View>
+        ))}
+      </View>
 
-        <View style={styles.retaliationCard}>
-          <Text style={styles.retaliationTitle}>If You Face Retaliation</Text>
-          <Text style={styles.retaliationText}>
-            Contact HR or Legal immediately. Retaliation against whistleblowers is illegal and grounds for employment tribunal claim.
-          </Text>
-          <Text style={styles.retaliationContact}>
-            [Insert HR/Legal Contact Details]
-          </Text>
-        </View>
+      <View style={styles.retaliationCard}>
+        <Text style={styles.retaliationTitle}>If You Face Retaliation</Text>
+        <Text style={styles.retaliationText}>
+          Contact HR or Legal immediately. Retaliation against whistleblowers is illegal and grounds for employment tribunal claim.
+        </Text>
+        <Text style={styles.retaliationContact}>
+          [Insert HR/Legal Contact Details]
+        </Text>
+      </View>
 
-        <View style={styles.noteCard}>
-          <Text style={styles.noteText}>
-            Whistleblower protection exists to encourage honest reporting. The organisation values your courage in speaking up.
-          </Text>
-        </View>
+      <View style={styles.noteCard}>
+        <Text style={styles.noteText}>
+          Whistleblower protection exists to encourage honest reporting. The organisation values your courage in speaking up.
+        </Text>
+      </View>
 
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => router.push('/myths')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.continueButtonText}>Common Fraud Myths</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+      <ActionButton
+        label="Common Fraud Myths"
+        onPress={() => router.push('/myths')}
+      />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   iconContainer: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748b',
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 22,
   },
-  banner: {
-    backgroundColor: '#059669',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-  },
-  bannerText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-    textAlign: 'center',
-    lineHeight: 22,
+  bannerWrapper: {
+    marginBottom: spacing.lg,
   },
   sectionsContainer: {
-    gap: 16,
-    marginBottom: 24,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
   },
   sectionCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     padding: 20,
   },
   sectionTitle: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#0f172a',
-    marginBottom: 16,
+    color: colors.text,
+    marginBottom: spacing.md,
   },
   itemsContainer: {
-    gap: 12,
+    gap: spacing.md - 4,
   },
   item: {
     flexDirection: 'row',
@@ -179,62 +156,51 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#059669',
+    backgroundColor: colors.success,
     marginTop: 7,
-    marginRight: 12,
+    marginRight: spacing.md - 4,
   },
   itemText: {
     flex: 1,
     fontSize: 14,
-    color: '#334155',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   retaliationCard: {
-    backgroundColor: '#fee2e2',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: colors.dangerLight,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
     borderLeftWidth: 4,
-    borderLeftColor: '#dc2626',
+    borderLeftColor: colors.danger,
   },
   retaliationTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#991b1b',
-    marginBottom: 8,
+    color: colors.dangerDark,
+    marginBottom: spacing.sm,
   },
   retaliationText: {
     fontSize: 14,
-    color: '#7f1d1d',
+    color: colors.dangerDarkest,
     lineHeight: 20,
-    marginBottom: 12,
+    marginBottom: spacing.md - 4,
   },
   retaliationContact: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#dc2626',
+    color: colors.danger,
   },
   noteCard: {
-    backgroundColor: '#eff6ff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    backgroundColor: colors.primaryLight,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
   },
   noteText: {
     fontSize: 14,
-    color: '#1e40af',
+    color: colors.primary,
     textAlign: 'center',
     lineHeight: 20,
-  },
-  continueButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
   },
 });

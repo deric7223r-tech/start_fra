@@ -12,6 +12,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getDbPool, closeDbPool } from './db.js';
 import { getRedis } from './redis.js';
 import workshop from './workshop.js';
+import budgetGuide from './budget-guide.js';
 
 dotenv.config();
 
@@ -2206,6 +2207,9 @@ api.get('/reports/generate', (c) => {
 
 // ── Mount workshop routes ────────────────────────────────────
 api.route('/workshop', workshop);
+
+// ── Mount budget guide routes ────────────────────────────────
+api.route('/budget-guide', budgetGuide);
 
 const port = Number(process.env.PORT ?? 3000);
 const hostname =

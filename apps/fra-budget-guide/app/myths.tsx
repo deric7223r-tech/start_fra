@@ -5,10 +5,13 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
+import ScreenContainer from '@/components/ScreenContainer';
+import ActionButton from '@/components/ActionButton';
+import InfoBanner from '@/components/InfoBanner';
+import { colors, spacing, borderRadius, shadows } from '@/constants/theme';
 
 interface Myth {
   id: string;
@@ -61,118 +64,105 @@ export default function MythsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.header}>
-          <RotateCcw color="#f59e0b" size={40} />
-          <Text style={styles.title}>Common Fraud Myths</Text>
-          <Text style={styles.subtitle}>Tap any card to reveal the reality</Text>
-        </View>
+    <ScreenContainer screenId="myths">
+      <View style={styles.header}>
+        <RotateCcw color={colors.warning} size={40} />
+        <Text style={styles.title}>Common Fraud Myths</Text>
+        <Text style={styles.subtitle}>Tap any card to reveal the reality</Text>
+      </View>
 
-        <View style={styles.cardsContainer}>
-          {myths.map((myth) => {
-            const isFlipped = flippedCards[myth.id];
+      <View style={styles.cardsContainer}>
+        {myths.map((myth) => {
+          const isFlipped = flippedCards[myth.id];
 
-            return (
-              <TouchableOpacity
-                key={myth.id}
-                style={styles.cardWrapper}
-                onPress={() => handleFlip(myth.id)}
-                activeOpacity={0.9}
-              >
-                <View style={[styles.card, isFlipped && styles.cardFlipped]}>
-                  {!isFlipped ? (
-                    <View style={styles.cardFront}>
-                      <View style={styles.mythBadge}>
-                        <Text style={styles.mythBadgeText}>MYTH</Text>
-                      </View>
-                      <Text style={styles.mythText}>{myth.myth}</Text>
-                      <Text style={styles.tapHint}>Tap to see reality</Text>
+          return (
+            <TouchableOpacity
+              key={myth.id}
+              style={styles.cardWrapper}
+              onPress={() => handleFlip(myth.id)}
+              activeOpacity={0.9}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isFlipped
+                  ? `Reality: ${myth.reality}. Tap to see myth`
+                  : `Myth: ${myth.myth}. Tap to see reality`
+              }
+            >
+              <View style={[styles.card, isFlipped && styles.cardFlipped]}>
+                {!isFlipped ? (
+                  <View style={styles.cardFront}>
+                    <View style={styles.mythBadge}>
+                      <Text style={styles.mythBadgeText}>MYTH</Text>
                     </View>
-                  ) : (
-                    <View style={styles.cardBack}>
-                      <View style={styles.realityBadge}>
-                        <CheckCircle color="#ffffff" size={20} />
-                        <Text style={styles.realityBadgeText}>REALITY</Text>
-                      </View>
-                      <Text style={styles.realityText}>{myth.reality}</Text>
-                      <Text style={styles.tapHint}>Tap to see myth</Text>
+                    <Text style={styles.mythText}>{myth.myth}</Text>
+                    <Text style={styles.tapHint}>Tap to see reality</Text>
+                  </View>
+                ) : (
+                  <View style={styles.cardBack}>
+                    <View style={styles.realityBadge}>
+                      <CheckCircle color={colors.surface} size={20} />
+                      <Text style={styles.realityBadgeText}>REALITY</Text>
                     </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                    <Text style={styles.realityText}>{myth.reality}</Text>
+                    <Text style={styles.tapHint}>Tap to see myth</Text>
+                  </View>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
-        <View style={styles.noteCard}>
-          <Text style={styles.noteText}>
-            Remove complacency and false confidence by understanding these common misconceptions.
-          </Text>
-        </View>
+      <View style={styles.noteCardWrapper}>
+        <InfoBanner
+          message="Remove complacency and false confidence by understanding these common misconceptions."
+          variant="warning"
+        />
+      </View>
 
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={() => router.push('/pledge')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.continueButtonText}>Take Your Pledge</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+      <ActionButton
+        label="Take Your Pledge"
+        onPress={() => router.push('/pledge')}
+      />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
-  },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
     textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: spacing.md - 4,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 15,
-    color: '#64748b',
+    color: colors.textMuted,
     textAlign: 'center',
   },
   cardsContainer: {
-    gap: 16,
-    marginBottom: 24,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
   },
   cardWrapper: {
     minHeight: 200,
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
     minHeight: 200,
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    ...shadows.md,
   },
   cardFlipped: {
-    backgroundColor: '#059669',
+    backgroundColor: colors.success,
   },
   cardFront: {
     alignItems: 'center',
@@ -181,75 +171,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mythBadge: {
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 16,
+    backgroundColor: colors.danger,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: 20,
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   mythBadgeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.surface,
     letterSpacing: 1,
   },
   mythText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0f172a',
+    color: colors.text,
     textAlign: 'center',
     lineHeight: 26,
-    marginBottom: 12,
+    marginBottom: spacing.md - 4,
   },
   realityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 16,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: 20,
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   realityBadgeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.surface,
     letterSpacing: 1,
   },
   realityText: {
     fontSize: 16,
-    color: '#ffffff',
+    color: colors.surface,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 12,
+    marginBottom: spacing.md - 4,
   },
   tapHint: {
     fontSize: 13,
-    color: '#94a3b8',
+    color: colors.textFaint,
     fontStyle: 'italic',
   },
-  noteCard: {
-    backgroundColor: '#fef3c7',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-  },
-  noteText: {
-    fontSize: 14,
-    color: '#92400e',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  continueButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+  noteCardWrapper: {
+    marginBottom: spacing.lg,
   },
 });

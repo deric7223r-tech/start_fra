@@ -1,0 +1,305 @@
+// ============================================================
+// Stop FRA - Budget Guide Routes
+// Mounted at /api/v1/budget-guide in index.ts
+// ============================================================
+
+import { Hono } from 'hono';
+import type { Context } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import jwt from 'jsonwebtoken';
+import { z } from 'zod';
+import { getDbPool } from './db.js';
+
+// ── Types ────────────────────────────────────────────────────
+
+type AuthContext = {
+  userId: string;
+  email: string;
+  role: string;
+  organisationId: string;
+};
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function jsonError(c: Context, status: ContentfulStatusCode, code: string, message: string) {
+  return c.json({ success: false, error: { code, message } }, status);
+}
+
+function hasDatabase(): boolean {
+  return !!process.env.DATABASE_URL;
+}
+
+const jwtSecret = process.env.JWT_SECRET ?? 'dev_jwt_secret_change_me';
+
+function getAuth(c: Context): AuthContext | null {
+  const authHeader = c.req.header('authorization') ?? c.req.header('Authorization');
+  if (!authHeader) return null;
+
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+
+  try {
+    const payload = jwt.verify(match[1], jwtSecret) as {
+      sub: string;
+      email: string;
+      role: string;
+      organisationId: string;
+    };
+    return {
+      userId: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      organisationId: payload.organisationId,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function requireAuth(c: Context): AuthContext | Response {
+  const auth = getAuth(c);
+  if (!auth) return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid access token');
+  return auth;
+}
+
+// ── Budget Guide Hono App ────────────────────────────────────
+
+const budgetGuide = new Hono();
+
+// ── Progress ─────────────────────────────────────────────────
+
+// GET /progress — Get user's budget guide progress
+budgetGuide.get('/progress', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM budget_guide_progress WHERE user_id = $1 LIMIT 1',
+    [auth.userId]
+  );
+
+  return c.json({ success: true, data: res.rows[0] ?? null });
+});
+
+// POST /progress — Create initial progress record
+budgetGuide.post('/progress', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
+
+  const body = await c.req.json();
+  const schema = z.object({
+    selectedRoles: z.array(z.string()).optional(),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION', 'Invalid request body');
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    `INSERT INTO budget_guide_progress (user_id, selected_roles)
+     VALUES ($1, $2)
+     ON CONFLICT (user_id) DO UPDATE SET
+       selected_roles = EXCLUDED.selected_roles,
+       updated_at = now()
+     RETURNING *`,
+    [auth.userId, parsed.data.selectedRoles ?? []]
+  );
+
+  return c.json({ success: true, data: res.rows[0] }, 201);
+});
+
+// PATCH /progress — Update progress
+budgetGuide.patch('/progress', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
+
+  const body = await c.req.json();
+  const schema = z.object({
+    selectedRoles: z.array(z.string()).optional(),
+    completedScreens: z.array(z.string()).optional(),
+    watchItems: z.any().optional(),
+    contactDetails: z.any().optional(),
+    currentScreen: z.string().optional(),
+    completedAt: z.string().nullable().optional(),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION', 'Invalid request body');
+
+  const updates: string[] = ['updated_at = now()'];
+  const values: unknown[] = [auth.userId];
+  let paramIndex = 2;
+
+  if (parsed.data.selectedRoles !== undefined) {
+    updates.push(`selected_roles = $${paramIndex++}`);
+    values.push(parsed.data.selectedRoles);
+  }
+  if (parsed.data.completedScreens !== undefined) {
+    updates.push(`completed_screens = $${paramIndex++}`);
+    values.push(parsed.data.completedScreens);
+  }
+  if (parsed.data.watchItems !== undefined) {
+    updates.push(`watch_items = $${paramIndex++}`);
+    values.push(JSON.stringify(parsed.data.watchItems));
+  }
+  if (parsed.data.contactDetails !== undefined) {
+    updates.push(`contact_details = $${paramIndex++}`);
+    values.push(JSON.stringify(parsed.data.contactDetails));
+  }
+  if (parsed.data.currentScreen !== undefined) {
+    updates.push(`current_screen = $${paramIndex++}`);
+    values.push(parsed.data.currentScreen);
+  }
+  if (parsed.data.completedAt !== undefined) {
+    updates.push(`completed_at = $${paramIndex++}`);
+    values.push(parsed.data.completedAt);
+  }
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    `UPDATE budget_guide_progress SET ${updates.join(', ')} WHERE user_id = $1 RETURNING *`,
+    values
+  );
+
+  if (res.rows.length === 0) return jsonError(c, 404, 'NOT_FOUND', 'Progress record not found');
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+// ── Pledge ───────────────────────────────────────────────────
+
+// GET /pledge — Get user's pledge
+budgetGuide.get('/pledge', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM budget_guide_pledges WHERE user_id = $1 LIMIT 1',
+    [auth.userId]
+  );
+
+  return c.json({ success: true, data: res.rows[0] ?? null });
+});
+
+// POST /pledge — Save pledge with signature
+budgetGuide.post('/pledge', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
+
+  const body = await c.req.json();
+  const schema = z.object({
+    signature: z.string().min(1, 'Signature is required'),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION', parsed.error.issues[0].message);
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    `INSERT INTO budget_guide_pledges (user_id, signature)
+     VALUES ($1, $2)
+     ON CONFLICT (user_id) DO UPDATE SET
+       signature = EXCLUDED.signature,
+       pledged_at = now()
+     RETURNING *`,
+    [auth.userId, parsed.data.signature]
+  );
+
+  return c.json({ success: true, data: res.rows[0] }, 201);
+});
+
+// ── Analytics ────────────────────────────────────────────────
+
+// GET /analytics — Get user's analytics
+budgetGuide.get('/analytics', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    'SELECT * FROM budget_guide_analytics WHERE user_id = $1 LIMIT 1',
+    [auth.userId]
+  );
+
+  return c.json({ success: true, data: res.rows[0] ?? null });
+});
+
+// POST /analytics — Create or update analytics
+budgetGuide.post('/analytics', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
+
+  const body = await c.req.json();
+  const schema = z.object({
+    quizScores: z.any().optional(),
+    timeSpentSeconds: z.number().int().min(0).optional(),
+    screensVisited: z.array(z.string()).optional(),
+    completed: z.boolean().optional(),
+  });
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION', 'Invalid request body');
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    `INSERT INTO budget_guide_analytics (user_id, organisation_id, quiz_scores, time_spent_seconds, screens_visited, completed)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (user_id) DO UPDATE SET
+       quiz_scores = COALESCE(EXCLUDED.quiz_scores, budget_guide_analytics.quiz_scores),
+       time_spent_seconds = COALESCE(EXCLUDED.time_spent_seconds, budget_guide_analytics.time_spent_seconds),
+       screens_visited = COALESCE(EXCLUDED.screens_visited, budget_guide_analytics.screens_visited),
+       completed = COALESCE(EXCLUDED.completed, budget_guide_analytics.completed),
+       updated_at = now()
+     RETURNING *`,
+    [
+      auth.userId,
+      auth.organisationId || null,
+      JSON.stringify(parsed.data.quizScores ?? {}),
+      parsed.data.timeSpentSeconds ?? 0,
+      parsed.data.screensVisited ?? [],
+      parsed.data.completed ?? false,
+    ]
+  );
+
+  return c.json({ success: true, data: res.rows[0] }, 201);
+});
+
+// GET /analytics/org/:orgId — Get org-wide analytics (admin only)
+budgetGuide.get('/analytics/org/:orgId', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
+
+  // Only admins or users in the same org can view org analytics
+  const orgId = c.req.param('orgId');
+  if (auth.role !== 'admin' && auth.organisationId !== orgId) {
+    return jsonError(c, 403, 'FORBIDDEN', 'Not authorized to view this organisation');
+  }
+
+  const pool = getDbPool();
+  const res = await pool.query(
+    `SELECT
+       COUNT(*) as total_users,
+       COUNT(*) FILTER (WHERE completed = true) as completed_users,
+       AVG(time_spent_seconds) as avg_time_seconds,
+       jsonb_agg(
+         jsonb_build_object(
+           'userId', user_id,
+           'completed', completed,
+           'timeSpent', time_spent_seconds,
+           'screensVisited', screens_visited
+         )
+       ) as users
+     FROM budget_guide_analytics
+     WHERE organisation_id = $1`,
+    [orgId]
+  );
+
+  return c.json({ success: true, data: res.rows[0] });
+});
+
+export default budgetGuide;

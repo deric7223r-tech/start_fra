@@ -6,11 +6,13 @@ import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import ScreenContainer from '@/components/ScreenContainer';
+import ActionButton from '@/components/ActionButton';
+import InfoBanner from '@/components/InfoBanner';
+import { colors, spacing, borderRadius } from '@/constants/theme';
 
 interface RoleOption {
   id: UserRole;
@@ -73,147 +75,121 @@ export default function RoleSelectionScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1e40af" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Shield color="#1e40af" size={48} />
-          </View>
-          <Text style={styles.title}>Your Role in Fraud Prevention</Text>
-          <Text style={styles.subtitle}>
-            Select your responsibilities to personalize your guidance
-          </Text>
+    <ScreenContainer>
+      <View style={styles.header}>
+        <View style={styles.iconContainer}>
+          <Shield color={colors.primary} size={48} />
         </View>
-
-        <View style={styles.messageCard}>
-          <Text style={styles.messageText}>
-            As a budget-holder, you are the front line of fraud prevention.
-          </Text>
-        </View>
-
-        <View style={styles.rolesContainer}>
-          {roleOptions.map((role) => {
-            const isSelected = localSelection.includes(role.id);
-            const Icon = role.icon;
-
-            return (
-              <TouchableOpacity
-                key={role.id}
-                style={[styles.roleCard, isSelected && styles.roleCardSelected]}
-                onPress={() => toggleRole(role.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.roleCardContent}>
-                  <View style={[styles.iconCircle, isSelected && styles.iconCircleSelected]}>
-                    <Icon color={isSelected ? '#ffffff' : '#1e40af'} size={24} />
-                  </View>
-                  <View style={styles.roleTextContainer}>
-                    <Text style={[styles.roleTitle, isSelected && styles.roleTitleSelected]}>
-                      {role.title}
-                    </Text>
-                    <Text style={[styles.roleDescription, isSelected && styles.roleDescriptionSelected]}>
-                      {role.description}
-                    </Text>
-                  </View>
-                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                    {isSelected && <View style={styles.checkboxInner} />}
-                  </View>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <TouchableOpacity
-          style={[styles.continueButton, localSelection.length === 0 && styles.continueButtonDisabled]}
-          onPress={handleContinue}
-          disabled={localSelection.length === 0}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.continueButtonText}>
-            {localSelection.length === 0 ? 'Select at least one role' : 'Continue'}
-          </Text>
-        </TouchableOpacity>
-
-        <Text style={styles.footerNote}>
-          You can select multiple roles. This helps us show you the most relevant fraud risks and controls.
+        <Text style={styles.title}>Your Role in Fraud Prevention</Text>
+        <Text style={styles.subtitle}>
+          Select your responsibilities to personalize your guidance
         </Text>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+
+      <InfoBanner
+        message="As a budget-holder, you are the front line of fraud prevention."
+        variant="info"
+      />
+      <View style={styles.bannerSpacer} />
+
+      <View style={styles.rolesContainer}>
+        {roleOptions.map((role) => {
+          const isSelected = localSelection.includes(role.id);
+          const Icon = role.icon;
+
+          return (
+            <TouchableOpacity
+              key={role.id}
+              style={[styles.roleCard, isSelected && styles.roleCardSelected]}
+              onPress={() => toggleRole(role.id)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`${role.title}: ${role.description}${isSelected ? ', selected' : ''}`}
+            >
+              <View style={styles.roleCardContent}>
+                <View style={[styles.iconCircle, isSelected && styles.iconCircleSelected]}>
+                  <Icon color={isSelected ? colors.surface : colors.primary} size={24} />
+                </View>
+                <View style={styles.roleTextContainer}>
+                  <Text style={[styles.roleTitle, isSelected && styles.roleTitleSelected]}>
+                    {role.title}
+                  </Text>
+                  <Text style={[styles.roleDescription, isSelected && styles.roleDescriptionSelected]}>
+                    {role.description}
+                  </Text>
+                </View>
+                <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                  {isSelected && <View style={styles.checkboxInner} />}
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <ActionButton
+        label={localSelection.length === 0 ? 'Select at least one role' : 'Continue'}
+        onPress={handleContinue}
+        disabled={localSelection.length === 0}
+      />
+
+      <Text style={styles.footerNote}>
+        You can select multiple roles. This helps us show you the most relevant fraud risks and controls.
+      </Text>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    paddingBottom: 40,
+    backgroundColor: colors.background,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   iconContainer: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 16,
-    color: '#64748b',
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 22,
   },
-  messageCard: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-  },
-  messageText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-    textAlign: 'center',
-    lineHeight: 22,
+  bannerSpacer: {
+    marginBottom: spacing.lg,
   },
   rolesContainer: {
     gap: 12,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   roleCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
-    padding: 16,
+    borderColor: colors.border,
+    padding: spacing.md,
   },
   roleCardSelected: {
-    borderColor: '#1e40af',
-    backgroundColor: '#eff6ff',
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
   },
   roleCardContent: {
     flexDirection: 'row',
@@ -222,14 +198,14 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: '#eff6ff',
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   iconCircleSelected: {
-    backgroundColor: '#1e40af',
+    backgroundColor: colors.primary,
   },
   roleTextContainer: {
     flex: 1,
@@ -237,58 +213,44 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0f172a',
-    marginBottom: 4,
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
   roleTitleSelected: {
-    color: '#1e40af',
+    color: colors.primary,
   },
   roleDescription: {
     fontSize: 14,
-    color: '#64748b',
+    color: colors.textMuted,
     lineHeight: 18,
   },
   roleDescriptionSelected: {
-    color: '#1e40af',
+    color: colors.primary,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#cbd5e1',
+    borderColor: colors.borderLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxSelected: {
-    borderColor: '#1e40af',
-    backgroundColor: '#1e40af',
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
   },
   checkboxInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#ffffff',
-  },
-  continueButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  continueButtonDisabled: {
-    backgroundColor: '#cbd5e1',
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
+    backgroundColor: colors.surface,
   },
   footerNote: {
     fontSize: 14,
-    color: '#64748b',
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
+    marginTop: spacing.md,
   },
 });
