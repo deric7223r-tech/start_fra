@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { Hono } from 'hono';
 import { getAuth, hasDatabase, jsonError, requireAuth } from '../helpers.js';
 import {
@@ -222,10 +223,51 @@ payments.get('/purchases/organisation/:orgId', async (c) => {
   return c.json({ success: true, data: purchases });
 });
 
-// TODO: Add Stripe signature verification for production using stripe.webhooks.constructEvent()
-// with the STRIPE_WEBHOOK_SECRET environment variable. Without this, any caller can fake webhook events.
+function verifyStripeSignature(payload: string, sigHeader: string, secret: string): boolean {
+  const parts = sigHeader.split(',').reduce((acc, part) => {
+    const [key, value] = part.split('=');
+    acc[key] = value;
+    return acc;
+  }, {} as Record<string, string>);
+
+  const timestamp = parts['t'];
+  const signature = parts['v1'];
+
+  if (!timestamp || !signature) return false;
+
+  // Check timestamp is within 5 minutes
+  const tolerance = 300; // 5 minutes
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp)) > tolerance) return false;
+
+  const signedPayload = `${timestamp}.${payload}`;
+  const expectedSig = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
+
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
+}
+
 payments.post('/webhooks/stripe', async (c) => {
-  const parsed = stripeWebhookSchema.safeParse(await c.req.json().catch(() => null));
+  // Read the raw body text for signature verification before JSON parsing
+  const rawBody = await c.req.text();
+
+  // Stripe webhook signature verification
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (webhookSecret) {
+    const sigHeader = c.req.header('stripe-signature');
+    if (!sigHeader) {
+      return jsonError(c, 400, 'SIGNATURE_MISSING', 'Missing stripe-signature header');
+    }
+    if (!verifyStripeSignature(rawBody, sigHeader, webhookSecret)) {
+      return jsonError(c, 400, 'SIGNATURE_INVALID', 'Invalid Stripe webhook signature');
+    }
+  } else {
+    console.warn('WARNING: STRIPE_WEBHOOK_SECRET is not set — skipping webhook signature verification. Do NOT run in production without it.');
+  }
+
+  let body: unknown;
+  try { body = JSON.parse(rawBody); } catch { return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid JSON body'); }
+
+  const parsed = stripeWebhookSchema.safeParse(body);
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid stripe webhook payload');
 
   const eventType = parsed.data.type;

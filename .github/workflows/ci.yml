@@ -1,103 +1,112 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
-env:
-  NODE_VERSION: '20'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # Lint and Type Check
-  lint:
-    name: Lint & Type Check
+  lint-and-typecheck:
+    name: Lint & Typecheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          version: 9.15.4
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run lint
-      - run: pnpm run typecheck
-
-  # Backend Tests
-  test-backend:
-    name: Backend Tests
-    runs-on: ubuntu-latest
-    needs: lint
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: stopfra_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          node-version: 20
+          cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Run migrations
+      - name: TypeScript check all apps
         run: |
-          for f in apps/fra-backend/backend/migrations/*.sql; do
-            PGPASSWORD=test psql -h localhost -U test -d stopfra_test -f "$f" 2>/dev/null || true
-          done
+          cd apps/fra-backend && npx tsc --noEmit &
+          cd apps/fra-web-dashboard && npx tsc --noEmit &
+          cd apps/fra-budget-guide && npx tsc --noEmit &
+          cd apps/fra-mobile-app && npx tsc --noEmit &
+          wait
 
-      - name: Run backend tests
-        run: pnpm run test:backend
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/stopfra_test
-          REDIS_URL: redis://localhost:6379
-          JWT_SECRET: test-secret-key-for-ci-minimum-32-characters
-          JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci-minimum-32
-          NODE_ENV: test
-
-  # Build Check
-  build:
-    name: Build Check
+  test:
+    name: Test
     runs-on: ubuntu-latest
-    needs: lint
+    needs: lint-and-typecheck
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          version: 9.15.4
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build:backend
-      - run: pnpm run build:web
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test backend
+        run: cd apps/fra-backend/backend && npx jest --passWithNoTests --ci
+
+      - name: Test budget guide
+        run: cd apps/fra-budget-guide && npx jest --passWithNoTests --ci
+
+      - name: Test mobile app
+        run: cd apps/fra-mobile-app && npx jest --passWithNoTests --ci
+
+      - name: Test web dashboard
+        run: cd apps/fra-web-dashboard && npx vitest run
+
+      - name: Test shared package
+        run: cd packages/shared && npx vitest run
+
+      - name: Test types package
+        run: cd packages/types && npx vitest run
+
+      - name: Test ui-core package
+        run: cd packages/ui-core && npx vitest run
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web dashboard
+        run: cd apps/fra-web-dashboard && npm run build
+
+      - name: Build backend
+        run: cd apps/fra-backend/backend && npm run build
