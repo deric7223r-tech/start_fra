@@ -6,6 +6,6 @@ npx lint-staged
 
 # Run type checking
 echo "Running type check..."
-bun run typecheck || exit 1
+pnpm run typecheck || exit 1
 
 echo "Pre-commit checks passed!"
