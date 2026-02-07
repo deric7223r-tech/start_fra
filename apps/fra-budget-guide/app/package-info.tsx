@@ -115,12 +115,12 @@ export default function PackageInfoScreen() {
 
       <TouchableOpacity
         style={styles.ctaPrimary}
-        onPress={() => router.push('/')}
+        onPress={() => router.push('/payment?package=Professional&price=1995' as any)}
         activeOpacity={0.85}
         accessibilityRole="button"
-        accessibilityLabel="Start Training"
+        accessibilityLabel="Choose Professional"
       >
-        <Text style={styles.ctaPrimaryText}>Start Training</Text>
+        <Text style={styles.ctaPrimaryText}>Choose Professional</Text>
         <ArrowRight size={18} color={colors.surface} />
       </TouchableOpacity>
 

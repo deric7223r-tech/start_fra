@@ -338,7 +338,7 @@ export default function Index() {
                     ))}
                   </ul>
                   <Button className="w-full" size="lg" asChild>
-                    <Link to="/package/professional">
+                    <Link to={user ? '/checkout?package=Professional&price=1995' : '/auth?mode=signup'}>
                       Choose Professional
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
@@ -390,7 +390,7 @@ export default function Index() {
                     ))}
                   </ul>
                   <Button className="w-full bg-amber-500 text-white hover:bg-amber-600 shadow-md" asChild>
-                    <Link to="/package/enterprise">
+                    <Link to={user ? '/checkout?package=Enterprise&price=4995' : '/auth?mode=signup'}>
                       Choose Enterprise
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>

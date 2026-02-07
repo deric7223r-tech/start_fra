@@ -138,7 +138,7 @@ export default function PackageEnterpriseScreen() {
 
       <TouchableOpacity
         style={styles.ctaPrimary}
-        onPress={() => router.push('/')}
+        onPress={() => router.push('/payment?package=Enterprise&price=4995' as any)}
         activeOpacity={0.85}
         accessibilityRole="button"
         accessibilityLabel="Choose Enterprise Package"

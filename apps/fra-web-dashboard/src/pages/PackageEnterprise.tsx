@@ -80,7 +80,7 @@ export default function PackageEnterprise() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button size="lg" className="bg-amber-500 text-white hover:bg-amber-600" asChild>
-                  <Link to={user ? '/dashboard' : '/auth?mode=signup'}>
+                  <Link to={user ? '/checkout?package=Enterprise&price=4995' : '/auth?mode=signup'}>
                     Choose Enterprise
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
@@ -270,7 +270,7 @@ export default function PackageEnterprise() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-amber-500 text-white hover:bg-amber-600" asChild>
-                  <Link to={user ? '/dashboard' : '/auth?mode=signup'}>
+                  <Link to={user ? '/checkout?package=Enterprise&price=4995' : '/auth?mode=signup'}>
                     Get Started Now
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>

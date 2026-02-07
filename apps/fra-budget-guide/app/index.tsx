@@ -93,7 +93,7 @@ const packages: PackageOption[] = [
       { label: 'Priority support' },
     ],
     route: '/package-enterprise',
-    ctaLabel: 'Contact Sales',
+    ctaLabel: 'Choose Enterprise',
     ctaVariant: 'accent',
   },
 ];
