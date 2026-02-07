@@ -32,7 +32,7 @@ export default function Workshop() {
   
   const { user, profile } = useAuth();
   const { progress, updateSection, completeSection, saveQuizScore, saveScenarioChoice, isLoading: progressLoading } = useWorkshopProgress(sessionCode);
-  const { session, activePoll, participantCount, joinSession } = useSession(sessionCode || undefined);
+  const { session, participantCount, joinSession } = useSession(sessionCode || undefined);
   const navigate = useNavigate();
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -52,7 +52,7 @@ export default function Workshop() {
     if (sessionCode && user) {
       joinSession();
     }
-  }, [sessionCode, user]);
+  }, [sessionCode, user, joinSession]);
 
   if (progressLoading) {
     return (

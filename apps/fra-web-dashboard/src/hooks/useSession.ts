@@ -20,19 +20,43 @@ export function useSession(sessionCode?: string) {
     sessionRef.current = session;
   }, [session]);
 
+  const fetchSession = useCallback(async () => {
+    if (!sessionCode) return;
+
+    try {
+      const data = await api.get<WorkshopSession>(
+        `/api/v1/workshop/sessions/code/${sessionCode.toUpperCase()}`
+      );
+      setSession(data);
+      setError(null);
+      await Promise.all([
+        fetchActivePollById(data.id),
+        fetchQuestionsById(data.id),
+        fetchParticipantCountById(data.id),
+      ]);
+    } catch (err) {
+      logger.error('Error fetching session', err);
+      toast.error('Failed to load session');
+      setError((err as Error).message || 'Failed to load session');
+    }
+
+    setIsLoading(false);
+  }, [sessionCode]);
+
   useEffect(() => {
     if (sessionCode) {
       fetchSession();
     } else {
       setIsLoading(false);
     }
-  }, [sessionCode]);
+  }, [sessionCode, fetchSession]);
 
   // SSE subscription for real-time updates
+  const sessionId = session?.id;
   useEffect(() => {
-    if (!session) return;
+    if (!sessionId) return;
 
-    const cleanup = connectSSE(`/api/v1/workshop/sessions/${session.id}/events`, {
+    const cleanup = connectSSE(`/api/v1/workshop/sessions/${sessionId}/events`, {
       session_update: (data) => {
         setSession(data as WorkshopSession);
       },
@@ -58,30 +82,7 @@ export function useSession(sessionCode?: string) {
     });
 
     return cleanup;
-  }, [session?.id]);
-
-  const fetchSession = async () => {
-    if (!sessionCode) return;
-
-    try {
-      const data = await api.get<WorkshopSession>(
-        `/api/v1/workshop/sessions/code/${sessionCode.toUpperCase()}`
-      );
-      setSession(data);
-      setError(null);
-      await Promise.all([
-        fetchActivePollById(data.id),
-        fetchQuestionsById(data.id),
-        fetchParticipantCountById(data.id),
-      ]);
-    } catch (err) {
-      logger.error('Error fetching session', err);
-      toast.error('Failed to load session');
-      setError((err as Error).message || 'Failed to load session');
-    }
-
-    setIsLoading(false);
-  };
+  }, [sessionId, fetchQuestions, fetchParticipantCount]);
 
   const fetchActivePollById = async (sessionId: string) => {
     try {
@@ -130,7 +131,7 @@ export function useSession(sessionCode?: string) {
     await fetchParticipantCountById(s.id);
   }, []);
 
-  const joinSession = async () => {
+  const joinSession = useCallback(async () => {
     if (!user || !session) return { error: 'Not authenticated or no session' };
 
     try {
@@ -140,7 +141,7 @@ export function useSession(sessionCode?: string) {
       logger.error('Error joining session', err);
       return { error: (err as Error).message };
     }
-  };
+  }, [user, session]);
 
   const submitPollResponse = async (pollId: string, optionIndex: number) => {
     if (!user) return { error: 'Not authenticated' };

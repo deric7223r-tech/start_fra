@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,7 +17,6 @@ import {
   ArrowLeft,
   Save,
   Loader2,
-  CheckCircle2,
   Clock,
   Calendar,
 } from 'lucide-react';
@@ -25,20 +24,14 @@ import { toast } from 'sonner';
 
 export default function ActionPlan() {
   const { user, profile } = useAuth();
-  const { progress } = useWorkshopProgress();
+  useWorkshopProgress();
   const navigate = useNavigate();
   const [actionPlan, setActionPlan] = useState<ActionPlanType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [customCommitments, setCustomCommitments] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      fetchActionPlan();
-    }
-  }, [user]);
-
-  const fetchActionPlan = async () => {
+  const fetchActionPlan = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -70,7 +63,13 @@ export default function ActionPlan() {
     }
 
     setIsLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchActionPlan();
+    }
+  }, [user, fetchActionPlan]);
 
   const generateDefaultItems = (): ActionItem[] => {
     return [

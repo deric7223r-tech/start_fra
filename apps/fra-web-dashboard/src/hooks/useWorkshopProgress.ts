@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from './useAuth';
 import { logger } from '@/lib/logger';
@@ -38,16 +38,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
   const [progress, setProgress] = useState<WorkshopProgress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchProgress();
-    } else {
-      setProgress(null);
-      setIsLoading(false);
-    }
-  }, [user, sessionId]);
-
-  const fetchProgress = async () => {
+  const fetchProgress = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -69,7 +60,16 @@ export function useWorkshopProgress(sessionId?: string | null) {
     }
 
     setIsLoading(false);
-  };
+  }, [user, sessionId]);
+
+  useEffect(() => {
+    if (user) {
+      fetchProgress();
+    } else {
+      setProgress(null);
+      setIsLoading(false);
+    }
+  }, [user, sessionId, fetchProgress]);
 
   const updateSection = async (sectionId: number) => {
     if (!user || !progress) return;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,13 +23,12 @@ import {
   Loader2,
   Play,
   Square,
-  Trash2,
   ArrowLeft,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Facilitator() {
-  const { user, profile, hasRole, isLoading: authLoading } = useAuth();
+  const { user, profile, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   const [sessions, setSessions] = useState<WorkshopSession[]>([]);
@@ -50,19 +49,70 @@ export default function Facilitator() {
 
   // Auth and role checks handled by ProtectedRoute in App.tsx
 
+  const fetchPolls = useCallback(async (sessionId: string) => {
+    try {
+      const data = await api.get<Poll[]>(`/api/v1/workshop/sessions/${sessionId}/polls`);
+      setPolls(data.map(p => ({ ...p, options: p.options as string[] })));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const fetchQuestions = useCallback(async (sessionId: string) => {
+    try {
+      const data = await api.get<Question[]>(`/api/v1/workshop/sessions/${sessionId}/questions`);
+      setQuestions(data);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const fetchParticipantCount = useCallback(async (sessionId: string) => {
+    try {
+      const data = await api.get<{ count: number }>(`/api/v1/workshop/sessions/${sessionId}/participants`);
+      setParticipantCount(data.count);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const fetchSessionData = useCallback(async (sessionId: string) => {
+    await Promise.all([
+      fetchPolls(sessionId),
+      fetchQuestions(sessionId),
+      fetchParticipantCount(sessionId),
+    ]);
+  }, [fetchPolls, fetchQuestions, fetchParticipantCount]);
+
+  const fetchSessions = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const data = await api.get<WorkshopSession[]>('/api/v1/workshop/sessions');
+      setSessions(data);
+      const active = data.find(s => s.is_active);
+      if (active) setActiveSession(active);
+    } catch (err) {
+      logger.error('Error fetching sessions', err);
+      toast.error('Failed to load sessions');
+    }
+    setIsLoading(false);
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       fetchSessions();
     }
-  }, [user]);
+  }, [user, fetchSessions]);
 
+  const activeSessionId = activeSession?.id;
   useEffect(() => {
-    if (!activeSession) return;
+    if (!activeSessionId) return;
 
-    fetchSessionData(activeSession.id);
+    fetchSessionData(activeSessionId);
 
     // SSE subscription for real-time updates
-    const cleanup = connectSSE(`/api/v1/workshop/sessions/${activeSession.id}/events`, {
+    const cleanup = connectSSE(`/api/v1/workshop/sessions/${activeSessionId}/events`, {
       session_update: (data) => {
         const updated = data as WorkshopSession;
         setActiveSession(updated);
@@ -77,68 +127,18 @@ export default function Facilitator() {
         setPolls(prev => prev.map(p => p.id === poll.id ? { ...p, is_active: false } : p));
       },
       question_added: () => {
-        fetchQuestions(activeSession.id);
+        fetchQuestions(activeSessionId);
       },
       question_updated: () => {
-        fetchQuestions(activeSession.id);
+        fetchQuestions(activeSessionId);
       },
       participant_joined: () => {
-        fetchParticipantCount(activeSession.id);
+        fetchParticipantCount(activeSessionId);
       },
     });
 
     return cleanup;
-  }, [activeSession?.id]);
-
-  const fetchSessions = async () => {
-    if (!user) return;
-
-    try {
-      const data = await api.get<WorkshopSession[]>('/api/v1/workshop/sessions');
-      setSessions(data);
-      const active = data.find(s => s.is_active);
-      if (active) setActiveSession(active);
-    } catch (err) {
-      logger.error('Error fetching sessions', err);
-      toast.error('Failed to load sessions');
-    }
-    setIsLoading(false);
-  };
-
-  const fetchSessionData = async (sessionId: string) => {
-    await Promise.all([
-      fetchPolls(sessionId),
-      fetchQuestions(sessionId),
-      fetchParticipantCount(sessionId),
-    ]);
-  };
-
-  const fetchPolls = async (sessionId: string) => {
-    try {
-      const data = await api.get<Poll[]>(`/api/v1/workshop/sessions/${sessionId}/polls`);
-      setPolls(data.map(p => ({ ...p, options: p.options as string[] })));
-    } catch {
-      // ignore
-    }
-  };
-
-  const fetchQuestions = async (sessionId: string) => {
-    try {
-      const data = await api.get<Question[]>(`/api/v1/workshop/sessions/${sessionId}/questions`);
-      setQuestions(data);
-    } catch {
-      // ignore
-    }
-  };
-
-  const fetchParticipantCount = async (sessionId: string) => {
-    try {
-      const data = await api.get<{ count: number }>(`/api/v1/workshop/sessions/${sessionId}/participants`);
-      setParticipantCount(data.count);
-    } catch {
-      // ignore
-    }
-  };
+  }, [activeSessionId, fetchSessionData, fetchQuestions, fetchParticipantCount]);
 
   const createSession = async () => {
     if (!user || !newSessionTitle.trim()) return;

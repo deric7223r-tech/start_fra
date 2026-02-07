@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,13 +28,7 @@ export default function Certificate() {
   const [isLoadingCert, setIsLoadingCert] = useState(true);
   const certificateRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchCertificate();
-    }
-  }, [user]);
-
-  const fetchCertificate = async () => {
+  const fetchCertificate = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -48,7 +42,13 @@ export default function Certificate() {
     }
 
     setIsLoadingCert(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchCertificate();
+    }
+  }, [user, fetchCertificate]);
 
   const generateCertificate = async () => {
     if (!user || !progress?.completed_at) return;
