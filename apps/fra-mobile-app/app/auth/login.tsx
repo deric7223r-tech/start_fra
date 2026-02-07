@@ -92,7 +92,13 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.forgotPasswordButton} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Forgot password">
+          <TouchableOpacity
+            style={styles.forgotPasswordButton}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Forgot password"
+            onPress={() => Alert.alert('Reset Password', 'Please contact your organisation administrator or email support@stopfra.com to reset your password.')}
+          >
             <Text style={styles.forgotPasswordText}>Forgot password?</Text>
           </TouchableOpacity>
         </View>

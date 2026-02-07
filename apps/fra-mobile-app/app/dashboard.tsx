@@ -49,9 +49,9 @@ export default function DashboardScreen() {
   const usedKeyPasses = organisation?.keyPassesUsed || 0;
   const remainingKeyPasses = totalKeyPasses - usedKeyPasses;
 
-  const employeesStarted = filteredEmployees.filter(e => e.status !== 'not-started').length;
-  const employeesCompleted = filteredEmployees.filter(e => e.status === 'completed').length;
-  const completionRate = usedKeyPasses > 0 ? Math.round((employeesCompleted / usedKeyPasses) * 100) : 0;
+  const employeesStarted = useMemo(() => filteredEmployees.filter(e => e.status !== 'not-started').length, [filteredEmployees]);
+  const employeesCompleted = useMemo(() => filteredEmployees.filter(e => e.status === 'completed').length, [filteredEmployees]);
+  const completionRate = useMemo(() => usedKeyPasses > 0 ? Math.round((employeesCompleted / usedKeyPasses) * 100) : 0, [employeesCompleted, usedKeyPasses]);
 
   const riskDistribution = useMemo(() => {
     const completed = filteredEmployees.filter(e => e.status === 'completed');

@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   Lock,
+  Loader2,
 } from 'lucide-react';
 
 export default function Checkout() {
@@ -245,7 +246,12 @@ export default function Checkout() {
                       size="lg"
                       disabled={isProcessing}
                     >
-                      {isProcessing ? 'Processing...' : `Pay \u00A3${total.toFixed(2)}`}
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : `Pay \u00A3${total.toFixed(2)}`}
                     </Button>
 
                     <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">

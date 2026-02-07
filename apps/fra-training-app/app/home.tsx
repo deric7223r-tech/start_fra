@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Award } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import ScreenContainer from '@/components/ScreenContainer';
 import ProgressHeader from '@/components/ProgressHeader';
 import SectionCard from '@/components/SectionCard';
@@ -12,7 +12,7 @@ import { workshopSections } from '@/constants/data/workshopContent';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { completedSections, isComplete } = useTraining();
+  const { completedSections, isComplete, isLoading } = useTraining();
 
   const handleSectionPress = (sectionId: number) => {
     router.push(`/section/${sectionId}`);
@@ -21,6 +21,16 @@ export default function HomeScreen() {
   const handleViewCertificate = () => {
     router.push('/certificate');
   };
+
+  if (isLoading) {
+    return (
+      <ScreenContainer>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>
@@ -128,6 +138,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: spacing.xs,
     marginBottom: spacing.md,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   certificateButton: {
     width: '100%',

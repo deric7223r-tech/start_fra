@@ -41,6 +41,9 @@ export default class ErrorBoundary extends Component<Props, State> {
           <Text style={styles.message}>
             An unexpected error occurred. Please try again.
           </Text>
+          {this.state.error?.message && (
+            <Text style={styles.errorDetail}>{this.state.error.message}</Text>
+          )}
           <TouchableOpacity
             style={styles.button}
             onPress={this.handleReset}
@@ -79,6 +82,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: spacing.lg,
+  },
+  errorDetail: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.md,
+    fontFamily: 'monospace',
   },
   button: {
     backgroundColor: colors.primary,
