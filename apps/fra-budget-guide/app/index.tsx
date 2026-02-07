@@ -33,6 +33,7 @@ interface PackageOption {
   icon: React.ComponentType<{ color: string; size: number }>;
   features: PackageFeature[];
   popular?: boolean;
+  enterprise?: boolean;
   route: string;
   ctaLabel: string;
   ctaVariant: 'outline' | 'filled' | 'accent';
@@ -82,6 +83,7 @@ const packages: PackageOption[] = [
     price: '£4,995',
     priceSuffix: '/year',
     icon: LayoutDashboard,
+    enterprise: true,
     features: [
       { label: 'Everything in Professional' },
       { label: 'Live dashboard' },
@@ -109,15 +111,30 @@ export default function PackageSelectionScreen() {
 
   return (
     <ScreenContainer>
-      {/* ---- Header (kept from original) ---- */}
+      {/* ---- Header ---- */}
       <View style={styles.header}>
         <View style={styles.headerIconContainer}>
           <Shield color={colors.primary} size={48} />
         </View>
-        <Text style={styles.title}>Your Role in Fraud Prevention</Text>
+        <Text
+          style={styles.title}
+          accessibilityRole="header"
+        >
+          Fraud Risk Co UK
+        </Text>
+        <Text style={styles.tagline}>
+          Staff Fraud Awareness Training
+        </Text>
         <Text style={styles.subtitle}>
           Choose the package that fits your organisation
         </Text>
+
+        {/* Compliance pill */}
+        <View style={styles.compliancePill}>
+          <Text style={styles.compliancePillText}>
+            GovS-013 & ECCTA 2023
+          </Text>
+        </View>
       </View>
 
       {/* ---- Package Cards ---- */}
@@ -125,6 +142,7 @@ export default function PackageSelectionScreen() {
         {packages.map((pkg) => {
           const Icon = pkg.icon;
           const isPopular = !!pkg.popular;
+          const isEnterprise = !!pkg.enterprise;
 
           return (
             <View
@@ -132,6 +150,7 @@ export default function PackageSelectionScreen() {
               style={[
                 styles.card,
                 isPopular && styles.cardPopular,
+                isEnterprise && styles.cardEnterprise,
               ]}
             >
               {/* Popular badge */}
@@ -142,49 +161,78 @@ export default function PackageSelectionScreen() {
               )}
 
               {/* Tier badge */}
-              <View style={styles.tierBadgeRow}>
-                <View style={[styles.tierBadge, isPopular && styles.tierBadgePopular]}>
-                  <Text style={[styles.tierBadgeText, isPopular && styles.tierBadgeTextPopular]}>
+              <View style={[
+                styles.tierBadgeRow,
+                isPopular && styles.tierBadgeRowPopular,
+              ]}>
+                <View style={[
+                  styles.tierBadge,
+                  isEnterprise && styles.tierBadgeEnterprise,
+                ]}>
+                  <Text style={[
+                    styles.tierBadgeText,
+                    isEnterprise && styles.tierBadgeTextEnterprise,
+                  ]}>
                     {pkg.tier}
                   </Text>
                 </View>
               </View>
 
               {/* Icon circle */}
-              <View style={[styles.iconCircle, isPopular && styles.iconCirclePopular]}>
+              <View style={[
+                styles.iconCircle,
+                isPopular && styles.iconCirclePopular,
+                isEnterprise && styles.iconCircleEnterprise,
+              ]}>
                 <Icon
-                  color={isPopular ? colors.surface : colors.primary}
+                  color={isPopular ? colors.surface : isEnterprise ? colors.warningDarkest : colors.primary}
                   size={28}
                 />
               </View>
 
               {/* Title */}
-              <Text style={[styles.packageTitle, isPopular && styles.packageTitlePopular]}>
+              <Text style={[
+                styles.packageTitle,
+                isPopular && styles.packageTitlePopular,
+                isEnterprise && styles.packageTitleEnterprise,
+              ]}>
                 {pkg.title}
               </Text>
 
               {/* Price */}
               <View style={styles.priceRow}>
-                <Text style={[styles.price, isPopular && styles.pricePopular]}>
+                <Text style={[
+                  styles.price,
+                  isPopular && styles.pricePopular,
+                  isEnterprise && styles.priceEnterprise,
+                ]}>
                   {pkg.price}
                 </Text>
-                <Text style={[styles.priceSuffix, isPopular && styles.priceSuffixPopular]}>
+                <Text style={styles.priceSuffix}>
                   {pkg.priceSuffix}
                 </Text>
               </View>
 
               {/* Divider */}
-              <View style={[styles.divider, isPopular && styles.dividerPopular]} />
+              <View style={[
+                styles.divider,
+                isPopular && styles.dividerPopular,
+                isEnterprise && styles.dividerEnterprise,
+              ]} />
 
               {/* Features */}
               <View style={styles.featuresList}>
                 {pkg.features.map((feat, idx) => (
-                  <View key={idx} style={styles.featureRow}>
+                  <View key={feat.label} style={styles.featureRow}>
                     <CheckCircle
-                      color={colors.success}
+                      color={isEnterprise ? colors.warningDark : colors.success}
                       size={18}
                     />
-                    <Text style={[styles.featureText, isPopular && styles.featureTextPopular]}>
+                    <Text style={[
+                      styles.featureText,
+                      isPopular && styles.featureTextPopular,
+                      isEnterprise && styles.featureTextEnterprise,
+                    ]}>
                       {feat.label}
                     </Text>
                   </View>
@@ -192,7 +240,11 @@ export default function PackageSelectionScreen() {
               </View>
 
               {/* Divider */}
-              <View style={[styles.divider, isPopular && styles.dividerPopular]} />
+              <View style={[
+                styles.divider,
+                isPopular && styles.dividerPopular,
+                isEnterprise && styles.dividerEnterprise,
+              ]} />
 
               {/* CTA */}
               <TouchableOpacity
@@ -223,8 +275,12 @@ export default function PackageSelectionScreen() {
         })}
       </View>
 
+      {/* ---- Footer ---- */}
       <Text style={styles.footerNote}>
         All packages include ECCTA-aligned fraud controls. Prices exclude VAT.
+      </Text>
+      <Text style={styles.footerCopyright}>
+        {'\u00A9'} 2026 Fraud Risk Co UK
       </Text>
     </ScreenContainer>
   );
@@ -238,28 +294,52 @@ const styles = StyleSheet.create({
   // Header
   header: {
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   headerIconContainer: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  tagline: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 22,
+    marginBottom: spacing.md,
+  },
+
+  // Compliance pill
+  compliancePill: {
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1,
+    borderColor: colors.primaryBorder,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: borderRadius.full,
+  },
+  compliancePillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+    letterSpacing: 0.5,
   },
 
   // Cards container
   cardsContainer: {
-    gap: spacing.lg,
+    gap: spacing.xl,
     marginBottom: spacing.lg,
   },
 
@@ -269,12 +349,21 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
     alignItems: 'center',
     ...shadows.md,
   },
   cardPopular: {
     borderColor: colors.primary,
+    borderWidth: 2,
+    paddingTop: spacing.lg + spacing.xs,
+    ...shadows.lg,
+  },
+  cardEnterprise: {
+    backgroundColor: colors.warningLight,
+    borderColor: colors.warning,
     borderWidth: 2,
     ...shadows.lg,
   },
@@ -300,14 +389,18 @@ const styles = StyleSheet.create({
   tierBadgeRow: {
     marginBottom: spacing.md,
   },
+  tierBadgeRowPopular: {
+    marginTop: spacing.xs,
+  },
   tierBadge: {
     backgroundColor: colors.primaryLight,
     paddingHorizontal: spacing.sm + 4,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
   },
-  tierBadgePopular: {
-    backgroundColor: colors.primaryLight,
+  /* tierBadgePopular removed — identical to tierBadge base */
+  tierBadgeEnterprise: {
+    backgroundColor: colors.warningLighter,
   },
   tierBadgeText: {
     fontSize: 11,
@@ -315,8 +408,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
     letterSpacing: 1,
   },
-  tierBadgeTextPopular: {
-    color: colors.primary,
+  /* tierBadgeTextPopular removed — identical to tierBadgeText base */
+  tierBadgeTextEnterprise: {
+    color: colors.warningDarker,
   },
 
   // Icon circle
@@ -332,6 +426,9 @@ const styles = StyleSheet.create({
   iconCirclePopular: {
     backgroundColor: colors.primary,
   },
+  iconCircleEnterprise: {
+    backgroundColor: colors.warning,
+  },
 
   // Package title
   packageTitle: {
@@ -342,6 +439,9 @@ const styles = StyleSheet.create({
   },
   packageTitlePopular: {
     color: colors.primary,
+  },
+  packageTitleEnterprise: {
+    color: colors.warningDarkest,
   },
 
   // Price
@@ -358,14 +458,14 @@ const styles = StyleSheet.create({
   pricePopular: {
     color: colors.primary,
   },
+  priceEnterprise: {
+    color: colors.warningDarkest,
+  },
   priceSuffix: {
     fontSize: 15,
     fontWeight: '500',
     color: colors.textMuted,
     marginLeft: spacing.xs,
-  },
-  priceSuffixPopular: {
-    color: colors.textMuted,
   },
 
   // Divider
@@ -377,6 +477,10 @@ const styles = StyleSheet.create({
   },
   dividerPopular: {
     backgroundColor: colors.primaryBorder,
+  },
+  dividerEnterprise: {
+    backgroundColor: colors.warning,
+    opacity: 0.4,
   },
 
   // Features
@@ -396,6 +500,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featureTextPopular: {
+    color: colors.text,
+    fontWeight: '500',
+  },
+  featureTextEnterprise: {
     color: colors.text,
     fontWeight: '500',
   },
@@ -430,7 +538,7 @@ const styles = StyleSheet.create({
     color: colors.surface,
   },
   ctaTextAccent: {
-    color: colors.warningDarkest,
+    color: colors.warningDarker,
   },
 
   // Footer
@@ -440,5 +548,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginTop: spacing.sm,
+  },
+  footerCopyright: {
+    fontSize: 13,
+    color: colors.textFaint,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginTop: spacing.md,
+    paddingBottom: spacing.md,
   },
 });

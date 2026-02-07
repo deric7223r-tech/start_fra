@@ -5,16 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
-import { 
-  Shield, 
-  Users, 
-  Target, 
-  Award, 
+import {
+  Shield,
+  Users,
+  Target,
+  Award,
   ArrowRight,
   Play,
   BookOpen,
   Clock,
   CheckCircle2,
+  BadgeCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -72,19 +73,24 @@ export default function Index() {
               transition={{ duration: 0.5 }}
               className="text-center lg:text-left"
             >
-              <div className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-4 py-1.5 text-sm font-medium text-accent mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-4 py-1.5 text-sm font-medium text-accent mb-4">
                 <Shield className="h-4 w-4" />
-                <span>Professional Development Workshop</span>
+                <span>Professional Fraud Risk Training</span>
               </div>
-              
-              <h1 className="text-4xl font-bold tracking-tight text-primary-foreground sm:text-5xl lg:text-6xl mb-6">
-                Fraud Risk
+
+              <h1 className="text-4xl font-bold tracking-tight text-primary-foreground sm:text-5xl lg:text-6xl mb-4">
+                Fraud Risk CO UK
                 <br />
-                <span className="text-accent">Awareness</span> Briefing
+                <span className="text-accent">Protect Your Organisation</span>
               </h1>
-              
+
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-4 py-1.5 text-xs font-semibold text-primary-foreground/90 mb-6 backdrop-blur">
+                <BadgeCheck className="h-4 w-4 text-accent" />
+                <span>GovS-013 & ECCTA 2023 Compliant</span>
+              </div>
+
               <p className="text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto lg:mx-0">
-                An interactive 30-minute workshop designed for trustees, executive leadership, and budget-holders. 
+                An interactive 30-minute workshop designed for trustees, executive leadership, and budget-holders.
                 Build fraud resilience through engaging content and practical action plans.
               </p>
 
@@ -127,7 +133,7 @@ export default function Index() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex gap-3">
+                  <form onSubmit={(e) => { e.preventDefault(); handleJoinSession(); }} className="flex gap-3">
                     <Input
                       placeholder="Enter session code"
                       value={sessionCode}
@@ -136,10 +142,10 @@ export default function Index() {
                       maxLength={6}
                       aria-label="Session code"
                     />
-                    <Button onClick={handleJoinSession} disabled={!sessionCode.trim()}>
+                    <Button type="submit" disabled={!sessionCode.trim()}>
                       Join
                     </Button>
-                  </div>
+                  </form>
                   
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
@@ -220,88 +226,8 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Workshop Overview Section */}
-      <section className="py-20 lg:py-32 bg-muted/50">
-        <div className="container">
-          <div className="grid gap-12 lg:grid-cols-2 items-center">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-6">
-                A Comprehensive 30-Minute Journey
-              </h2>
-              <p className="text-lg text-muted-foreground mb-8">
-                From regulatory updates to practical action planning, our workshop covers 
-                everything you need to strengthen your organisation's fraud defenses.
-              </p>
-
-              <div className="space-y-4">
-                {[
-                  { time: '5 min', title: 'Regulatory Landscape', desc: 'Current compliance requirements and legislation' },
-                  { time: '5 min', title: 'Fraud Types & Risks', desc: 'Understanding common fraud schemes' },
-                  { time: '5 min', title: 'Defense Strategies', desc: 'Practical controls and prevention measures' },
-                  { time: '5 min', title: 'Organisational Impact', desc: 'The true cost of fraud incidents' },
-                  { time: '5 min', title: 'Interactive Scenarios', desc: 'Real-world case studies and exercises' },
-                  { time: '5 min', title: 'Action Planning', desc: 'Your personalised next steps' },
-                ].map((item, index) => (
-                  <motion.div
-                    key={item.title}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    viewport={{ once: true }}
-                    className="flex items-start gap-4"
-                  >
-                    <div className="flex items-center gap-2 text-sm font-medium text-primary min-w-[60px]">
-                      <Clock className="h-4 w-4" />
-                      {item.time}
-                    </div>
-                    <div>
-                      <div className="font-medium">{item.title}</div>
-                      <div className="text-sm text-muted-foreground">{item.desc}</div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <Card className="border-0 shadow-xl">
-                <CardHeader className="gradient-hero text-primary-foreground rounded-t-lg">
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5" />
-                    What You'll Learn
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <ul className="space-y-3">
-                    {[
-                      'Understand your obligations under the Economic Crime Act 2023',
-                      'Identify common fraud schemes targeting your sector',
-                      'Implement practical defense strategies immediately',
-                      'Recognise red flags and early warning signs',
-                      'Develop a personalised fraud prevention action plan',
-                      'Access downloadable resources and tools',
-                    ].map((item, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
-                        <span className="text-sm">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
       {/* Packages / Pricing Section */}
-      <section className="py-20 lg:py-32">
+      <section className="py-20 lg:py-32 bg-muted/50">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
@@ -314,7 +240,7 @@ export default function Index() {
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-3 items-stretch">
             {/* ---- Package 1: Starter ---- */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -322,7 +248,7 @@ export default function Index() {
               transition={{ duration: 0.5, delay: 0 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full flex flex-col border shadow-md">
+              <Card className="h-full flex flex-col border shadow-lg hover:shadow-xl transition-shadow bg-card">
                 <CardHeader className="pb-4">
                   <div className="mb-3">
                     <span className="inline-block rounded-full bg-muted px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -370,14 +296,16 @@ export default function Index() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}
               viewport={{ once: true }}
+              className="md:-mt-4 md:mb-[-16px]"
             >
-              <Card className="h-full flex flex-col ring-2 ring-primary shadow-xl relative">
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                  <span className="inline-block rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground">
+              <Card className="h-full flex flex-col ring-2 ring-primary shadow-2xl relative bg-card">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-lg">
+                    <Award className="h-3.5 w-3.5" />
                     Most Popular
                   </span>
                 </div>
-                <CardHeader className="pb-4 pt-8">
+                <CardHeader className="pb-4 pt-10">
                   <div className="mb-3">
                     <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary">
                       Package 2
@@ -385,7 +313,7 @@ export default function Index() {
                   </div>
                   <CardTitle className="text-2xl">Professional</CardTitle>
                   <CardDescription>
-                    Ongoing protection with training &amp; support
+                    Ongoing protection with training & support
                   </CardDescription>
                   <div className="pt-4">
                     <span className="text-4xl font-bold">£1,995</span>
@@ -409,7 +337,7 @@ export default function Index() {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full" asChild>
+                  <Button className="w-full" size="lg" asChild>
                     <Link to="/package/professional">
                       Choose Professional
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -426,19 +354,20 @@ export default function Index() {
               transition={{ duration: 0.5, delay: 0.3 }}
               viewport={{ once: true }}
             >
-              <Card className="h-full flex flex-col border-2 border-amber-500 shadow-md">
+              <Card className="h-full flex flex-col border-2 border-amber-500/70 shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-b from-amber-50/50 to-card dark:from-amber-950/20 dark:to-card">
                 <CardHeader className="pb-4">
                   <div className="mb-3">
-                    <span className="inline-block rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
+                      <Shield className="h-3 w-3" />
                       Package 3
                     </span>
                   </div>
-                  <CardTitle className="text-2xl">Enterprise</CardTitle>
+                  <CardTitle className="text-2xl text-amber-900 dark:text-amber-100">Enterprise</CardTitle>
                   <CardDescription>
                     Full-scale fraud risk management for large organisations
                   </CardDescription>
                   <div className="pt-4">
-                    <span className="text-4xl font-bold">£4,995</span>
+                    <span className="text-4xl font-bold text-amber-700 dark:text-amber-400">£4,995</span>
                     <span className="ml-1 text-sm text-muted-foreground">
                       / year
                     </span>
@@ -460,12 +389,92 @@ export default function Index() {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full bg-amber-500 text-white hover:bg-amber-600" asChild>
+                  <Button className="w-full bg-amber-500 text-white hover:bg-amber-600 shadow-md" asChild>
                     <Link to="/package/enterprise">
                       Choose Enterprise
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Workshop Overview Section */}
+      <section className="py-20 lg:py-32">
+        <div className="container">
+          <div className="grid gap-12 lg:grid-cols-2 items-center">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-6">
+                A Comprehensive 30-Minute Journey
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                From regulatory updates to practical action planning, our workshop covers
+                everything you need to strengthen your organisation's fraud defences.
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  { time: '5 min', title: 'Regulatory Landscape', desc: 'Current compliance requirements and legislation' },
+                  { time: '5 min', title: 'Fraud Types & Risks', desc: 'Understanding common fraud schemes' },
+                  { time: '5 min', title: 'Defence Strategies', desc: 'Practical controls and prevention measures' },
+                  { time: '5 min', title: 'Organisational Impact', desc: 'The true cost of fraud incidents' },
+                  { time: '5 min', title: 'Interactive Scenarios', desc: 'Real-world case studies and exercises' },
+                  { time: '5 min', title: 'Action Planning', desc: 'Your personalised next steps' },
+                ].map((item, index) => (
+                  <motion.div
+                    key={item.title}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    viewport={{ once: true }}
+                    className="flex items-start gap-4"
+                  >
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary min-w-[60px]">
+                      <Clock className="h-4 w-4" />
+                      {item.time}
+                    </div>
+                    <div>
+                      <div className="font-medium">{item.title}</div>
+                      <div className="text-sm text-muted-foreground">{item.desc}</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <Card className="border-0 shadow-xl">
+                <CardHeader className="gradient-hero text-primary-foreground rounded-t-lg">
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5" />
+                    What You'll Learn
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <ul className="space-y-3">
+                    {[
+                      'Understand your obligations under the Economic Crime Act 2023',
+                      'Identify common fraud schemes targeting your sector',
+                      'Implement practical defence strategies immediately',
+                      'Recognise red flags and early warning signs',
+                      'Develop a personalised fraud prevention action plan',
+                      'Access downloadable resources and tools',
+                    ].map((item, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span className="text-sm">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
             </motion.div>
@@ -479,11 +488,11 @@ export default function Index() {
           <Card className="border-0 gradient-hero overflow-hidden">
             <CardContent className="p-12 lg:p-16 text-center">
               <h2 className="text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl mb-4">
-                Ready to Strengthen Your Fraud Defenses?
+                Ready to Strengthen Your Fraud Defences?
               </h2>
               <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-                Join thousands of professionals who have enhanced their fraud awareness 
-                through our interactive workshop platform.
+                Join thousands of professionals who have enhanced their fraud awareness
+                through Fraud Risk Co UK's interactive workshop platform.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
@@ -511,10 +520,10 @@ export default function Index() {
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <Shield className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold">Fraud Risk Awareness Workshop</span>
+              <span className="font-semibold">Fraud Risk Co UK</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} All rights reserved.
+              © {new Date().getFullYear()} Fraud Risk Co UK. All rights reserved.
             </p>
           </div>
         </div>

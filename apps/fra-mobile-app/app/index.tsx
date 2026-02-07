@@ -7,6 +7,8 @@ import colors from '@/constants/colors';
 
 const GOLD_ACCENT = '#b38b2e';
 const GOLD_LIGHT = '#fdf8ed';
+const BG_LIGHT = '#F7F8FA';
+const PRO_CARD_BG = '#f0f5ff';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -30,9 +32,17 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
+          <View
+            style={styles.compliancePill}
+            accessibilityRole="text"
+            accessibilityLabel="GovS-013 and ECCTA 2023 Compliant"
+          >
+            <Text style={styles.compliancePillText}>GovS-013 & ECCTA 2023 Compliant</Text>
+          </View>
           <Shield size={32} color={colors.govBlue} />
           <Text style={styles.welcome} accessibilityRole="header">WELCOME</Text>
-          <Text style={styles.brand}>FRAUD RISK CO UK</Text>
+          <Text style={styles.brand} accessibilityRole="header">FRAUD RISK CO UK</Text>
+          <Text style={styles.tagline}>Protect your organisation from fraud</Text>
         </View>
 
         <View style={styles.cardsContainer}>
@@ -43,6 +53,7 @@ export default function HomeScreen() {
             activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityLabel="Package 1: Starter — Fraud Risk Health Check, 795 pounds one-time"
+            accessibilityHint="Starts a new fraud risk health check assessment"
           >
             <View style={styles.cardInner}>
               <View style={styles.cardIconCircle}>
@@ -78,7 +89,8 @@ export default function HomeScreen() {
             onPress={handlePackage2}
             activeOpacity={0.85}
             accessibilityRole="button"
-            accessibilityLabel="Package 2: Professional — FRA plus Training, 1995 pounds per year"
+            accessibilityLabel="Package 2: Professional — FRA plus Training, 1995 pounds per year. Most popular option"
+            accessibilityHint="Opens the Professional package details page"
           >
             <View style={styles.popularTag}>
               <Text style={styles.popularTagText}>MOST POPULAR</Text>
@@ -93,7 +105,7 @@ export default function HomeScreen() {
               <Text style={styles.cardTitle}>Professional</Text>
               <Text style={styles.cardSubtitle}>FRA + Training</Text>
               <View style={styles.priceBlock}>
-                <Text style={styles.cardPricePopular}>£1,995</Text>
+                <Text style={styles.cardPrice}>£1,995</Text>
                 <Text style={styles.cardPriceNote}>/year + VAT</Text>
               </View>
               <View style={styles.featureDivider} />
@@ -118,7 +130,8 @@ export default function HomeScreen() {
             onPress={handlePackage3}
             activeOpacity={0.85}
             accessibilityRole="button"
-            accessibilityLabel="Package 3: Enterprise — Full Dashboard, 4995 pounds per year"
+            accessibilityLabel="Package 3: Enterprise — Full Dashboard plus Unlimited, 4995 pounds per year"
+            accessibilityHint="Opens the Enterprise package details page"
           >
             <View style={styles.cardInner}>
               <View style={styles.cardIconCircleGold}>
@@ -150,6 +163,20 @@ export default function HomeScreen() {
             </View>
           </TouchableOpacity>
         </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerCopyright}>{'\u00A9'} 2026 Fraud Risk Co UK</Text>
+          <TouchableOpacity
+            onPress={() => router.push('/feedback')}
+            activeOpacity={0.7}
+            accessibilityRole="link"
+            accessibilityLabel="Need help? Contact us"
+            accessibilityHint="Opens the feedback and support page"
+          >
+            <Text style={styles.footerLink}>Need help? Contact us</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -157,7 +184,7 @@ export default function HomeScreen() {
 
 function FeatureBullet({ text, color }: { text: string; color: string }) {
   return (
-    <View style={styles.featureRow}>
+    <View style={styles.featureRow} accessibilityRole="text" accessibilityLabel={text}>
       <CheckCircle size={18} color={color} style={styles.featureIcon} />
       <Text style={styles.featureText}>{text}</Text>
     </View>
@@ -167,7 +194,7 @@ function FeatureBullet({ text, color }: { text: string; color: string }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7F8FA',
+    backgroundColor: BG_LIGHT,
   },
   scrollContent: {
     flexGrow: 1,
@@ -175,9 +202,26 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 48,
   },
+
+  /* ---- Header ---- */
   header: {
     alignItems: 'center',
     marginBottom: 40,
+  },
+  compliancePill: {
+    backgroundColor: '#e8f5e9',
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#c8e6c9',
+  },
+  compliancePillText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: '#2e7d32',
+    letterSpacing: 0.3,
   },
   welcome: {
     fontSize: 14,
@@ -194,6 +238,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     textAlign: 'center',
   },
+  tagline: {
+    fontSize: 15,
+    fontWeight: '400' as const,
+    color: colors.govGrey2,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+
+  /* ---- Cards container ---- */
   cardsContainer: {
     gap: 28,
   },
@@ -209,10 +262,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 3,
-    overflow: 'visible',
   },
   card2: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: PRO_CARD_BG,
     borderRadius: 18,
     borderWidth: 2.5,
     borderColor: colors.govBlue,
@@ -222,7 +274,6 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 6,
     overflow: 'visible',
-    marginTop: 8,
   },
   card3: {
     backgroundColor: GOLD_LIGHT,
@@ -234,7 +285,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 14,
     elevation: 4,
-    overflow: 'visible',
   },
 
   cardInner: {
@@ -274,7 +324,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.govBlue,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
   cardIconCirclePopular: {
     width: 70,
@@ -283,7 +333,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.govBlue,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
     marginTop: 4,
   },
   cardIconCircleGold: {
@@ -293,7 +343,7 @@ const styles = StyleSheet.create({
     backgroundColor: GOLD_ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
   },
 
   /* ---- Package number badges ---- */
@@ -302,7 +352,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 4,
     borderRadius: 10,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   packageBadgeText: {
     fontSize: 11,
@@ -311,11 +361,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   packageBadgePopular: {
-    backgroundColor: colors.lightBlue,
+    backgroundColor: '#dce8ff',
     paddingHorizontal: 14,
     paddingVertical: 4,
     borderRadius: 10,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   packageBadgeTextPopular: {
     fontSize: 11,
@@ -328,7 +378,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 4,
     borderRadius: 10,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   packageBadgeTextGold: {
     fontSize: 11,
@@ -348,11 +398,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500' as const,
     color: colors.govGrey2,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   priceBlock: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
   },
   cardPrice: {
     fontSize: 40,
@@ -360,12 +410,7 @@ const styles = StyleSheet.create({
     color: colors.govBlue,
     lineHeight: 48,
   },
-  cardPricePopular: {
-    fontSize: 40,
-    fontWeight: '800' as const,
-    color: colors.govBlue,
-    lineHeight: 48,
-  },
+  /* cardPricePopular removed — identical to cardPrice, reuse cardPrice for Package 2 */
   cardPriceGold: {
     fontSize: 40,
     fontWeight: '800' as const,
@@ -384,14 +429,14 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.govGrey4,
     alignSelf: 'stretch',
-    marginBottom: 20,
+    marginBottom: 18,
   },
   ctaDivider: {
     height: 1,
     backgroundColor: colors.govGrey4,
     alignSelf: 'stretch',
-    marginTop: 4,
-    marginBottom: 22,
+    marginTop: 6,
+    marginBottom: 20,
   },
 
   /* ---- Feature bullets ---- */
@@ -473,5 +518,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700' as const,
     color: GOLD_ACCENT,
+  },
+
+  /* ---- Footer ---- */
+  footer: {
+    alignItems: 'center',
+    marginTop: 36,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  footerCopyright: {
+    fontSize: 13,
+    fontWeight: '400' as const,
+    color: colors.govGrey2,
+    marginBottom: 8,
+  },
+  footerLink: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.govBlue,
+    textDecorationLine: 'underline',
   },
 });
