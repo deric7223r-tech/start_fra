@@ -16,9 +16,7 @@
     "lint:fix": "turbo run lint -- --fix",
     "test": "turbo run test",
     "test:backend": "pnpm --filter @stopfra/backend test",
-    "db:migrate": "pnpm --filter @stopfra/backend db:migrate",
-    "db:seed": "pnpm --filter @stopfra/backend db:seed",
-    "db:studio": "pnpm --filter @stopfra/backend db:studio",
+    "db:migrate": "pnpm --filter @stopfra/backend migrate",
     "clean": "rm -rf node_modules apps/*/node_modules apps/fra-backend/backend/node_modules",
     "typecheck": "turbo run typecheck"
   },
@@ -31,6 +29,10 @@
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": ["eslint --fix"],
+    "*.{json,md,yml}": ["prettier --write"]
   },
   "packageManager": "pnpm@9.15.4",
   "pnpm": {
