@@ -3,27 +3,22 @@
   "version": "2.0.0",
   "private": true,
   "description": "Stop FRA - Fraud Risk Assessment Platform Monorepo",
-  "workspaces": [
-    "packages/*",
-    "apps/*",
-    "apps/fra-backend/backend"
-  ],
   "scripts": {
-    "dev:mobile": "bun --filter @stopfra/mobile-app start",
-    "dev:web": "bun --filter @stopfra/web-dashboard dev",
-    "dev:backend": "bun --filter @stopfra/backend dev",
-    "dev:training": "bun --filter @stopfra/training-app start",
-    "dev:budget": "bun --filter @stopfra/budget-guide start",
+    "dev:mobile": "pnpm --filter @stopfra/mobile-app start",
+    "dev:web": "pnpm --filter @stopfra/web-dashboard dev",
+    "dev:backend": "pnpm --filter @stopfra/backend dev",
+    "dev:training": "pnpm --filter @stopfra/training-app start",
+    "dev:budget": "pnpm --filter @stopfra/budget-guide start",
     "build": "turbo run build",
-    "build:web": "bun --filter @stopfra/web-dashboard build",
-    "build:backend": "bun --filter @stopfra/backend build",
+    "build:web": "pnpm --filter @stopfra/web-dashboard build",
+    "build:backend": "pnpm --filter @stopfra/backend build",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint -- --fix",
     "test": "turbo run test",
-    "test:backend": "bun --filter @stopfra/backend test",
-    "db:migrate": "bun --filter @stopfra/backend db:migrate",
-    "db:seed": "bun --filter @stopfra/backend db:seed",
-    "db:studio": "bun --filter @stopfra/backend db:studio",
+    "test:backend": "pnpm --filter @stopfra/backend test",
+    "db:migrate": "pnpm --filter @stopfra/backend db:migrate",
+    "db:seed": "pnpm --filter @stopfra/backend db:seed",
+    "db:studio": "pnpm --filter @stopfra/backend db:studio",
     "clean": "rm -rf node_modules apps/*/node_modules apps/fra-backend/backend/node_modules",
     "typecheck": "turbo run typecheck"
   },
@@ -35,8 +30,7 @@
     "typescript": "^5.7.0"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "bun": ">=1.0.0"
+    "node": ">=20.0.0"
   },
   "packageManager": "pnpm@9.15.4",
   "pnpm": {
