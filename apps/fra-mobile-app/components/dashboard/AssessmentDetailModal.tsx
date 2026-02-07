@@ -687,7 +687,7 @@ export default function AssessmentDetailModal({
                         )}
                         {assessment.actionPlan.mediumPriority?.length > 0 && (
                           <View style={{ marginBottom: 16 }}>
-                            <Text style={[styles.detailLabel, { marginBottom: 8, fontWeight: '700' as const, color: '#FF8C00' }]}>Medium Priority Actions</Text>
+                            <Text style={[styles.detailLabel, { marginBottom: 8, fontWeight: '700' as const, color: colors.riskMedium }]}>Medium Priority Actions</Text>
                             {assessment.actionPlan.mediumPriority.map((action) => (
                               <View key={action.id} style={[styles.detailCard, { marginBottom: 8 }]}>
                                 <View style={styles.detailRow}>
@@ -908,7 +908,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusCompleted: {
-    backgroundColor: '#28A745',
+    backgroundColor: colors.statusCompleted,
   },
   statusText: {
     fontSize: 12,
@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.errorRed,
   },
   riskMedium: {
-    backgroundColor: '#FF8C00',
+    backgroundColor: colors.riskMedium,
   },
   riskLow: {
     backgroundColor: colors.govGreen,

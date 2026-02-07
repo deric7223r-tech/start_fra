@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AssessmentProvider } from "@/contexts/AssessmentContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import colors from "@/constants/colors";
 
 
 SplashScreen.preventAutoHideAsync();
@@ -29,9 +30,9 @@ function RootLayoutNav() {
       screenOptions={{
         headerBackTitle: "Back",
         headerStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: colors.white,
         },
-        headerTintColor: '#003078',
+        headerTintColor: colors.govBlue,
         headerTitleStyle: {
           fontWeight: '600' as const,
         },

@@ -441,13 +441,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusCompleted: {
-    backgroundColor: '#28A745',
+    backgroundColor: colors.statusCompleted,
   },
   statusInProgress: {
-    backgroundColor: '#0066CC',
+    backgroundColor: colors.statusInProgress,
   },
   statusNotStarted: {
-    backgroundColor: '#6C757D',
+    backgroundColor: colors.statusNotStarted,
   },
   statusText: {
     fontSize: 12,
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.errorRed,
   },
   riskMedium: {
-    backgroundColor: '#FF8C00',
+    backgroundColor: colors.riskMedium,
   },
   riskLow: {
     backgroundColor: colors.govGreen,

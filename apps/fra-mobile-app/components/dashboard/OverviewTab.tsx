@@ -274,7 +274,7 @@ export default function OverviewTab({
             </View>
             <View style={styles.riskBarRow}>
               <View style={styles.riskLabelContainer}>
-                <Zap size={18} color="#FF8C00" />
+                <Zap size={18} color={colors.riskMedium} />
                 <Text style={styles.riskLabel}>Medium Risk</Text>
               </View>
               <View style={styles.riskBarContainer}>
@@ -690,7 +690,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.errorRed,
   },
   riskBarMedium: {
-    backgroundColor: '#FF8C00',
+    backgroundColor: colors.riskMedium,
   },
   riskBarLow: {
     backgroundColor: colors.govGreen,

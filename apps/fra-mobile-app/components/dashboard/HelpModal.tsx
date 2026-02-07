@@ -49,7 +49,7 @@ export default function HelpModal({ visible, onClose }: HelpModalProps) {
                 <Text style={styles.helpText}>High Risk (15-25): Immediate action required</Text>
               </View>
               <View style={styles.helpRiskRow}>
-                <View style={[styles.helpRiskBadge, { backgroundColor: '#FF8C00' }]} />
+                <View style={[styles.helpRiskBadge, { backgroundColor: colors.riskMedium }]} />
                 <Zap size={16} color="#FF8C00" style={{ marginLeft: -4 }} />
                 <Text style={styles.helpText}>Medium Risk (8-14): Plan mitigation within 3-6 months</Text>
               </View>
