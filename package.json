@@ -38,6 +38,9 @@
       "allowedVersions": {
         "@types/react": ">=18.0.0"
       }
+    },
+    "overrides": {
+      "@isaacs/brace-expansion": ">=5.0.1"
     }
   }
 }

@@ -42,7 +42,9 @@ coverage/
 # Turbo
 .turbo/
 
-# Bun
+# Lock files (pnpm-lock.yaml is tracked; ignore npm/yarn/bun)
+package-lock.json
+yarn.lock
 bun.lockb
 
 # Expo
