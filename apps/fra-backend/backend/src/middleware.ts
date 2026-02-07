@@ -97,15 +97,33 @@ export function applyGlobalMiddleware(app: Hono) {
     .map((o) => o.trim())
     .filter(Boolean);
 
+  // In production, an empty CORS_ORIGINS list is a misconfiguration that would
+  // allow any origin. Log a warning and deny all cross-origin requests.
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction && allowedOrigins.length === 0) {
+    console.warn(
+      JSON.stringify({
+        ts: new Date().toISOString(),
+        level: 'warn',
+        message: 'CORS_ORIGINS is empty in production. All cross-origin requests will be denied. Set CORS_ORIGINS to allow specific origins.',
+      })
+    );
+  }
+
   app.use(
     '*',
     cors({
       origin: (origin) => {
         if (!origin) return '*'; // allow non-browser requests (curl, mobile)
-        if (allowedOrigins.length === 0) return origin; // dev: allow all
+        if (allowedOrigins.length === 0) {
+          // In production, deny all when no origins are configured
+          if (isProduction) return '';
+          // In dev, allow all origins for convenience
+          return origin;
+        }
         if (allowedOrigins.includes(origin)) return origin;
-        // Allow Expo tunnel URLs in dev
-        if (origin.endsWith('.exp.direct') || origin.endsWith('.ngrok.io') || origin.endsWith('.ngrok-free.app')) return origin;
+        // Allow Expo tunnel URLs in dev (never in production)
+        if (!isProduction && (origin.endsWith('.exp.direct') || origin.endsWith('.ngrok.io') || origin.endsWith('.ngrok-free.app'))) return origin;
         return ''; // deny
       },
       allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],

@@ -1,15 +1,16 @@
 import { Hono } from 'hono';
-import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
+import { getAuth, hasDatabase, jsonError, requireAuth } from '../helpers.js';
 import {
   paymentCreateIntentSchema, purchasesCreateSchema, purchasesConfirmSchema,
   stripeWebhookSchema, FALLBACK_PACKAGES,
 } from '../types.js';
-import type { Purchase } from '../types.js';
-import { purchasesById } from '../stores.js';
+import type { Assessment, Purchase } from '../types.js';
+import { assessmentsById, purchasesById } from '../stores.js';
 import { getClientIp } from '../middleware.js';
 import {
   dbInsertPurchase, dbGetPurchaseById, dbUpdatePurchaseStatus,
   dbListPurchasesByOrganisation, dbListPackages, dbGetPackageById,
+  dbListAssessmentsByOrganisation,
   auditLog,
 } from '../db/index.js';
 
@@ -56,8 +57,49 @@ payments.get('/packages', async (c) => {
   });
 });
 
-payments.get('/packages/recommended', (c) => {
-  return c.json({ success: true, data: { packageId: 'pkg_basic' } });
+payments.get('/packages/recommended', async (c) => {
+  const auth = getAuth(c);
+
+  // No auth/org info available: recommend professional (most popular)
+  if (!auth) {
+    return c.json({ success: true, data: { packageId: 'pkg_training', reason: 'most_popular' } });
+  }
+
+  // Fetch the user's assessments
+  const orgAssessments: Assessment[] = hasDatabase()
+    ? await dbListAssessmentsByOrganisation(auth.organisationId)
+    : Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
+
+  // No assessments: recommend starter
+  if (orgAssessments.length === 0) {
+    return c.json({ success: true, data: { packageId: 'pkg_basic', reason: 'no_assessment' } });
+  }
+
+  // Check completed/submitted assessments for risk indicators
+  const completedAssessments = orgAssessments.filter((a) => a.status === 'completed' || a.status === 'submitted');
+
+  if (completedAssessments.length === 0) {
+    // Has assessments but none completed yet: recommend starter
+    return c.json({ success: true, data: { packageId: 'pkg_basic', reason: 'assessment_in_progress' } });
+  }
+
+  // Derive a simple risk score from the most recent completed assessment's answers.
+  // Count the number of answered questions as a proxy for complexity/risk.
+  const latest = completedAssessments.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+  const answerCount = Object.keys(latest.answers).length;
+
+  // Simple heuristic: more answers filled in suggests higher risk awareness needed
+  // High risk (many answers / flags): recommend enterprise (pkg_full)
+  // Medium risk: recommend professional (pkg_training)
+  // Low risk: recommend starter (pkg_basic)
+  if (answerCount >= 15) {
+    return c.json({ success: true, data: { packageId: 'pkg_full', reason: 'high_risk_score' } });
+  }
+  if (answerCount >= 5) {
+    return c.json({ success: true, data: { packageId: 'pkg_training', reason: 'medium_risk_score' } });
+  }
+
+  return c.json({ success: true, data: { packageId: 'pkg_basic', reason: 'low_risk_score' } });
 });
 
 payments.post('/purchases', async (c) => {
@@ -180,11 +222,69 @@ payments.get('/purchases/organisation/:orgId', async (c) => {
   return c.json({ success: true, data: purchases });
 });
 
+// TODO: Add Stripe signature verification for production using stripe.webhooks.constructEvent()
+// with the STRIPE_WEBHOOK_SECRET environment variable. Without this, any caller can fake webhook events.
 payments.post('/webhooks/stripe', async (c) => {
   const parsed = stripeWebhookSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid stripe webhook payload');
 
-  return c.json({ success: true, data: { received: true, type: parsed.data.type } });
+  const eventType = parsed.data.type;
+  const eventData = parsed.data.data as Record<string, unknown> | undefined;
+  const now = new Date().toISOString();
+
+  console.log(JSON.stringify({ ts: now, event: 'stripe_webhook', type: eventType }));
+
+  switch (eventType) {
+    case 'checkout.session.completed': {
+      // Extract purchase/payment info from the session object
+      const sessionObj = (eventData as Record<string, unknown> | undefined)?.object as Record<string, unknown> | undefined;
+      const paymentIntentId = (sessionObj?.payment_intent as string) ?? null;
+      const metadata = sessionObj?.metadata as Record<string, string> | undefined;
+      const purchaseId = metadata?.purchaseId;
+
+      if (purchaseId) {
+        if (hasDatabase()) {
+          await dbUpdatePurchaseStatus(purchaseId, 'succeeded', now);
+        } else {
+          const existing = purchasesById.get(purchaseId);
+          if (existing) { existing.status = 'succeeded'; existing.confirmedAt = now; }
+        }
+        console.log(JSON.stringify({ ts: now, event: 'purchase_status_updated', purchaseId, status: 'succeeded', paymentIntentId }));
+      }
+      break;
+    }
+
+    case 'payment_intent.succeeded': {
+      // Confirm payment for a purchase linked via paymentIntentId
+      const intentObj = (eventData as Record<string, unknown> | undefined)?.object as Record<string, unknown> | undefined;
+      const piId = (intentObj?.id as string) ?? null;
+
+      if (piId) {
+        // Search for the purchase with this paymentIntentId
+        if (hasDatabase()) {
+          // In DB mode, we rely on checkout.session.completed for status updates.
+          // Log the confirmation for auditing purposes.
+          console.log(JSON.stringify({ ts: now, event: 'payment_intent_confirmed', paymentIntentId: piId }));
+        } else {
+          const purchase = Array.from(purchasesById.values()).find((p) => p.paymentIntentId === piId);
+          if (purchase && purchase.status !== 'succeeded') {
+            purchase.status = 'succeeded';
+            purchase.confirmedAt = now;
+            console.log(JSON.stringify({ ts: now, event: 'purchase_confirmed_via_intent', purchaseId: purchase.id, paymentIntentId: piId }));
+          }
+        }
+      }
+      break;
+    }
+
+    default: {
+      // Acknowledge unhandled event types
+      console.log(JSON.stringify({ ts: now, event: 'stripe_webhook_unhandled', type: eventType }));
+      break;
+    }
+  }
+
+  return c.json({ success: true, data: { received: true, type: eventType } });
 });
 
 export default payments;

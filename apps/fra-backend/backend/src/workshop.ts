@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { getDbPool } from './db.js';
 import { type AuthContext, jwtSecret, hasDatabase, jsonError, getAuth as getAuthBase, requireAuth } from './helpers.js';
+import { getRedis } from './redis.js';
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -36,34 +37,66 @@ export function broadcastToSession(sessionId: string, event: string, data: unkno
   }
 }
 
+// ── SSE token store (short-lived, single-use tokens for SSE auth) ──
+
+const SSE_TOKEN_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const SSE_TOKEN_PREFIX = 'sse_token:';
+
+type SseTokenEntry = {
+  auth: AuthContext;
+  expiresAt: number;
+};
+
+// In-memory fallback when Redis is not available
+const sseTokenStore = new Map<string, SseTokenEntry>();
+
+async function storeSseToken(token: string, auth: AuthContext): Promise<void> {
+  const redis = getRedis();
+  if (redis) {
+    await redis.set(`${SSE_TOKEN_PREFIX}${token}`, JSON.stringify(auth), { ex: Math.ceil(SSE_TOKEN_TTL_MS / 1000) });
+    return;
+  }
+  sseTokenStore.set(token, { auth, expiresAt: Date.now() + SSE_TOKEN_TTL_MS });
+}
+
+async function consumeSseToken(token: string): Promise<AuthContext | null> {
+  const redis = getRedis();
+  if (redis) {
+    const key = `${SSE_TOKEN_PREFIX}${token}`;
+    const raw = await redis.get<string>(key);
+    if (!raw) return null;
+    // Single-use: delete immediately after retrieval
+    await redis.del(key);
+    try {
+      return JSON.parse(raw) as AuthContext;
+    } catch {
+      return null;
+    }
+  }
+
+  const entry = sseTokenStore.get(token);
+  if (!entry) return null;
+  // Single-use: delete immediately
+  sseTokenStore.delete(token);
+  if (entry.expiresAt < Date.now()) return null;
+  return entry.auth;
+}
+
 // ── Helpers ──────────────────────────────────────────────────
 
-// Workshop-specific auth that also accepts token from query params (for SSE EventSource)
-function getAuthWithQueryToken(c: Context): AuthContext | null {
+// Workshop-specific auth that accepts a short-lived SSE token from query params.
+// The SSE token is single-use and expires after 5 minutes, so even if it appears
+// in logs or browser history, the exposure window is minimal.
+async function getAuthWithSseToken(c: Context): Promise<AuthContext | null> {
   // Try standard header-based auth first
   const headerAuth = getAuthBase(c);
   if (headerAuth) return headerAuth;
 
-  // Fall back to query param token (for SSE EventSource which can't set headers)
-  const queryToken = c.req.query('token');
-  if (!queryToken) return null;
+  // Fall back to short-lived, single-use SSE token from query param
+  const sseToken = c.req.query('sse_token');
+  if (!sseToken) return null;
 
-  try {
-    const payload = jwt.verify(queryToken, jwtSecret) as {
-      sub: string;
-      email: string;
-      role: string;
-      organisationId: string;
-    };
-    return {
-      userId: payload.sub,
-      email: payload.email,
-      role: payload.role,
-      organisationId: payload.organisationId,
-    };
-  } catch {
-    return null;
-  }
+  return consumeSseToken(sseToken);
 }
 
 // ── Workshop Hono App ────────────────────────────────────────
@@ -765,8 +798,20 @@ workshop.post('/certificates', async (c) => {
 
 // ── SSE Events endpoint ──────────────────────────────────────
 
+// Exchange a valid JWT for a short-lived, single-use SSE token.
+// The frontend calls this before opening an EventSource connection.
+workshop.post('/sse-token', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const token = crypto.randomUUID();
+  await storeSseToken(token, auth);
+
+  return c.json({ success: true, data: { sseToken: token } });
+});
+
 workshop.get('/sessions/:sessionId/events', async (c) => {
-  const auth = getAuthWithQueryToken(c);
+  const auth = await getAuthWithSseToken(c);
   if (!auth) return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid access token');
 
   const sessionId = c.req.param('sessionId');

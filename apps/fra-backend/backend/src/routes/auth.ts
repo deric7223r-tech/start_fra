@@ -202,7 +202,9 @@ auth.post('/auth/login', async (c) => {
       eventType: 'auth.lockout', actorEmail: emailLc,
       details: { reason: 'Too many failed login attempts' }, ipAddress: getClientIp(c),
     });
-    return jsonError(c, 429, 'ACCOUNT_LOCKED', 'Account temporarily locked due to too many failed attempts. Try again in 15 minutes.');
+    // Return the same generic error as invalid credentials to prevent
+    // account enumeration via lockout timing differences.
+    return jsonError(c, 401, 'INVALID_CREDENTIALS', 'Invalid email or password');
   }
 
   const user = hasDatabase() ? await dbGetUserByEmail(emailLc) : usersByEmail.get(emailLc);

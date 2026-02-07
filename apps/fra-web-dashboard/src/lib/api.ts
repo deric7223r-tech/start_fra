@@ -120,26 +120,46 @@ export const api = {
 
 type SSEHandlers = Record<string, (data: unknown) => void>;
 
+/**
+ * Connects to an SSE endpoint using a short-lived, single-use SSE token
+ * instead of passing the long-lived JWT directly as a query parameter.
+ * This limits exposure in browser history, server logs, and referer headers.
+ */
 export function connectSSE(path: string, handlers: SSEHandlers): () => void {
-  const token = getAccessToken();
-  const url = `${API_URL}${path}${path.includes('?') ? '&' : '?'}token=${token}`;
-  const es = new EventSource(url);
+  let es: EventSource | null = null;
+  let closed = false;
 
-  for (const [event, handler] of Object.entries(handlers)) {
-    es.addEventListener(event, (e: MessageEvent) => {
-      try {
-        handler(JSON.parse(e.data));
-      } catch {
-        // ignore parse errors
+  // Obtain a short-lived SSE token from the backend, then open EventSource
+  (async () => {
+    try {
+      const { sseToken } = await api.post<{ sseToken: string }>('/api/v1/workshop/sse-token');
+      if (closed) return; // caller already called cleanup
+
+      const url = `${API_URL}${path}${path.includes('?') ? '&' : '?'}sse_token=${sseToken}`;
+      es = new EventSource(url);
+
+      for (const [event, handler] of Object.entries(handlers)) {
+        es.addEventListener(event, (e: MessageEvent) => {
+          try {
+            handler(JSON.parse(e.data));
+          } catch {
+            // ignore parse errors
+          }
+        });
       }
-    });
-  }
 
-  es.onerror = () => {
-    // EventSource auto-reconnects; we just log
-    logger.warn('SSE connection error, reconnecting...');
-  };
+      es.onerror = () => {
+        // EventSource auto-reconnects; we just log
+        logger.warn('SSE connection error, reconnecting...');
+      };
+    } catch (err) {
+      logger.warn('Failed to obtain SSE token', err);
+    }
+  })();
 
   // Return cleanup function
-  return () => es.close();
+  return () => {
+    closed = true;
+    es?.close();
+  };
 }
