@@ -125,10 +125,11 @@ if (!process.env.JEST_WORKER_ID && process.env.NODE_ENV !== 'test') {
       process.exit(0);
     });
     // Force exit after 10s if graceful shutdown stalls
-    setTimeout(() => {
+    const forceExitTimer = setTimeout(() => {
       console.error(JSON.stringify({ ts: new Date().toISOString(), level: 'error', message: 'Forced shutdown after timeout' }));
       process.exit(1);
-    }, 10_000).unref();
+    }, 10_000) as NodeJS.Timeout;
+    forceExitTimer.unref();
   };
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
