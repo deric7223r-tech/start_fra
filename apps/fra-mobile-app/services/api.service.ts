@@ -5,19 +5,22 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '@/constants/api';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('ApiService');
 
 interface ApiRequestOptions extends RequestInit {
   requiresAuth?: boolean;
   timeout?: number;
 }
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: Record<string, unknown>;
   };
   message?: string;
 }
@@ -49,7 +52,7 @@ class ApiService {
       this.accessToken = accessToken;
       this.refreshToken = refreshToken;
     } catch (error) {
-      console.error('Failed to load tokens:', error);
+      logger.error('Failed to load tokens:', error);
     }
   }
 
@@ -65,7 +68,7 @@ class ApiService {
         AsyncStorage.setItem('refreshToken', refreshToken),
       ]);
     } catch (error) {
-      console.error('Failed to save tokens:', error);
+      logger.error('Failed to save tokens:', error);
       throw error;
     }
   }
@@ -149,10 +152,10 @@ class ApiService {
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId);
 
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         return {
           success: false,
           error: {
@@ -166,7 +169,7 @@ class ApiService {
         success: false,
         error: {
           code: 'NETWORK_ERROR',
-          message: error.message || 'Network request failed',
+          message: error instanceof Error ? error.message : 'Network request failed',
         },
       };
     }
@@ -206,7 +209,7 @@ class ApiService {
       await this.clearTokens();
       return false;
     } catch (error) {
-      console.error('Token refresh failed:', error);
+      logger.error('Token refresh failed:', error);
       await this.clearTokens();
       return false;
     }
@@ -227,7 +230,7 @@ class ApiService {
    */
   async post<T>(
     endpoint: string,
-    data?: any,
+    data?: Record<string, unknown>,
     options?: ApiRequestOptions
   ): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, {
@@ -242,7 +245,7 @@ class ApiService {
    */
   async patch<T>(
     endpoint: string,
-    data?: any,
+    data?: Record<string, unknown>,
     options?: ApiRequestOptions
   ): Promise<ApiResponse<T>> {
     return this.makeRequest<T>(endpoint, {

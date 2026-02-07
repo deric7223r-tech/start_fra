@@ -79,8 +79,8 @@ export default function PaymentScreen() {
       }
 
       router.push('/confirmation');
-    } catch (error: any) {
-      const message = error?.message || '';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '';
       if (message.includes('TIMEOUT') || message.includes('timed out')) {
         Alert.alert('Request Timed Out', 'The payment request timed out. Please check your connection and try again.');
       } else if (message.includes('NETWORK') || message.includes('Network')) {

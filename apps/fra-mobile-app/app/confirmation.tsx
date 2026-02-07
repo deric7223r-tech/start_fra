@@ -5,8 +5,10 @@ import { useAssessment } from '@/contexts/AssessmentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckCircle2, Download, Share2, ChevronDown, ChevronUp, AlertTriangle, GraduationCap, BarChart3, FileCheck, AlertOctagon, ListChecks, DollarSign, Link2, Copy, Users } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import { createLogger } from '@/utils/logger';
 
 export default function ConfirmationScreen() {
+  const logger = createLogger('Confirmation');
   const router = useRouter();
   const { assessment } = useAssessment();
   const { organisation } = useAuth();
@@ -35,7 +37,7 @@ export default function ConfirmationScreen() {
         title: 'FRA Report',
       });
     } catch (error) {
-      console.error('Error sharing:', error);
+      logger.error('Error sharing:', error);
     }
   };
 
@@ -129,7 +131,7 @@ export default function ConfirmationScreen() {
                     title: 'Fraud Risk Awareness Training Access',
                   });
                 } catch (error) {
-                  console.error('Error sharing link:', error);
+                  logger.error('Error sharing link:', error);
                 }
               }}
               activeOpacity={0.8}

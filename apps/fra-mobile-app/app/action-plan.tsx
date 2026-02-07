@@ -31,7 +31,7 @@ export default function ActionPlanScreen() {
     { title: 'Enhanced payroll audit analytics', owner: 'HR Manager', timeline: '6-12 months' },
   ];
 
-  const renderActionCard = (action: any, index: number, priority: 'high' | 'medium' | 'low') => {
+  const renderActionCard = (action: { title: string; owner: string; timeline: string }, index: number, priority: 'high' | 'medium' | 'low') => {
     const priorityColor = priority === 'high' ? colors.govRed : priority === 'medium' ? colors.warningOrange : colors.successGreen;
     
     return (

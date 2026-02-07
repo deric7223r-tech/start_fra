@@ -1,9 +1,23 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useCallback, useEffect, useState } from 'react';
 import { authService, type User, type Organisation } from '@/services/auth.service';
-import type { KeyPass, EmployeeCount, OrganisationSize } from '@/types/assessment';
+import type { KeyPass, EmployeeCount, OrganisationSize, PackageType } from '@/types/assessment';
 import { apiService } from '@/services/api.service';
 import { API_CONFIG } from '@/constants/api';
+import { createLogger } from '@/utils/logger';
+import type { User as AuthUser, Organisation as AuthOrg } from '@/services/auth.service';
+
+// Response interfaces for API calls
+interface KeyPassUseResponse {
+  user: AuthUser;
+  organisation: AuthOrg;
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface KeyPassAllocateResponse {
+  codes: string[];
+}
 
 // Map backend user/org types to local types
 interface UserData extends User {
@@ -17,6 +31,7 @@ interface OrganisationData extends Organisation {
 }
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
+  const logger = createLogger('Auth');
   const [user, setUser] = useState<UserData | null>(null);
   const [organisation, setOrganisation] = useState<OrganisationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,12 +52,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (result.success && result.user && result.organisation) {
         setUser(result.user);
         setOrganisation(result.organisation as OrganisationData);
-        console.log('Session restored:', result.user.email);
+        logger.info('Session restored:', result.user.email);
       } else {
-        console.log('No valid session found');
+        logger.info('No valid session found');
       }
     } catch (error) {
-      console.error('Failed to restore session:', error);
+      logger.error('Failed to restore session:', error);
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +73,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       orgName: string
     ): Promise<{ success: boolean; error?: string }> => {
       try {
-        console.log('Signing up:', email);
+        logger.info('Signing up:', email);
 
         const result = await authService.signup({
           email,
@@ -70,7 +85,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         if (result.success && result.data) {
           setUser(result.data.user);
           setOrganisation(result.data.organisation as OrganisationData);
-          console.log('Signup successful');
+          logger.info('Signup successful');
           return { success: true };
         }
 
@@ -79,7 +94,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           error: result.error?.message || 'Failed to create account',
         };
       } catch (error) {
-        console.error('Signup error:', error);
+        logger.error('Signup error:', error);
         return { success: false, error: 'Failed to create account' };
       }
     },
@@ -92,14 +107,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const signIn = useCallback(
     async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        console.log('Signing in:', email);
+        logger.info('Signing in:', email);
 
         const result = await authService.login({ email, password });
 
         if (result.success && result.data) {
           setUser(result.data.user);
           setOrganisation(result.data.organisation as OrganisationData);
-          console.log('Login successful');
+          logger.info('Login successful');
           return { success: true };
         }
 
@@ -108,7 +123,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           error: result.error?.message || 'Invalid email or password',
         };
       } catch (error) {
-        console.error('Sign in error:', error);
+        logger.error('Sign in error:', error);
         return { success: false, error: 'Failed to sign in' };
       }
     },
@@ -121,9 +136,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const signInWithKeyPass = useCallback(
     async (email: string, keyPassCode: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        console.log('Signing in with key-pass:', keyPassCode);
+        logger.info('Signing in with key-pass:', keyPassCode);
 
-        const result = await apiService.post<any>(
+        const result = await apiService.post<KeyPassUseResponse>(
           API_CONFIG.ENDPOINTS.KEYPASSES.USE,
           { code: keyPassCode, email, name: email.split('@')[0] },
           { requiresAuth: false }
@@ -144,7 +159,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           error: result.error?.message || 'Invalid key-pass code',
         };
       } catch (error) {
-        console.error('Key-pass sign in error:', error);
+        logger.error('Key-pass sign in error:', error);
         return { success: false, error: 'Failed to validate key-pass' };
       }
     },
@@ -160,9 +175,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       setUser(null);
       setOrganisation(null);
       setKeyPasses([]);
-      console.log('User signed out');
+      logger.info('User signed out');
     } catch (error) {
-      console.error('Sign out error:', error);
+      logger.error('Sign out error:', error);
     }
   }, []);
 
@@ -177,12 +192,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         // Update local state immediately for better UX
         const updated: OrganisationData = { ...organisation, ...updates };
         setOrganisation(updated);
-        console.log('Organisation updated locally');
+        logger.info('Organisation updated locally');
 
         // TODO: Sync with backend
         // await apiService.patch(`/api/v1/organisations/${organisation.organisationId}`, updates);
       } catch (error) {
-        console.error('Failed to update organisation:', error);
+        logger.error('Failed to update organisation:', error);
       }
     },
     [organisation]
@@ -196,32 +211,32 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (!organisation) return { success: false, error: 'No organisation found' };
 
       try {
-        console.log('Allocating key-passes for package:', packageType);
+        logger.info('Allocating key-passes for package:', packageType);
 
         const allocation = employeeCount === '1-10' || employeeCount === '11-50' ? 100 : 250;
 
-        const result = await apiService.post<any>(
+        const result = await apiService.post<KeyPassAllocateResponse>(
           API_CONFIG.ENDPOINTS.KEYPASSES.ALLOCATE,
           { quantity: allocation, expiresInDays: 90 },
           { requiresAuth: true }
         );
 
         if (result.success && Array.isArray(result.data?.codes)) {
-          setKeyPasses(result.data.codes.map((code: string) => ({ code, status: 'unused' } as any)));
+          setKeyPasses(result.data.codes.map((code: string) => ({ code, status: 'unused' } as KeyPass)));
         } else {
           return { success: false, error: result.error?.message || 'Failed to allocate access codes' };
         }
 
         await updateOrganisation({
-          packageType: packageType as any,
+          packageType: packageType as PackageType,
           keyPassesAllocated: allocation,
           keyPassesUsed: 0,
         });
 
-        console.log(`Allocated ${allocation} key-passes`);
+        logger.info(`Allocated ${allocation} key-passes`);
         return { success: true };
       } catch (error) {
-        console.error('Failed to allocate key-passes:', error);
+        logger.error('Failed to allocate key-passes:', error);
         return { success: false, error: 'Failed to allocate access codes' };
       }
     },

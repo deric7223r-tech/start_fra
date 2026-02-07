@@ -6,6 +6,7 @@ import type { AssessmentData, AssessmentStatus, PackageType, PaymentStatus, Feed
 import { apiService } from '@/services/api.service';
 import { API_CONFIG } from '@/constants/api';
 import { debounce } from '@/utils/debounce';
+import { createLogger } from '@/utils/logger';
 
 const STORAGE_KEY = 'fra_assessment_draft';
 const SYNC_QUEUE_KEY = 'fra_sync_queue';
@@ -303,6 +304,7 @@ function calculateRiskScore(assessment: AssessmentData): RiskRegisterItem[] {
 }
 
 export const [AssessmentProvider, useAssessment] = createContextHook(() => {
+  const logger = createLogger('Assessment');
   const [assessment, setAssessment] = useState<AssessmentData>(createEmptyAssessment());
   const [isLoading, setIsLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
@@ -322,9 +324,9 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       return current;
     }
 
-    const response = await apiService.post<any>(
+    const response = await apiService.post<{ id: string }>(
       API_CONFIG.ENDPOINTS.ASSESSMENTS.CREATE,
-      { title: 'Fraud Risk Assessment', answers: current as any },
+      { title: 'Fraud Risk Assessment', answers: current as unknown as Record<string, unknown> },
       { requiresAuth: true }
     );
 
@@ -349,7 +351,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
 
       // If we just came back online, process sync queue
       if (wasOffline && isNowOnline) {
-        console.log('Network restored, processing sync queue');
+        logger.info('Network restored, processing sync queue');
         processSyncQueue();
       }
     });
@@ -370,11 +372,11 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
         const queue = JSON.parse(stored) as SyncQueueItem[];
         setSyncQueue(queue);
         if (queue.length > 0) {
-          console.log(`Loaded ${queue.length} pending sync items`);
+          logger.info(`Loaded ${queue.length} pending sync items`);
         }
       }
     } catch (error) {
-      console.error('Failed to load sync queue:', error);
+      logger.error('Failed to load sync queue:', error);
     }
   };
 
@@ -384,7 +386,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
       setSyncQueue(queue);
     } catch (error) {
-      console.error('Failed to save sync queue:', error);
+      logger.error('Failed to save sync queue:', error);
     }
   };
 
@@ -399,7 +401,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
 
     const newQueue = [...syncQueue, queueItem];
     await saveSyncQueue(newQueue);
-    console.log('Added to sync queue:', queueItem.id);
+    logger.info('Added to sync queue:', queueItem.id);
   };
 
   // Process sync queue
@@ -408,21 +410,21 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       return;
     }
 
-    console.log(`Processing ${syncQueue.length} queued sync items`);
+    logger.info(`Processing ${syncQueue.length} queued sync items`);
     const remainingQueue: SyncQueueItem[] = [];
 
     for (const item of syncQueue) {
       try {
         await syncToBackendImmediate(item.data);
-        console.log('Successfully synced queued item:', item.id);
+        logger.info('Successfully synced queued item:', item.id);
       } catch (error) {
-        console.error('Failed to sync queued item:', item.id, error);
+        logger.error('Failed to sync queued item:', { id: item.id, error });
 
         // Retry logic: max 3 retries
         if (item.retryCount < 3) {
           remainingQueue.push({ ...item, retryCount: item.retryCount + 1 });
         } else {
-          console.warn('Max retries reached for item:', item.id);
+          logger.warn('Max retries reached for item:', item.id);
         }
       }
     }
@@ -433,7 +435,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   // Sync to backend (immediate, no debounce)
   const syncToBackendImmediate = async (data: Partial<AssessmentData>) => {
     if (!apiService.isAuthenticated()) {
-      console.log('Not authenticated, skipping sync');
+      logger.debug('Not authenticated, skipping sync');
       return;
     }
 
@@ -444,7 +446,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
 
       const response = await apiService.patch(
         API_CONFIG.ENDPOINTS.ASSESSMENTS.UPDATE(target.id),
-        data,
+        data as unknown as Record<string, unknown>,
         { requiresAuth: true }
       );
 
@@ -454,16 +456,16 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
           lastSync: new Date(),
           errorMessage: undefined,
         });
-        console.log('Successfully synced to backend');
+        logger.info('Successfully synced to backend');
       } else {
         throw new Error(response.error?.message || 'Sync failed');
       }
-    } catch (error: any) {
-      console.error('Sync to backend failed:', error);
+    } catch (error: unknown) {
+      logger.error('Sync to backend failed:', error);
       setSyncStatus({
         state: 'error',
         lastSync: syncStatus.lastSync,
-        errorMessage: error.message || 'Failed to sync',
+        errorMessage: error instanceof Error ? error.message : 'Failed to sync',
       });
       throw error;
     }
@@ -473,14 +475,14 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   const debouncedSync = useCallback(
     debounce(async (data: Partial<AssessmentData>) => {
       if (!isOnline) {
-        console.log('Offline, adding to sync queue');
+        logger.info('Offline, adding to sync queue');
         await addToSyncQueue(data);
         setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
         return;
       }
 
       if (!apiService.isAuthenticated()) {
-        console.log('Not authenticated, skipping sync');
+        logger.debug('Not authenticated, skipping sync');
         return;
       }
 
@@ -500,7 +502,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored && stored !== 'undefined' && stored !== 'null' && stored.trim().length > 0) {
         if (!stored.startsWith('{') && !stored.startsWith('[')) {
-          console.warn('Invalid JSON format detected, clearing storage');
+          logger.warn('Invalid JSON format detected, clearing storage');
           await AsyncStorage.removeItem(STORAGE_KEY);
           setAssessment(createEmptyAssessment());
           return;
@@ -533,15 +535,15 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
             payment: { ...defaults.payment, ...parsed.payment },
           };
           setAssessment(merged);
-          console.log('Loaded draft assessment:', merged.id);
+          logger.info('Loaded draft assessment:', merged.id);
         } catch (parseError) {
-          console.error('Failed to parse assessment data:', parseError, 'Stored value:', stored.substring(0, 100));
+          logger.error('Failed to parse assessment data:', { parseError, storedPreview: stored.substring(0, 100) });
           await AsyncStorage.removeItem(STORAGE_KEY);
           setAssessment(createEmptyAssessment());
         }
       }
     } catch (error) {
-      console.error('Failed to load draft:', error);
+      logger.error('Failed to load draft:', error);
     } finally {
       setIsLoading(false);
     }
@@ -552,9 +554,9 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       const updated = { ...data, updatedAt: new Date().toISOString() };
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       setAssessment(updated);
-      console.log('Saved draft assessment');
+      logger.debug('Saved draft assessment');
     } catch (error) {
-      console.error('Failed to save draft:', error);
+      logger.error('Failed to save draft:', error);
     }
   }, []);
 
@@ -563,7 +565,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       const updated = { ...prev, ...updates, updatedAt: new Date().toISOString() };
 
       // Save to AsyncStorage immediately (offline-first)
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch(console.error);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch((err: unknown) => logger.error('Failed to persist assessment:', err));
 
       // Trigger debounced sync to backend
       debouncedSync(updates);
@@ -606,7 +608,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
           setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
         });
     } else {
-      addToSyncQueue({ status: 'submitted' as AssessmentStatus, riskRegister }).catch(console.error);
+      addToSyncQueue({ status: 'submitted' as AssessmentStatus, riskRegister }).catch((err: unknown) => logger.error('Failed to add submit to sync queue:', err));
       setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
     }
   }, [assessment, updateAssessment, isOnline]);
@@ -632,7 +634,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   }, [assessment.payment, updateAssessment]);
 
   const processPayment = useCallback(async (cardDetails: { number: string; expiry: string; cvc: string; name: string }) => {
-    console.log('Processing payment with card ending:', cardDetails.number.slice(-4));
+    logger.info('Processing payment with card ending:', cardDetails.number.slice(-4));
     const packageType = assessment.payment.packageType;
     if (!packageType) {
       throw new Error('No package selected');
@@ -646,7 +648,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
           : 'pkg_full';
 
     try {
-      const purchase = await apiService.post<any>(
+      const purchase = await apiService.post<{ purchaseId: string; paymentIntentId: string }>(
         API_CONFIG.ENDPOINTS.PURCHASES.CREATE,
         { packageId },
         { requiresAuth: true }
@@ -656,7 +658,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
         throw new Error(purchase.error?.message || 'Failed to create purchase');
       }
 
-      const confirmed = await apiService.post<any>(
+      const confirmed = await apiService.post<{ status: string }>(
         API_CONFIG.ENDPOINTS.PURCHASES.CONFIRM(purchase.data.purchaseId),
         { paymentIntentId: purchase.data.paymentIntentId },
         { requiresAuth: true }
@@ -697,7 +699,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       ...feedbackData,
     };
     updateAssessment({ feedback });
-    console.log('Feedback submitted:', feedback);
+    logger.info('Feedback submitted:', feedback);
   }, [assessment.id, updateAssessment]);
 
   return {

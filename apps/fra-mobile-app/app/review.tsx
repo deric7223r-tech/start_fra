@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
 import { ChevronRight, Building2, Target, AlertTriangle, ShoppingCart, Banknote, Users2, TrendingUp, Monitor, Heart, Shield, DollarSign, GraduationCap, BarChart3, FileCheck, AlertOctagon, ListChecks } from 'lucide-react-native';
 import colors from '@/constants/colors';
@@ -74,7 +74,7 @@ export default function ReviewScreen() {
               <TouchableOpacity
                 key={section.key}
                 style={styles.sectionCard}
-                onPress={() => router.push(section.route as any)}
+                onPress={() => router.push(section.route as Href)}
                 activeOpacity={0.7}
               >
                 <View style={styles.sectionIcon}>
@@ -111,7 +111,7 @@ export default function ReviewScreen() {
               <TouchableOpacity
                 key={section.key}
                 style={styles.sectionCard}
-                onPress={() => router.push(section.route as any)}
+                onPress={() => router.push(section.route as Href)}
                 activeOpacity={0.7}
               >
                 <View style={styles.sectionIcon}>

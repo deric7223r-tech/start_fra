@@ -6,6 +6,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiService } from './api.service';
 import { API_CONFIG } from '@/constants/api';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('AuthService');
 
 export interface SignupData {
   email: string;
@@ -44,15 +47,21 @@ export interface AuthResponse {
   refreshToken: string;
 }
 
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
 class AuthService {
   /**
    * Sign up a new user
    */
-  async signup(data: SignupData): Promise<{ success: boolean; data?: AuthResponse; error?: any }> {
+  async signup(data: SignupData): Promise<{ success: boolean; data?: AuthResponse; error?: ApiError }> {
     try {
       const response = await apiService.post<AuthResponse>(
         API_CONFIG.ENDPOINTS.AUTH.SIGNUP,
-        data
+        data as unknown as Record<string, unknown>
       );
 
       if (response.success && response.data) {
@@ -70,7 +79,7 @@ class AuthService {
 
       return { success: false, error: response.error };
     } catch (error) {
-      console.error('Signup error:', error);
+      logger.error('Signup error:', error);
       return {
         success: false,
         error: { code: 'SIGNUP_FAILED', message: 'Failed to create account' },
@@ -81,9 +90,9 @@ class AuthService {
   /**
    * Log in an existing user
    */
-  async login(data: LoginData): Promise<{ success: boolean; data?: AuthResponse; error?: any }> {
+  async login(data: LoginData): Promise<{ success: boolean; data?: AuthResponse; error?: ApiError }> {
     try {
-      const response = await apiService.post<AuthResponse>(API_CONFIG.ENDPOINTS.AUTH.LOGIN, data);
+      const response = await apiService.post<AuthResponse>(API_CONFIG.ENDPOINTS.AUTH.LOGIN, data as unknown as Record<string, unknown>);
 
       if (response.success && response.data) {
         // Save tokens
@@ -100,7 +109,7 @@ class AuthService {
 
       return { success: false, error: response.error };
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       return {
         success: false,
         error: { code: 'LOGIN_FAILED', message: 'Failed to log in' },
@@ -116,7 +125,7 @@ class AuthService {
       // Call logout endpoint (optional - JWT is stateless)
       await apiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, {}, { requiresAuth: true });
     } catch (error) {
-      console.error('Logout API call failed:', error);
+      logger.error('Logout API call failed:', error);
     } finally {
       // Always clear local data
       await apiService.clearTokens();
@@ -126,7 +135,7 @@ class AuthService {
   /**
    * Get current user from API
    */
-  async getCurrentUser(): Promise<{ success: boolean; data?: User; error?: any }> {
+  async getCurrentUser(): Promise<{ success: boolean; data?: User; error?: ApiError }> {
     try {
       const response = await apiService.get<User>(API_CONFIG.ENDPOINTS.AUTH.ME, {
         requiresAuth: true,
@@ -140,7 +149,7 @@ class AuthService {
 
       return { success: false, error: response.error };
     } catch (error) {
-      console.error('Get current user error:', error);
+      logger.error('Get current user error:', error);
       return {
         success: false,
         error: { code: 'FETCH_USER_FAILED', message: 'Failed to fetch user data' },
@@ -156,7 +165,7 @@ class AuthService {
       const userJson = await AsyncStorage.getItem('user');
       return userJson ? JSON.parse(userJson) : null;
     } catch (error) {
-      console.error('Failed to get cached user:', error);
+      logger.error('Failed to get cached user:', error);
       return null;
     }
   }
@@ -169,7 +178,7 @@ class AuthService {
       const orgJson = await AsyncStorage.getItem('organisation');
       return orgJson ? JSON.parse(orgJson) : null;
     } catch (error) {
-      console.error('Failed to get cached organisation:', error);
+      logger.error('Failed to get cached organisation:', error);
       return null;
     }
   }
@@ -203,7 +212,7 @@ class AuthService {
       await apiService.clearTokens();
       return { success: false };
     } catch (error) {
-      console.error('Failed to restore session:', error);
+      logger.error('Failed to restore session:', error);
       await apiService.clearTokens();
       return { success: false };
     }

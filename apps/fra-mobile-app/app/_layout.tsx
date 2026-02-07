@@ -3,13 +3,25 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AssessmentProvider } from "@/contexts/AssessmentContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 function RootLayoutNav() {
   return (
@@ -126,14 +138,6 @@ function RootLayoutNav() {
         options={{ title: "Action Plan" }}
       />
       <Stack.Screen
-        name="procurement-refactored"
-        options={{ title: "Procurement" }}
-      />
-      <Stack.Screen
-        name="risk-appetite-refactored"
-        options={{ title: "Risk Appetite" }}
-      />
-      <Stack.Screen
         name="auth/login"
         options={{ title: "Sign In", headerShown: false }}
       />
@@ -158,11 +162,13 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <AuthProvider>
-          <AssessmentProvider>
-            <RootLayoutNav />
-          </AssessmentProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <AssessmentProvider>
+              <RootLayoutNav />
+            </AssessmentProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </GestureHandlerRootView>
     </QueryClientProvider>
   );
