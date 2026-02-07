@@ -34,6 +34,8 @@ export default function KeyPassesTab({
           style={styles.actionButton}
           onPress={() => Alert.alert('Key-Passes', `You have ${remainingKeyPasses} key-passes available to distribute to employees`)}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Generate invite link"
         >
           <Key size={20} color={colors.govBlue} />
           <Text style={styles.actionButtonText}>Generate Invite Link</Text>
@@ -43,6 +45,8 @@ export default function KeyPassesTab({
           style={styles.actionButton}
           onPress={() => Alert.alert('Key-Pass Codes', 'List of available key-pass codes would be shown here')}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="View key-pass codes"
         >
           <FileText size={20} color={colors.govBlue} />
           <Text style={styles.actionButtonText}>View Key-Pass Codes</Text>

@@ -24,6 +24,8 @@ import { createLogger } from '../logger.js';
 
 const logger = createLogger('auth');
 
+const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
 // ── Auth helpers ────────────────────────────────────────────────
 
 async function checkAccountLockout(email: string): Promise<{ locked: boolean; remaining: number }> {
@@ -60,7 +62,7 @@ async function clearFailedLogins(email: string): Promise<void> {
 const auth = new Hono();
 
 auth.post('/auth/signup', async (c) => {
-  const limited = await rateLimit('auth:signup', { windowMs: 15 * 60 * 1000, max: 10 })(c);
+  const limited = await rateLimit('auth:signup', { windowMs: AUTH_RATE_LIMIT_WINDOW_MS, max: 10 })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = signupSchema.safeParse(await c.req.json().catch(() => null));
@@ -150,7 +152,7 @@ auth.post('/auth/signup', async (c) => {
 });
 
 auth.post('/auth/login', async (c) => {
-  const limited = await rateLimit('auth:login', { windowMs: 15 * 60 * 1000, max: 20 })(c);
+  const limited = await rateLimit('auth:login', { windowMs: AUTH_RATE_LIMIT_WINDOW_MS, max: 20 })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = loginSchema.safeParse(await c.req.json().catch(() => null));
@@ -317,7 +319,7 @@ auth.post('/auth/refresh', async (c) => {
 });
 
 auth.post('/auth/forgot-password', async (c) => {
-  const limited = await rateLimit('auth:forgot', { windowMs: 15 * 60 * 1000, max: 5 })(c);
+  const limited = await rateLimit('auth:forgot', { windowMs: AUTH_RATE_LIMIT_WINDOW_MS, max: 5 })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = forgotPasswordSchema.safeParse(await c.req.json().catch(() => null));
@@ -353,7 +355,7 @@ auth.post('/auth/forgot-password', async (c) => {
 });
 
 auth.post('/auth/reset-password', async (c) => {
-  const limited = await rateLimit('auth:reset', { windowMs: 15 * 60 * 1000, max: 5 })(c);
+  const limited = await rateLimit('auth:reset', { windowMs: AUTH_RATE_LIMIT_WINDOW_MS, max: 5 })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = resetPasswordSchema.safeParse(await c.req.json().catch(() => null));

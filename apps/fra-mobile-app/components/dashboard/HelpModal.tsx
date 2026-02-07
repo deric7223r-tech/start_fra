@@ -20,7 +20,7 @@ export default function HelpModal({ visible, onClose }: HelpModalProps) {
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>How to Read This Dashboard</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close help">
               <X size={24} color={colors.govGrey1} />
             </TouchableOpacity>
           </View>

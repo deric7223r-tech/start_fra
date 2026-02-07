@@ -38,7 +38,7 @@ export default function FilterModal({
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Filters</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close filters">
               <X size={24} color={colors.govGrey1} />
             </TouchableOpacity>
           </View>
@@ -51,6 +51,9 @@ export default function FilterModal({
                 style={[styles.filterOption, filterStatus === status && styles.filterOptionActive]}
                 onPress={() => setFilterStatus(status)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter by status: ${status === 'all' ? 'All' : status}`}
+                accessibilityState={{ selected: filterStatus === status }}
               >
                 <Text style={[styles.filterOptionText, filterStatus === status && styles.filterOptionTextActive]}>
                   {status === 'all' ? 'All' : status === 'in-progress' ? 'In Progress' : status === 'not-started' ? 'Not Started' : 'Completed'}
@@ -67,6 +70,9 @@ export default function FilterModal({
                 style={[styles.filterOption, filterDepartment === dept && styles.filterOptionActive]}
                 onPress={() => setFilterDepartment(dept)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter by department: ${dept === 'all' ? 'All' : dept}`}
+                accessibilityState={{ selected: filterDepartment === dept }}
               >
                 <Text style={[styles.filterOptionText, filterDepartment === dept && styles.filterOptionTextActive]}>
                   {dept === 'all' ? 'All Departments' : dept}
@@ -83,6 +89,9 @@ export default function FilterModal({
                 style={[styles.filterOption, filterRisk === risk && styles.filterOptionActive]}
                 onPress={() => setFilterRisk(risk)}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Filter by risk: ${risk === 'all' ? 'All' : risk}`}
+                accessibilityState={{ selected: filterRisk === risk }}
               >
                 <Text style={[styles.filterOptionText, filterRisk === risk && styles.filterOptionTextActive]}>
                   {risk === 'all' ? 'All Risks' : `${risk.charAt(0).toUpperCase() + risk.slice(1)} Risk`}
@@ -95,6 +104,8 @@ export default function FilterModal({
             style={styles.applyButton}
             onPress={onClose}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Apply filters"
           >
             <Text style={styles.applyButtonText}>Apply Filters</Text>
           </TouchableOpacity>

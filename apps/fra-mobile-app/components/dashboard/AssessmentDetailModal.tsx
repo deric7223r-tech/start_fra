@@ -26,7 +26,7 @@ export default function AssessmentDetailModal({
         <View style={[styles.modalContent, styles.assessmentModalContent]}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Assessment Details</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close assessment details">
               <X size={24} color={colors.govGrey1} />
             </TouchableOpacity>
           </View>
@@ -738,6 +738,8 @@ export default function AssessmentDetailModal({
                         style={styles.exportDetailButton}
                         onPress={() => Alert.alert('Export', 'Assessment details would be exported as PDF')}
                         activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Export assessment as PDF"
                       >
                         <Download size={18} color={colors.govBlue} />
                         <Text style={styles.exportDetailButtonText}>Export as PDF</Text>
@@ -746,6 +748,8 @@ export default function AssessmentDetailModal({
                         style={styles.closeDetailButton}
                         onPress={onClose}
                         activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Close"
                       >
                         <Text style={styles.closeDetailButtonText}>Close</Text>
                       </TouchableOpacity>
@@ -765,6 +769,8 @@ export default function AssessmentDetailModal({
                 style={styles.closeDetailButton}
                 onPress={onClose}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
               >
                 <Text style={styles.closeDetailButtonText}>Close</Text>
               </TouchableOpacity>
