@@ -64,7 +64,8 @@ async function refreshAccessToken(): Promise<boolean> {
 
     setTokens(json.data.accessToken, json.data.refreshToken);
     return true;
-  } catch {
+  } catch (err) {
+    logger.warn('Token refresh failed', err);
     clearTokens();
     return false;
   }
@@ -142,8 +143,8 @@ export function connectSSE(path: string, handlers: SSEHandlers): () => void {
         es.addEventListener(event, (e: MessageEvent) => {
           try {
             handler(JSON.parse(e.data));
-          } catch {
-            // ignore parse errors
+          } catch (parseErr) {
+            logger.warn('SSE JSON parse error', parseErr);
           }
         });
       }

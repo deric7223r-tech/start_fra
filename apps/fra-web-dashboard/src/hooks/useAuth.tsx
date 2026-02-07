@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { api, setTokens, clearTokens, hasStoredTokens } from '@/lib/api';
+import { logger } from '@/lib/logger';
 import { Profile, AppRole } from '@/types/workshop';
 
 export interface AuthUser {
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(mapProfile(data.profile));
       setRoles((data.workshopRoles ?? []) as AppRole[]);
     } catch (err) {
-      console.warn('[useAuth] Failed to hydrate session, clearing tokens', err);
+      logger.warn('Failed to hydrate session, clearing tokens', err);
       clearTokens();
       setUser(null);
       setProfile(null);
@@ -165,8 +166,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       await api.post('/api/v1/auth/logout', {});
-    } catch {
-      // ignore logout errors
+    } catch (err) {
+      logger.warn('Logout request failed (tokens cleared locally)', err);
     }
     clearTokens();
     setUser(null);

@@ -139,7 +139,7 @@ analytics.get('/reports/generate', async (c) => {
         latestActivity: latestUpdatedAt ?? null,
       },
       assessments: assessmentSummaries,
-      // TODO: Integrate with S3 to persist the report and provide a real download URL
+      // Report data is returned inline; S3 persistence can be added when needed
       downloadUrl: `/api/v1/reports/${reportId}.json`,
     },
   });
