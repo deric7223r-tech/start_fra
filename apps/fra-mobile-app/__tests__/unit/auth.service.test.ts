@@ -28,6 +28,7 @@ jest.mock('@/services/api.service', () => ({
     setTokens: jest.fn(),
     clearTokens: jest.fn(),
     isAuthenticated: jest.fn(),
+    getRefreshToken: jest.fn().mockReturnValue('mock-refresh-token'),
   },
 }));
 
@@ -215,7 +216,7 @@ describe('AuthService', () => {
 
       expect(apiService.post).toHaveBeenCalledWith(
         '/api/v1/auth/logout',
-        {},
+        { refreshToken: 'mock-refresh-token' },
         { requiresAuth: true },
       );
       expect(apiService.clearTokens).toHaveBeenCalled();

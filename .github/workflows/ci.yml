@@ -32,13 +32,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: TypeScript check all apps
-        run: |
-          cd apps/fra-backend && npx tsc --noEmit &
-          cd apps/fra-web-dashboard && npx tsc --noEmit &
-          cd apps/fra-budget-guide && npx tsc --noEmit &
-          cd apps/fra-mobile-app && npx tsc --noEmit &
-          wait
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
 
   test:
     name: Test
@@ -62,26 +60,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Test backend
-        run: cd apps/fra-backend/backend && npx jest --passWithNoTests --ci
-
-      - name: Test budget guide
-        run: cd apps/fra-budget-guide && npx jest --passWithNoTests --ci
-
-      - name: Test mobile app
-        run: cd apps/fra-mobile-app && npx jest --passWithNoTests --ci
-
-      - name: Test web dashboard
-        run: cd apps/fra-web-dashboard && npx vitest run
-
-      - name: Test shared package
-        run: cd packages/shared && npx vitest run
-
-      - name: Test types package
-        run: cd packages/types && npx vitest run
-
-      - name: Test ui-core package
-        run: cd packages/ui-core && npx vitest run
+      - name: Test
+        run: pnpm run test
 
   build:
     name: Build
