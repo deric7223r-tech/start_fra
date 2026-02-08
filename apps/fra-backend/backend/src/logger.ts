@@ -15,7 +15,7 @@ function log(level: LogLevel, context: string, message: string, data?: Record<st
     level,
     context,
     message,
-    ...data,
+    ...(data ? { data } : {}),
   };
 
   if (level === 'error') {

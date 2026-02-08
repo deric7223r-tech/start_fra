@@ -286,7 +286,7 @@ workshop.get('/sessions/code/:code', async (c) => {
 
   const pool = getDbPool();
   const res = await pool.query(
-    'SELECT * FROM workshop_sessions WHERE session_code = $1 LIMIT 1',
+    'SELECT id, title, is_active, created_at FROM workshop_sessions WHERE session_code = $1 LIMIT 1',
     [sanitisedCode]
   );
 

@@ -189,9 +189,12 @@ budgetGuide.post('/analytics', async (c) => {
 
   const body = await c.req.json().catch(() => null);
   const schema = z.object({
-    quizScores: z.record(z.string(), z.unknown()).optional(),
+    quizScores: z.record(z.string(), z.unknown()).refine(
+      (v) => JSON.stringify(v).length <= 100_000,
+      'quizScores payload too large (max 100KB)'
+    ).optional(),
     timeSpentSeconds: z.number().int().min(0).optional(),
-    screensVisited: z.array(z.string()).optional(),
+    screensVisited: z.array(z.string().max(200)).max(500).optional(),
     completed: z.boolean().optional(),
   });
   const parsed = schema.safeParse(body);

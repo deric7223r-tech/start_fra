@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
-import { api, setTokens, clearTokens, hasStoredTokens } from '@/lib/api';
+import { api, setTokens, clearTokens, hasStoredTokens, getRefreshToken } from '@/lib/api';
 import { createLogger } from '@/lib/logger';
 const logger = createLogger('Auth');
 import { Profile, AppRole } from '@/types/workshop';
@@ -175,7 +175,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      await api.post('/api/v1/auth/logout', {});
+      const refreshToken = getRefreshToken();
+      await api.post('/api/v1/auth/logout', { refreshToken });
     } catch (err: unknown) {
       logger.warn('Logout request failed (tokens cleared locally)', err);
     }
