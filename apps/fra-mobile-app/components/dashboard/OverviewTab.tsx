@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AlertCircle, CheckCircle, Clock, PenTool, ArrowRight, ChevronDown, ChevronUp, Key, Users, TrendingUp, FileText, Info, RefreshCw, AlertTriangle, Zap } from 'lucide-react-native';
 import colors from '@/constants/colors';
-import type { TabType, VisibleMetrics, EmployeeData } from './types';
-import { completionByDepartment, completionTrend } from './mockData';
+import type { TabType, VisibleMetrics, EmployeeData, CompletionByDepartment, CompletionTrend } from './types';
 
 interface RiskDistribution {
   high: number;
@@ -43,7 +42,44 @@ export default function OverviewTab({
 }: OverviewTabProps) {
   const router = useRouter();
 
-  const chartData = completionByDepartment.map(d => ({
+  const departmentData = useMemo((): CompletionByDepartment[] => {
+    const deptMap = new Map<string, { completed: number; total: number }>();
+    for (const e of filteredEmployees) {
+      const dept = e.department || 'General';
+      const entry = deptMap.get(dept) ?? { completed: 0, total: 0 };
+      entry.total++;
+      if (e.status === 'completed') entry.completed++;
+      deptMap.set(dept, entry);
+    }
+    return Array.from(deptMap.entries()).map(([department, { completed, total }]) => ({
+      department,
+      completed,
+      total,
+    }));
+  }, [filteredEmployees]);
+
+  const trendData = useMemo((): CompletionTrend[] => {
+    const completed = filteredEmployees
+      .filter((e) => e.completedAt)
+      .map((e) => new Date(e.completedAt!));
+    if (completed.length === 0) return [{ date: 'This week', completed: 0 }];
+    completed.sort((a, b) => a.getTime() - b.getTime());
+    const now = new Date();
+    const weeks: CompletionTrend[] = [];
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = new Date(now);
+      weekStart.setDate(weekStart.getDate() - i * 7);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      const count = completed.filter((d) => d >= weekStart && d < weekEnd).length;
+      weeks.push({ date: `Week ${4 - i}`, completed: count });
+    }
+    return weeks;
+  }, [filteredEmployees]);
+
+  const maxTrend = Math.max(...trendData.map((t) => t.completed), 1);
+
+  const chartData = departmentData.map((d) => ({
     department: d.department,
     rate: d.total > 0 ? (d.completed / d.total) * 100 : 0,
   }));
@@ -218,9 +254,9 @@ export default function OverviewTab({
           </View>
           <View style={styles.lineChartWrapper}>
             <View style={styles.yAxisLabels}>
-              <Text style={styles.yAxisLabel}>3</Text>
-              <Text style={styles.yAxisLabel}>2</Text>
-              <Text style={styles.yAxisLabel}>1</Text>
+              <Text style={styles.yAxisLabel}>{maxTrend}</Text>
+              <Text style={styles.yAxisLabel}>{Math.round(maxTrend * 2 / 3)}</Text>
+              <Text style={styles.yAxisLabel}>{Math.round(maxTrend / 3)}</Text>
               <Text style={styles.yAxisLabel}>0</Text>
             </View>
             <View style={styles.chartWithGrid}>
@@ -231,7 +267,7 @@ export default function OverviewTab({
                 <View style={styles.gridLine} />
               </View>
               <View style={styles.lineChartContainer}>
-                {completionTrend.map((item) => (
+                {trendData.map((item) => (
                   <TouchableOpacity
                     key={item.date}
                     style={styles.lineChartPoint}
@@ -239,7 +275,7 @@ export default function OverviewTab({
                     onPress={() => Alert.alert(item.date, `${item.completed} assessments completed`)}
                   >
                     <View style={styles.lineChartBar}>
-                      <View style={[styles.lineChartBarFill, { height: `${(item.completed / 3) * 100}%` }]} />
+                      <View style={[styles.lineChartBarFill, { height: `${(item.completed / maxTrend) * 100}%` }]} />
                     </View>
                     <Text style={styles.barValueLabel}>{item.completed}</Text>
                     <Text style={styles.lineChartLabel}>{item.date}</Text>
@@ -250,7 +286,7 @@ export default function OverviewTab({
           </View>
           <View style={styles.chartTargetLine}>
             <View style={styles.targetLineDash} />
-            <Text style={styles.targetLineText}>Target: 6 assessments</Text>
+            <Text style={styles.targetLineText}>Target: {filteredEmployees.length} assessments</Text>
           </View>
         </View>
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { createLogger } from '@/lib/logger';
@@ -12,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
 import {
   Table,
   TableBody,
@@ -30,6 +33,19 @@ import {
   ArrowLeft,
   RefreshCw,
 } from 'lucide-react';
+
+const statusChartConfig = {
+  completed: { label: 'Completed', color: 'hsl(var(--success))' },
+  inProgress: { label: 'In Progress', color: 'hsl(var(--primary))' },
+  notStarted: { label: 'Not Started', color: 'hsl(var(--muted-foreground))' },
+} satisfies ChartConfig;
+
+const riskChartConfig = {
+  high: { label: 'High', color: 'hsl(var(--destructive))' },
+  medium: { label: 'Medium', color: 'hsl(38 92% 50%)' },
+  low: { label: 'Low', color: 'hsl(var(--success))' },
+  none: { label: 'Not Assessed', color: 'hsl(var(--muted-foreground))' },
+} satisfies ChartConfig;
 
 interface EmployeeRow {
   userId: string;
@@ -110,6 +126,25 @@ export default function EmployerDashboard() {
     const highRisk = employees.filter(e => e.riskLevel === 'high').length;
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { total, completed, inProgress, highRisk, completionRate };
+  }, [employees]);
+
+  const statusChartData = useMemo(() => [
+    { name: 'completed', value: stats.completed, fill: 'var(--color-completed)' },
+    { name: 'inProgress', value: stats.inProgress, fill: 'var(--color-inProgress)' },
+    { name: 'notStarted', value: stats.total - stats.completed - stats.inProgress, fill: 'var(--color-notStarted)' },
+  ].filter(d => d.value > 0), [stats]);
+
+  const riskChartData = useMemo(() => {
+    const high = employees.filter(e => e.riskLevel === 'high').length;
+    const medium = employees.filter(e => e.riskLevel === 'medium').length;
+    const low = employees.filter(e => e.riskLevel === 'low').length;
+    const none = employees.filter(e => !e.riskLevel).length;
+    return [
+      { name: 'High', value: high, fill: 'var(--color-high)' },
+      { name: 'Medium', value: medium, fill: 'var(--color-medium)' },
+      { name: 'Low', value: low, fill: 'var(--color-low)' },
+      { name: 'Not Assessed', value: none, fill: 'var(--color-none)' },
+    ].filter(d => d.value > 0);
   }, [employees]);
 
   if (!user) return null;
@@ -241,11 +276,61 @@ export default function EmployerDashboard() {
               </Card>
             </motion.div>
 
+            {/* Charts */}
+            {stats.total > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="grid gap-4 sm:grid-cols-2 mb-8"
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Status Breakdown</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer config={statusChartConfig} className="mx-auto aspect-square max-h-[250px]">
+                      <PieChart>
+                        <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                        <Pie data={statusChartData} dataKey="value" nameKey="name" innerRadius={50} strokeWidth={2}>
+                          {statusChartData.map((entry) => (
+                            <Cell key={entry.name} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                      </PieChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Risk Distribution</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer config={riskChartConfig} className="aspect-square max-h-[250px] w-full">
+                      <BarChart data={riskChartData} layout="vertical" margin={{ left: 20 }}>
+                        <CartesianGrid horizontal={false} />
+                        <XAxis type="number" allowDecimals={false} />
+                        <YAxis type="category" dataKey="name" width={90} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                          {riskChartData.map((entry) => (
+                            <Cell key={entry.name} fill={entry.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
             {/* Filters */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+              transition={{ delay: 0.2 }}
               className="mb-6"
             >
               <Card>
@@ -291,7 +376,7 @@ export default function EmployerDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.3 }}
             >
               <Card>
                 <CardHeader>

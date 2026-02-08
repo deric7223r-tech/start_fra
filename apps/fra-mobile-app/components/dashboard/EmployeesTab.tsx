@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput 
 import { Users, Filter, ChevronRight, X, Search, Download, Grid, List, Eye } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import type { FilterStatus, SortOption, ViewMode, EmployeeData } from './types';
-import { mockAssessmentDetails } from './mockData';
 
 interface EmployeesTabProps {
   filteredEmployees: EmployeeData[];
@@ -170,7 +169,7 @@ export default function EmployeesTab({
       ) : (
         <View style={viewMode === 'grid' ? styles.employeeGrid : undefined}>
       {filteredEmployees.map((employee) => {
-        const hasDetails = employee.status === 'completed' && !!mockAssessmentDetails[employee.userId];
+        const hasDetails = employee.status === 'completed';
         return (
         <TouchableOpacity
           key={employee.userId}
