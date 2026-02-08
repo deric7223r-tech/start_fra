@@ -273,10 +273,10 @@ analytics.get('/analytics/employees', async (c) => {
     for (const u of orgUsers) {
       const userAssessments = orgAssessments.filter((a) => a.createdByUserId === u.id);
       if (userAssessments.length === 0) {
-        rows.push({ id: u.id, email: u.email, name: u.name, role: u.role, createdAt: u.createdAt, assessmentId: null, assessmentStatus: null, assessmentStarted: null, assessmentCompleted: null, answerCount: 0 });
+        rows.push({ id: u.id, email: u.email, name: u.name, role: u.role, department: u.department ?? null, createdAt: u.createdAt, assessmentId: null, assessmentStatus: null, assessmentStarted: null, assessmentCompleted: null, answerCount: 0 });
       } else {
         for (const a of userAssessments) {
-          rows.push({ id: u.id, email: u.email, name: u.name, role: u.role, createdAt: u.createdAt, assessmentId: a.id, assessmentStatus: a.status, assessmentStarted: a.createdAt, assessmentCompleted: a.submittedAt ?? null, answerCount: Object.keys(a.answers).length });
+          rows.push({ id: u.id, email: u.email, name: u.name, role: u.role, department: u.department ?? null, createdAt: u.createdAt, assessmentId: a.id, assessmentStatus: a.status, assessmentStarted: a.createdAt, assessmentCompleted: a.submittedAt ?? null, answerCount: Object.keys(a.answers).length });
         }
       }
     }
@@ -285,6 +285,7 @@ analytics.get('/analytics/employees', async (c) => {
   // Group rows by user to produce one record per employee
   const userMap = new Map<string, {
     userId: string; userName: string; email: string; role: string;
+    department: string | null;
     status: 'completed' | 'in-progress' | 'not-started';
     startedAt: string | null; completedAt: string | null;
     assessmentCount: number; latestAssessmentStatus: string | null;
@@ -310,6 +311,7 @@ analytics.get('/analytics/employees', async (c) => {
         userName: row.name,
         email: row.email,
         role: row.role,
+        department: row.department,
         status,
         startedAt: row.assessmentStarted,
         completedAt: row.assessmentCompleted,

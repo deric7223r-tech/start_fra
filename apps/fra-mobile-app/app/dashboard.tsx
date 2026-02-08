@@ -262,7 +262,12 @@ export default function DashboardScreen() {
           />
         )}
         {activeTab === 'signoff' && (
-          <SignOffTab organisationName={organisation.name} />
+          <SignOffTab
+            organisationName={organisation.name}
+            totalEmployees={filteredEmployees.length}
+            completedEmployees={employeesCompleted}
+            packageName={organisation.packageType === 'with-dashboard' ? 'Full (with Dashboard)' : 'Standard'}
+          />
         )}
       </ScrollView>
 

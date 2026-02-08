@@ -8,6 +8,7 @@ interface EmployeeApiRow {
   userName: string;
   email: string;
   role: string;
+  department: string | null;
   status: 'completed' | 'in-progress' | 'not-started';
   startedAt: string | null;
   completedAt: string | null;
@@ -37,7 +38,7 @@ export function useDashboardFilters() {
           userId: row.userId,
           userName: row.userName,
           email: row.email,
-          department: '',
+          department: row.department || 'General',
           status: row.status,
           startedAt: row.startedAt,
           completedAt: row.completedAt,

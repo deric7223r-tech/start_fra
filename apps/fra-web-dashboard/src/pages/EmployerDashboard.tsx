@@ -55,6 +55,7 @@ interface EmployeeRow {
   userName: string;
   email: string;
   role: string;
+  department: string | null;
   status: 'completed' | 'in-progress' | 'not-started';
   startedAt: string | null;
   completedAt: string | null;
@@ -444,6 +445,7 @@ export default function EmployerDashboard() {
                             <TableHead className="w-8"></TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead>Department</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Risk Level</TableHead>
                             <TableHead>Assessments</TableHead>
@@ -469,6 +471,7 @@ export default function EmployerDashboard() {
                                   </TableCell>
                                   <TableCell className="font-medium">{employee.userName}</TableCell>
                                   <TableCell className="text-muted-foreground">{employee.email}</TableCell>
+                                  <TableCell className="text-muted-foreground">{employee.department || '—'}</TableCell>
                                   <TableCell>
                                     <StatusBadge status={employee.status} />
                                   </TableCell>
@@ -488,7 +491,7 @@ export default function EmployerDashboard() {
                                 </TableRow>
                                 {isExpanded && (
                                   <TableRow>
-                                    <TableCell colSpan={7} className="bg-muted/30 p-0">
+                                    <TableCell colSpan={8} className="bg-muted/30 p-0">
                                       <EmployeeDetailPanel
                                         detail={employeeDetail}
                                         loading={detailLoading}

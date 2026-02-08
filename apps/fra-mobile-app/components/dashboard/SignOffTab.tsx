@@ -6,10 +6,16 @@ import colors from '@/constants/colors';
 
 interface SignOffTabProps {
   organisationName: string;
+  totalEmployees: number;
+  completedEmployees: number;
+  packageName?: string;
 }
 
-export default function SignOffTab({ organisationName }: SignOffTabProps) {
+export default function SignOffTab({ organisationName, totalEmployees, completedEmployees, packageName }: SignOffTabProps) {
   const router = useRouter();
+
+  const completionPct = totalEmployees > 0 ? Math.round((completedEmployees / totalEmployees) * 100) : 0;
+  const isFullyComplete = completedEmployees > 0 && completedEmployees === totalEmployees;
 
   return (
     <View style={styles.section}>
@@ -29,36 +35,45 @@ export default function SignOffTab({ organisationName }: SignOffTabProps) {
           </View>
           <View style={styles.signOffHeaderText}>
             <Text style={styles.signOffCardTitle}>Main Organisational FRA</Text>
-            <Text style={styles.signOffAssessmentId}>Assessment ID: FRA-2024-001</Text>
+            <Text style={styles.signOffAssessmentId}>{organisationName}</Text>
           </View>
         </View>
 
         <View style={styles.signOffProgressWrapper}>
-          <Text style={styles.signOffProgressTitle}>Completion Progress</Text>
+          <Text style={styles.signOffProgressTitle}>Employee Completion</Text>
           <View style={styles.signOffProgressBar}>
-            <View style={[styles.signOffProgressFill, { width: '75%' }]} />
+            <View style={[styles.signOffProgressFill, { width: `${completionPct}%` }]} />
           </View>
-          <Text style={styles.signOffProgressText}>3 of 4 steps complete</Text>
+          <Text style={styles.signOffProgressText}>
+            {completedEmployees} of {totalEmployees} employee{totalEmployees !== 1 ? 's' : ''} completed
+          </Text>
         </View>
 
         <View style={styles.statusBadgeContainer}>
-          <View style={[styles.statusBadgeLarge, styles.statusPending]}>
-            <Clock size={16} color={colors.white} />
-            <Text style={styles.statusBadgeText}>Pending Sign-Off</Text>
-          </View>
+          {isFullyComplete ? (
+            <View style={[styles.statusBadgeLarge, styles.statusReady]}>
+              <Clock size={16} color={colors.white} />
+              <Text style={styles.statusBadgeText}>Ready for Sign-Off</Text>
+            </View>
+          ) : (
+            <View style={[styles.statusBadgeLarge, styles.statusPending]}>
+              <Clock size={16} color={colors.white} />
+              <Text style={styles.statusBadgeText}>Pending Completion</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.signOffMetaInfo}>
           <View style={styles.signOffMetaRow}>
-            <Text style={styles.signOffMetaLabel}>Created:</Text>
-            <Text style={styles.signOffMetaValue}>{new Date().toLocaleDateString('en-GB')}</Text>
+            <Text style={styles.signOffMetaLabel}>Completion Rate:</Text>
+            <Text style={styles.signOffMetaValue}>{completionPct}%</Text>
           </View>
           <View style={styles.signOffMetaRow}>
             <Text style={styles.signOffMetaLabel}>Package:</Text>
-            <Text style={styles.signOffMetaValue}>All Inclusive (with Dashboard)</Text>
+            <Text style={styles.signOffMetaValue}>{packageName || 'Full'}</Text>
           </View>
           <View style={styles.signOffMetaRow}>
-            <Text style={styles.signOffMetaLabel}>Awaiting Signature From:</Text>
+            <Text style={styles.signOffMetaLabel}>Organisation:</Text>
             <Text style={[styles.signOffMetaValue, { fontWeight: '600' as const }]}>{organisationName}</Text>
           </View>
         </View>
@@ -192,6 +207,9 @@ const styles = StyleSheet.create({
   },
   statusPending: {
     backgroundColor: colors.warningOrange,
+  },
+  statusReady: {
+    backgroundColor: colors.govGreen,
   },
   statusBadgeText: {
     fontSize: 14,

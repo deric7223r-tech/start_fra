@@ -4,7 +4,7 @@ import type { User, DbUserRow, EmployeeDashboardRow, DbEmployeeDashboardRow } fr
 export async function dbGetUserByEmail(email: string): Promise<User | null> {
   const pool = getDbPool();
   const res = await pool.query<DbUserRow>(
-    'select id, email, name, password_hash, role, organisation_id, created_at from public.users where email = $1 limit 1',
+    'select id, email, name, password_hash, role, organisation_id, department, created_at from public.users where email = $1 limit 1',
     [email.toLowerCase()]
   );
   const row = res.rows[0];
@@ -16,6 +16,7 @@ export async function dbGetUserByEmail(email: string): Promise<User | null> {
     passwordHash: row.password_hash,
     role: row.role,
     organisationId: row.organisation_id,
+    department: row.department ?? undefined,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -23,7 +24,7 @@ export async function dbGetUserByEmail(email: string): Promise<User | null> {
 export async function dbGetUserById(id: string): Promise<User | null> {
   const pool = getDbPool();
   const res = await pool.query<DbUserRow>(
-    'select id, email, name, password_hash, role, organisation_id, created_at from public.users where id = $1 limit 1',
+    'select id, email, name, password_hash, role, organisation_id, department, created_at from public.users where id = $1 limit 1',
     [id]
   );
   const row = res.rows[0];
@@ -35,6 +36,7 @@ export async function dbGetUserById(id: string): Promise<User | null> {
     passwordHash: row.password_hash,
     role: row.role,
     organisationId: row.organisation_id,
+    department: row.department ?? undefined,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -42,7 +44,7 @@ export async function dbGetUserById(id: string): Promise<User | null> {
 export async function dbInsertUser(user: User): Promise<void> {
   const pool = getDbPool();
   await pool.query(
-    'insert into public.users (id, email, name, password_hash, role, organisation_id, created_at) values ($1,$2,$3,$4,$5,$6,$7)',
+    'insert into public.users (id, email, name, password_hash, role, organisation_id, department, created_at) values ($1,$2,$3,$4,$5,$6,$7,$8)',
     [
       user.id,
       user.email.toLowerCase(),
@@ -50,6 +52,7 @@ export async function dbInsertUser(user: User): Promise<void> {
       user.passwordHash,
       user.role,
       user.organisationId,
+      user.department ?? null,
       user.createdAt,
     ]
   );
@@ -63,7 +66,7 @@ export async function dbUpdateUserPasswordHash(userId: string, passwordHash: str
 export async function dbListUsersByOrganisation(organisationId: string): Promise<User[]> {
   const pool = getDbPool();
   const res = await pool.query<DbUserRow>(
-    'select id, email, name, password_hash, role, organisation_id, created_at from public.users where organisation_id = $1 order by created_at desc',
+    'select id, email, name, password_hash, role, organisation_id, department, created_at from public.users where organisation_id = $1 order by created_at desc',
     [organisationId]
   );
   return res.rows.map((row) => ({
@@ -73,6 +76,7 @@ export async function dbListUsersByOrganisation(organisationId: string): Promise
     passwordHash: row.password_hash,
     role: row.role,
     organisationId: row.organisation_id,
+    department: row.department ?? undefined,
     createdAt: new Date(row.created_at).toISOString(),
   }));
 }
@@ -80,7 +84,7 @@ export async function dbListUsersByOrganisation(organisationId: string): Promise
 export async function dbGetEmployeeDashboardData(organisationId: string): Promise<EmployeeDashboardRow[]> {
   const pool = getDbPool();
   const res = await pool.query<DbEmployeeDashboardRow>(
-    `select u.id, u.email, u.name, u.role, u.organisation_id, u.created_at,
+    `select u.id, u.email, u.name, u.role, u.organisation_id, u.department, u.created_at,
             a.id as assessment_id, a.status as assessment_status,
             a.created_at as assessment_started, a.submitted_at as assessment_completed,
             coalesce((select count(*)::int from jsonb_object_keys(coalesce(a.answers, '{}'::jsonb))), 0) as answer_count
@@ -95,6 +99,7 @@ export async function dbGetEmployeeDashboardData(organisationId: string): Promis
     email: row.email,
     name: row.name,
     role: row.role,
+    department: row.department,
     createdAt: new Date(row.created_at).toISOString(),
     assessmentId: row.assessment_id,
     assessmentStatus: row.assessment_status,

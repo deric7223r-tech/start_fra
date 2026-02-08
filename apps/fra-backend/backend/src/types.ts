@@ -14,6 +14,7 @@ export type User = {
   passwordHash: string;
   role: Role;
   organisationId: string;
+  department?: string;
   createdAt: string;
 };
 
@@ -105,6 +106,7 @@ export type DbUserRow = {
   password_hash: string;
   role: Role;
   organisation_id: string;
+  department: string | null;
   created_at: string;
 };
 
@@ -124,6 +126,7 @@ export type DbEmployeeDashboardRow = {
   name: string;
   role: Role;
   organisation_id: string;
+  department: string | null;
   created_at: string;
   assessment_id: string | null;
   assessment_status: AssessmentStatus | null;
@@ -137,6 +140,7 @@ export interface EmployeeDashboardRow {
   email: string;
   name: string;
   role: Role;
+  department: string | null;
   createdAt: string;
   assessmentId: string | null;
   assessmentStatus: AssessmentStatus | null;
