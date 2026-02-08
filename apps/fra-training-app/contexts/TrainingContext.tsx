@@ -43,85 +43,82 @@ export const [TrainingProvider, useTraining] = createContextHook(() => {
     }
   };
 
-  const persistProgress = async (updated: TrainingProgress) => {
-    setProgress(updated);
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (error: unknown) {
-      logger.error('Failed to save training progress', error);
-    }
+  const persistProgress = async (updater: (prev: TrainingProgress) => TrainingProgress) => {
+    return new Promise<void>((resolve) => {
+      setProgress((prev) => {
+        const updated = updater(prev);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch((error: unknown) => {
+          logger.error('Failed to save training progress', error);
+        });
+        resolve();
+        return updated;
+      });
+    });
   };
 
   const completeSection = useCallback(
     async (sectionId: number) => {
-      if (progress.completedSections.includes(sectionId)) return;
-      const updated: TrainingProgress = {
-        ...progress,
-        completedSections: [...progress.completedSections, sectionId],
-      };
-      await persistProgress(updated);
+      await persistProgress((prev) => {
+        if (prev.completedSections.includes(sectionId)) return prev;
+        return { ...prev, completedSections: [...prev.completedSections, sectionId] };
+      });
     },
-    [progress]
+    []
   );
 
   const saveQuizScore = useCallback(
     async (sectionId: number, score: number) => {
-      const updated: TrainingProgress = {
-        ...progress,
-        quizScores: { ...progress.quizScores, [sectionId]: score },
-      };
-      await persistProgress(updated);
+      await persistProgress((prev) => ({
+        ...prev,
+        quizScores: { ...prev.quizScores, [sectionId]: score },
+      }));
     },
-    [progress]
+    []
   );
 
   const saveScenarioChoice = useCallback(
     async (stepId: string, choiceId: string) => {
-      const updated: TrainingProgress = {
-        ...progress,
-        scenarioChoices: { ...progress.scenarioChoices, [stepId]: choiceId },
-      };
-      await persistProgress(updated);
+      await persistProgress((prev) => ({
+        ...prev,
+        scenarioChoices: { ...prev.scenarioChoices, [stepId]: choiceId },
+      }));
     },
-    [progress]
+    []
   );
 
   const saveActionPlan = useCallback(
     async (commitments: { immediate: string[]; thirtyDays: string[]; ninetyDays: string[] }) => {
-      const updated: TrainingProgress = {
-        ...progress,
+      await persistProgress((prev) => ({
+        ...prev,
         actionPlanCommitments: commitments,
-      };
-      await persistProgress(updated);
+      }));
     },
-    [progress]
+    []
   );
 
   const setCurrentSection = useCallback(
     async (sectionId: number) => {
-      const updated: TrainingProgress = {
-        ...progress,
+      await persistProgress((prev) => ({
+        ...prev,
         currentSection: sectionId,
-      };
-      await persistProgress(updated);
+      }));
     },
-    [progress]
+    []
   );
 
   const completeCourse = useCallback(
     async (certificateNumber: string) => {
-      const updated: TrainingProgress = {
-        ...progress,
+      await persistProgress((prev) => ({
+        ...prev,
         completedAt: new Date().toISOString(),
         certificateNumber,
-      };
-      await persistProgress(updated);
+      }));
     },
-    [progress]
+    []
   );
 
   const resetProgress = useCallback(async () => {
-    await persistProgress(defaultProgress);
+    await persistProgress(() => defaultProgress);
   }, []);
 
   const isComplete = useMemo(

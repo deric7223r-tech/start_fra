@@ -102,7 +102,7 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
 
     const newQueue = [...syncQueue, item];
     await saveSyncQueue(newQueue);
-    setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
+    setSyncStatus((prev) => ({ state: 'pending', lastSync: prev.lastSync }));
   };
 
   const processSyncQueue = async () => {
@@ -110,7 +110,7 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
       return;
     }
 
-    setSyncStatus({ state: 'syncing', lastSync: syncStatus.lastSync });
+    setSyncStatus((prev) => ({ state: 'syncing', lastSync: prev.lastSync }));
     const failedItems: SyncQueueItem[] = [];
 
     for (const item of syncQueue) {
@@ -139,11 +139,11 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
     if (failedItems.length === 0) {
       setSyncStatus({ state: 'synced', lastSync: new Date() });
     } else {
-      setSyncStatus({
+      setSyncStatus((prev) => ({
         state: 'error',
-        lastSync: syncStatus.lastSync,
+        lastSync: prev.lastSync,
         errorMessage: `${failedItems.length} items failed to sync`,
-      });
+      }));
     }
   };
 
@@ -168,7 +168,7 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
         return;
       }
 
-      setSyncStatus({ state: 'syncing', lastSync: syncStatus.lastSync });
+      setSyncStatus((prev) => ({ state: 'syncing', lastSync: prev.lastSync }));
 
       try {
         const result = await apiService.patch(
@@ -185,18 +185,18 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
         if (result.success) {
           setSyncStatus({ state: 'synced', lastSync: new Date() });
         } else {
-          setSyncStatus({
+          setSyncStatus((prev) => ({
             state: 'error',
-            lastSync: syncStatus.lastSync,
+            lastSync: prev.lastSync,
             errorMessage: result.error?.message,
-          });
+          }));
         }
       } catch {
-        setSyncStatus({
+        setSyncStatus((prev) => ({
           state: 'error',
-          lastSync: syncStatus.lastSync,
+          lastSync: prev.lastSync,
           errorMessage: 'Network error',
-        });
+        }));
       }
     }, SYNC_DEBOUNCE_MS);
   }, [isOnline, app.selectedRoles, app.completedChannels, app.watchItems, app.contactDetails]);

@@ -141,8 +141,16 @@ export function connectSSE(path: string, handlers: SSEHandlers): () => void {
       const url = `${API_URL}${path}${path.includes('?') ? '&' : '?'}sse_token=${sseToken}`;
       es = new EventSource(url);
 
+      // If cleanup was called while we were creating the EventSource, close immediately
+      if (closed) {
+        es.close();
+        es = null;
+        return;
+      }
+
       for (const [event, handler] of Object.entries(handlers)) {
         es.addEventListener(event, (e: MessageEvent) => {
+          if (closed) return;
           try {
             handler(JSON.parse(e.data));
           } catch (parseErr) {
@@ -152,11 +160,14 @@ export function connectSSE(path: string, handlers: SSEHandlers): () => void {
       }
 
       es.onerror = () => {
+        if (closed) return;
         // EventSource auto-reconnects; we just log
         logger.warn('SSE connection error, reconnecting...');
       };
     } catch (err: unknown) {
-      logger.warn('Failed to obtain SSE token', err);
+      if (!closed) {
+        logger.warn('Failed to obtain SSE token', err);
+      }
     }
   })();
 
