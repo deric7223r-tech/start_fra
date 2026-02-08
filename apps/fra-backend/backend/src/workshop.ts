@@ -410,6 +410,23 @@ workshop.get('/sessions/:id/participants', async (c) => {
   if (!hasDatabase()) return c.json({ success: true, data: { count: 0 } });
 
   const pool = getDbPool();
+
+  // Verify the user is the facilitator or a session participant
+  const sessionCheck = await pool.query(
+    'SELECT facilitator_id FROM workshop_sessions WHERE id = $1',
+    [id]
+  );
+  if (!sessionCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  if (sessionCheck.rows[0].facilitator_id !== auth.userId) {
+    const partCheck = await pool.query(
+      'SELECT 1 FROM session_participants WHERE session_id = $1 AND user_id = $2 LIMIT 1',
+      [id, auth.userId]
+    );
+    if (!partCheck.rows[0]) {
+      return jsonError(c, 403, 'FORBIDDEN', 'Not a member of this session');
+    }
+  }
+
   const res = await pool.query(
     'SELECT COUNT(*)::int AS count FROM session_participants WHERE session_id = $1',
     [id]
@@ -809,6 +826,25 @@ workshop.post('/questions/:questionId/upvote', async (c) => {
   const pool = getDbPool();
   const questionId = requireUUID(c, 'questionId');
   if (questionId instanceof Response) return questionId;
+
+  // Verify the user belongs to the session this question is in
+  const qSession = await pool.query(
+    `SELECT q.session_id, ws.facilitator_id
+     FROM questions q JOIN workshop_sessions ws ON ws.id = q.session_id
+     WHERE q.id = $1`,
+    [questionId]
+  );
+  if (!qSession.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Question not found');
+  if (qSession.rows[0].facilitator_id !== auth.userId) {
+    const partCheck = await pool.query(
+      'SELECT 1 FROM session_participants WHERE session_id = $1 AND user_id = $2 LIMIT 1',
+      [qSession.rows[0].session_id, auth.userId]
+    );
+    if (!partCheck.rows[0]) {
+      return jsonError(c, 403, 'FORBIDDEN', 'Not a member of this session');
+    }
+  }
+
   const client = await pool.connect();
 
   try {
@@ -1023,6 +1059,25 @@ workshop.get('/sessions/:sessionId/events', async (c) => {
 
   const sessionId = requireUUID(c, 'sessionId');
   if (sessionId instanceof Response) return sessionId;
+
+  // Verify the user is the facilitator or a session participant
+  if (hasDatabase()) {
+    const pool = getDbPool();
+    const sessionCheck = await pool.query(
+      'SELECT facilitator_id FROM workshop_sessions WHERE id = $1',
+      [sessionId]
+    );
+    if (!sessionCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+    if (sessionCheck.rows[0].facilitator_id !== auth.userId) {
+      const partCheck = await pool.query(
+        'SELECT 1 FROM session_participants WHERE session_id = $1 AND user_id = $2 LIMIT 1',
+        [sessionId, auth.userId]
+      );
+      if (!partCheck.rows[0]) {
+        return jsonError(c, 403, 'FORBIDDEN', 'Not a member of this session');
+      }
+    }
+  }
 
   return streamSSE(c, async (stream) => {
     const clientId = crypto.randomUUID();

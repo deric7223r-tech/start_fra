@@ -88,6 +88,9 @@ s3Routes.post('/uploads/promote', async (c) => {
 
   const { sourceKey, filename } = parsed.data;
 
+  if (sourceKey.includes('..') || sourceKey.includes('\0')) {
+    return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid source key');
+  }
   const allowedSourcePrefix = `${s3UploadPrefix}/${auth.organisationId}/`;
   if (!sourceKey.startsWith(allowedSourcePrefix)) {
     return jsonError(c, 403, 'FORBIDDEN', 'Not allowed to promote this object');
@@ -136,6 +139,9 @@ s3Routes.post('/downloads/presign', async (c) => {
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid download payload');
 
   const { key } = parsed.data;
+  if (key.includes('..') || key.includes('\0')) {
+    return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid key');
+  }
   const allowedPrefix = `${s3DownloadPrefix}/${auth.organisationId}/`;
   if (!key.startsWith(allowedPrefix)) {
     return jsonError(c, 403, 'FORBIDDEN', 'Not allowed to access this object');
