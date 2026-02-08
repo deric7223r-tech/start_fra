@@ -62,7 +62,7 @@ const App = () => (
                 <Route path="/package/enterprise" element={<PackageEnterprise />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/facilitator" element={<ProtectedRoute requiredRole="facilitator"><Facilitator /></ProtectedRoute>} />
-                <Route path="/employer" element={<ProtectedRoute><EmployerDashboard /></ProtectedRoute>} />
+                <Route path="/employer" element={<ProtectedRoute requiredUserRole={['employer', 'admin']}><EmployerDashboard /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
