@@ -349,6 +349,9 @@ workshop.patch('/sessions/:id', async (c) => {
 });
 
 workshop.post('/sessions/:id/end', async (c) => {
+  const limited = await rateLimit('workshop:sessions', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -621,6 +624,9 @@ workshop.get('/sessions/:sessionId/polls/active', async (c) => {
 });
 
 workshop.post('/sessions/:sessionId/polls', async (c) => {
+  const limited = await rateLimit('workshop:polls', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
