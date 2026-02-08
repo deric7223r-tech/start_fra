@@ -186,6 +186,13 @@ keypasses.post('/keypasses/use', async (c) => {
 
   if (kp.status !== 'available') return jsonError(c, 400, 'NOT_AVAILABLE', 'Keypass is not available');
 
+  // In-memory path: claim immediately to prevent TOCTOU race across async gaps
+  // (bcrypt.hash below yields the event loop, allowing concurrent requests to pass the check)
+  if (!hasDatabase()) {
+    kp.status = 'used';
+    kp.usedAt = now;
+  }
+
   if (nowMs > expiresAt) {
     // Within grace period — allow but log warning
     logger.warn('Keypass used during grace period', { code, expiresAt: kp.expiresAt });
@@ -221,10 +228,6 @@ keypasses.post('/keypasses/use', async (c) => {
   if (hasDatabase()) {
     const claimed = await dbClaimKeypass(code, now, user.id);
     if (!claimed) return jsonError(c, 409, 'ALREADY_USED', 'Keypass has already been used');
-  } else {
-    if (kp.status !== 'available') return jsonError(c, 409, 'ALREADY_USED', 'Keypass has already been used');
-    kp.status = 'used';
-    kp.usedAt = now;
   }
 
   const { accessToken, refreshToken } = issueTokens(user);
