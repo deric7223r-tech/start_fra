@@ -130,7 +130,18 @@ export class ApiService {
         }
       }
 
-      const data: ApiResponse<T> = await response.json();
+      let data: ApiResponse<T>;
+      try {
+        data = await response.json();
+      } catch {
+        return {
+          success: false,
+          error: {
+            code: 'PARSE_ERROR',
+            message: `Request failed with status ${response.status} (non-JSON response)`,
+          },
+        };
+      }
 
       if (!response.ok) {
         return {
