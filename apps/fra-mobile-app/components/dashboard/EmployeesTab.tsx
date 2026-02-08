@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, Share } from 'react-native';
 import { Users, Filter, ChevronRight, X, Search, Download, Grid, List, Eye } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import type { FilterStatus, SortOption, ViewMode, EmployeeData } from './types';
@@ -43,6 +43,27 @@ export default function EmployeesTab({
   setShowAssessmentDetails,
   clearAllFilters,
 }: EmployeesTabProps) {
+  const handleExport = useCallback(async () => {
+    if (filteredEmployees.length === 0) {
+      Alert.alert('No Data', 'There are no employees to export with the current filters.');
+      return;
+    }
+    const header = 'Name,Email,Department,Status,Risk Level,Started,Completed';
+    const rows = filteredEmployees.map(e =>
+      [
+        `"${e.userName}"`,
+        `"${e.email}"`,
+        `"${e.department}"`,
+        e.status,
+        e.overallRiskLevel ?? 'N/A',
+        e.startedAt ?? '',
+        e.completedAt ?? '',
+      ].join(',')
+    );
+    const csv = [header, ...rows].join('\n');
+    await Share.share({ message: csv, title: 'Employee Assessment Data' });
+  }, [filteredEmployees]);
+
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
@@ -59,7 +80,7 @@ export default function EmployeesTab({
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.iconButton}
-            onPress={() => Alert.alert('Export', 'Export functionality would be implemented here')}
+            onPress={handleExport}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Export employee data"
