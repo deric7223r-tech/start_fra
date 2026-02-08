@@ -64,7 +64,7 @@ export default function ResourcesScreen() {
           const Icon = resource.icon;
 
           return (
-            <View key={index} style={styles.section}>
+            <View key={resource.title} style={styles.section}>
               <View style={styles.sectionHeader}>
                 <View style={styles.sectionIconCircle}>
                   <Icon color={colors.primary} size={24} />

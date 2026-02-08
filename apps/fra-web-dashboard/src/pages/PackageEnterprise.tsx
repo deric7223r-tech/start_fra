@@ -240,8 +240,8 @@ export default function PackageEnterprise() {
                       'API access for GRC tool integration',
                       'Priority support with dedicated onboarding',
                       'Board-ready compliance reports for GovS-013 & ECCTA',
-                    ].map((item, index) => (
-                      <li key={index} className="flex items-start gap-3">
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-3">
                         <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
                         <span className="text-sm">{item}</span>
                       </li>

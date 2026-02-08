@@ -65,12 +65,12 @@ export default function WhistleblowerScreen() {
       </View>
 
       <View style={styles.sectionsContainer}>
-        {protections.map((section, index) => (
-          <View key={index} style={styles.sectionCard}>
+        {protections.map((section) => (
+          <View key={section.title} style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>{section.title}</Text>
             <View style={styles.itemsContainer}>
-              {section.items.map((item, itemIndex) => (
-                <View key={itemIndex} style={styles.item}>
+              {section.items.map((item) => (
+                <View key={item} style={styles.item}>
                   <View style={styles.itemBullet} />
                   <Text style={styles.itemText}>{item}</Text>
                 </View>

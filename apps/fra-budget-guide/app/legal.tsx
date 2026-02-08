@@ -108,8 +108,8 @@ export default function LegalScreen() {
 
               {isExpanded && (
                 <View style={styles.cardDetails}>
-                  {block.details.map((detail, index) => (
-                    <Text key={index} style={styles.detailText}>
+                  {block.details.map((detail) => (
+                    <Text key={detail} style={styles.detailText}>
                       {detail}
                     </Text>
                   ))}

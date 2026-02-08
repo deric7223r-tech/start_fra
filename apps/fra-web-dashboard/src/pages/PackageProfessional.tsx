@@ -241,8 +241,8 @@ export default function PackageProfessional() {
                       'Email support included',
                       'Demonstrates "reasonable procedures" under ECCTA 2023',
                       'Ideal for organisations with compliance obligations',
-                    ].map((item, index) => (
-                      <li key={index} className="flex items-start gap-3">
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-3">
                         <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
                         <span className="text-sm">{item}</span>
                       </li>

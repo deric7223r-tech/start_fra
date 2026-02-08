@@ -120,8 +120,8 @@ export default function PackageEnterpriseScreen() {
             'Staff awareness training with certificates',
             '50 employee key-passes (upgraded to unlimited)',
             'Quarterly reassessment and email support',
-          ].map((item, index) => (
-            <View key={index} style={styles.starterItem}>
+          ].map((item) => (
+            <View key={item} style={styles.starterItem}>
               <CheckCircle size={16} color={colors.primary} />
               <Text style={styles.starterItemText}>{item}</Text>
             </View>

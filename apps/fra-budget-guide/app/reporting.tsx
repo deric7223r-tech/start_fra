@@ -64,7 +64,7 @@ export default function ReportingScreen() {
           const isEmpty = !contactValue;
 
           return (
-            <View key={index} style={styles.contactCard}>
+            <View key={contact.contactKey} style={styles.contactCard}>
               <View style={styles.contactHeader}>
                 <View style={styles.contactIconCircle}>
                   <Icon color={colors.primary} size={24} />

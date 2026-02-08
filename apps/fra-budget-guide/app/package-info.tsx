@@ -96,8 +96,8 @@ export default function PackageInfoScreen() {
             'Professional PDF health check report',
             'ECCTA 2023 compliance snapshot',
             'Risk register with priority bands',
-          ].map((item, index) => (
-            <View key={index} style={styles.starterItem}>
+          ].map((item) => (
+            <View key={item} style={styles.starterItem}>
               <CheckCircle size={16} color={colors.primary} />
               <Text style={styles.starterItemText}>{item}</Text>
             </View>

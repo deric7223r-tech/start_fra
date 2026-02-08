@@ -80,8 +80,8 @@ export default function AuthorityScreen() {
 
       <View style={styles.rulesCard}>
         <Text style={styles.rulesTitle}>Golden Rules</Text>
-        {goldenRules.map((rule, index) => (
-          <View key={index} style={styles.ruleItem}>
+        {goldenRules.map((rule) => (
+          <View key={rule} style={styles.ruleItem}>
             <View style={styles.ruleBullet} />
             <Text style={styles.ruleText}>{rule}</Text>
           </View>
@@ -116,7 +116,7 @@ export default function AuthorityScreen() {
 
             {authorityMatrix.map((row, index) => (
               <View
-                key={index}
+                key={row.type}
                 style={[styles.tableRow, index % 2 === 0 && styles.tableRowAlt]}
               >
                 <View style={[styles.tableCell, styles.cellType]}>

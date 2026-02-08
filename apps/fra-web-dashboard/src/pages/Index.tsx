@@ -468,8 +468,8 @@ export default function Index() {
                       'Recognise red flags and early warning signs',
                       'Develop a personalised fraud prevention action plan',
                       'Access downloadable resources and tools',
-                    ].map((item, index) => (
-                      <li key={index} className="flex items-start gap-3">
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-3">
                         <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
                         <span className="text-sm">{item}</span>
                       </li>
