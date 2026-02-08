@@ -1,5 +1,5 @@
 import { getDbPool } from '../db.js';
-import type { Purchase, Package } from '../types.js';
+import type { Purchase, Package, PurchaseStatus } from '../types.js';
 
 export async function dbInsertPurchase(p: Purchase): Promise<void> {
   const pool = getDbPool();
@@ -20,7 +20,7 @@ export async function dbGetPurchaseById(id: string): Promise<Purchase | null> {
   if (!row) return null;
   return {
     id: row.id, organisationId: row.organisation_id, userId: row.user_id,
-    packageId: row.package_id, status: row.status,
+    packageId: row.package_id, status: row.status as PurchaseStatus,
     paymentIntentId: row.payment_intent_id ?? undefined, clientSecret: row.client_secret ?? undefined,
     amountCents: row.amount_cents, currency: row.currency,
     createdAt: new Date(row.created_at).toISOString(),
@@ -28,7 +28,7 @@ export async function dbGetPurchaseById(id: string): Promise<Purchase | null> {
   };
 }
 
-export async function dbUpdatePurchaseStatus(id: string, status: string, confirmedAt?: string): Promise<void> {
+export async function dbUpdatePurchaseStatus(id: string, status: PurchaseStatus, confirmedAt?: string): Promise<void> {
   const pool = getDbPool();
   await pool.query('update public.purchases set status = $1, confirmed_at = $2 where id = $3', [status, confirmedAt ?? null, id]);
 }
@@ -42,7 +42,7 @@ export async function dbListPurchasesByOrganisation(orgId: string): Promise<Purc
   }>('select id, organisation_id, user_id, package_id, status, payment_intent_id, client_secret, amount_cents, currency, created_at, confirmed_at from public.purchases where organisation_id = $1 order by created_at desc', [orgId]);
   return res.rows.map((row) => ({
     id: row.id, organisationId: row.organisation_id, userId: row.user_id,
-    packageId: row.package_id, status: row.status,
+    packageId: row.package_id, status: row.status as PurchaseStatus,
     paymentIntentId: row.payment_intent_id ?? undefined, clientSecret: row.client_secret ?? undefined,
     amountCents: row.amount_cents, currency: row.currency,
     createdAt: new Date(row.created_at).toISOString(),

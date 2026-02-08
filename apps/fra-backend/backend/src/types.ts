@@ -43,12 +43,14 @@ export type Organisation = {
   updatedAt: string;
 };
 
+export type PurchaseStatus = 'requires_confirmation' | 'succeeded' | 'failed' | 'refunded';
+
 export type Purchase = {
   id: string;
   organisationId: string;
   userId: string;
   packageId: string;
-  status: string;
+  status: PurchaseStatus;
   paymentIntentId?: string;
   clientSecret?: string;
   amountCents: number;
