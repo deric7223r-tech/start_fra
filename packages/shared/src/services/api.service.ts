@@ -35,6 +35,7 @@ export class ApiService {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
   private tokensLoadedPromise: Promise<void>;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor(config: ApiServiceConfig) {
     this.baseUrl = config.baseUrl;
@@ -166,10 +167,24 @@ export class ApiService {
   }
 
   private async refreshAccessToken(): Promise<boolean> {
+    // Mutex: if a refresh is already in flight, wait for it instead of issuing a duplicate
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
     if (!this.refreshToken) {
       return false;
     }
 
+    this.refreshPromise = this.doRefresh();
+    try {
+      return await this.refreshPromise;
+    } finally {
+      this.refreshPromise = null;
+    }
+  }
+
+  private async doRefresh(): Promise<boolean> {
     try {
       const response = await fetch(`${this.baseUrl}${this.refreshEndpoint}`, {
         method: 'POST',
