@@ -176,6 +176,12 @@ export const RATE_LIMITS = {
   RESET_PASSWORD_MAX: 5,
   KEYPASS_WINDOW_MS: 60 * 1000,    // 1 minute
   KEYPASS_MAX: 3,
+  PURCHASE_WINDOW_MS: 60 * 60 * 1000,   // 1 hour
+  PURCHASE_MAX: 10,
+  REPORT_WINDOW_MS: 60 * 60 * 1000,     // 1 hour
+  REPORT_MAX: 5,
+  KEYPASS_GENERATE_WINDOW_MS: 60 * 60 * 1000, // 1 hour
+  KEYPASS_GENERATE_MAX: 10,
 } as const;
 
 // ── Package recommendation thresholds ──────────────────────────
@@ -192,6 +198,24 @@ export const FALLBACK_PACKAGES: Package[] = [
   { id: 'pkg_training', name: 'Training', description: 'Assessment with staff training key-passes', priceCents: 4900, currency: 'gbp', keypassAllowance: 10, features: ['Everything in Basic', '10 employee key-passes', 'Training modules', 'Compliance certificate'], isActive: true, sortOrder: 2 },
   { id: 'pkg_full', name: 'Full', description: 'Complete fraud risk management suite', priceCents: 14900, currency: 'gbp', keypassAllowance: 50, features: ['Everything in Training', '50 employee key-passes', 'Priority support', 'Custom action plan', 'Annual review'], isActive: true, sortOrder: 3 },
 ];
+
+// ── Pagination ─────────────────────────────────────────────────
+
+export const DEFAULT_PAGE_SIZE = 50;
+export const MAX_PAGE_SIZE = 200;
+
+export function parsePagination(query: Record<string, string | undefined>): { page: number; pageSize: number; offset: number } {
+  const page = Math.max(1, parseInt(query.page ?? '1', 10) || 1);
+  const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(query.pageSize ?? String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE));
+  return { page, pageSize, offset: (page - 1) * pageSize };
+}
+
+export function paginate<T>(items: T[], page: number, pageSize: number): { items: T[]; total: number; page: number; pageSize: number; totalPages: number } {
+  const total = items.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const offset = (page - 1) * pageSize;
+  return { items: items.slice(offset, offset + pageSize), total, page, pageSize, totalPages };
+}
 
 // ── Zod schemas ─────────────────────────────────────────────────
 
@@ -248,6 +272,10 @@ export const keypassValidateSchema = z.object({
   code: z.string().min(6).max(64),
 });
 
+export const keypassBulkSchema = z.object({
+  codes: z.array(z.string().min(6).max(64)).min(1).max(100),
+});
+
 export const keypassUseSchema = z.object({
   code: z.string().min(6).max(64),
   email: z.string().email().optional(),
@@ -268,6 +296,7 @@ export const purchasesConfirmSchema = z.object({
 });
 
 export const stripeWebhookSchema = z.object({
+  id: z.string().min(1).optional(),
   type: z.string().min(1),
   data: z.unknown().optional(),
 });

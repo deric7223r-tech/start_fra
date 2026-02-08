@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 
 import app from '../src/index';
+import { purchasesById } from '../src/stores';
 
 export { app };
 
@@ -31,4 +32,19 @@ export function authHeaders(token: string) {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
   };
+}
+
+/** Seed a succeeded purchase in the in-memory store so keypass quota checks pass. */
+export function seedPurchase(organisationId: string, userId: string, packageId = 'pkg_full') {
+  const id = crypto.randomUUID();
+  purchasesById.set(id, {
+    id,
+    organisationId,
+    userId,
+    packageId,
+    status: 'succeeded',
+    amountCents: 14900,
+    currency: 'gbp',
+    createdAt: new Date().toISOString(),
+  });
 }

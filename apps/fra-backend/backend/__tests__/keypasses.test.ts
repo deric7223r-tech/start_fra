@@ -1,9 +1,10 @@
 /// <reference types="jest" />
 
-import { app, createAuthenticatedUser, authHeaders } from './helpers';
+import { app, createAuthenticatedUser, authHeaders, seedPurchase } from './helpers';
 
 async function signup() {
-  const { accessToken, email, organisationId } = await createAuthenticatedUser({ name: 'KP User', organisationName: 'KP Org' });
+  const { accessToken, email, organisationId, userId } = await createAuthenticatedUser({ name: 'KP User', organisationName: 'KP Org' });
+  seedPurchase(organisationId, userId);
   return { accessToken, email, organisationId };
 }
 

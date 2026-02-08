@@ -1,9 +1,11 @@
+import crypto from 'node:crypto';
 import { Hono } from 'hono';
 import { hasDatabase, requireAuth } from '../helpers.js';
-import { RISK_THRESHOLDS } from '../types.js';
+import { RISK_THRESHOLDS, RATE_LIMITS, parsePagination, paginate } from '../types.js';
 import type { AssessmentStatus } from '../types.js';
-import { assessmentsById } from '../stores.js';
-import { dbListAssessmentsByOrganisation } from '../db/index.js';
+import { assessmentsById, purchasesById, keypassesByCode } from '../stores.js';
+import { dbListAssessmentsByOrganisation, dbListPurchasesByOrganisation, dbListKeypassesByOrganisation } from '../db/index.js';
+import { rateLimit } from '../middleware.js';
 
 const analytics = new Hono();
 
@@ -59,16 +61,23 @@ analytics.get('/analytics/assessments', async (c) => {
       submittedAt: a.submittedAt ?? null,
     }));
 
+  const { page, pageSize } = parsePagination(c.req.query());
+  const result = paginate(timeline, page, pageSize);
+
   return c.json({
     success: true,
     data: {
       organisationId: auth.organisationId,
-      items: timeline,
+      items: result.items,
     },
+    pagination: { page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages },
   });
 });
 
 analytics.get('/reports/generate', async (c) => {
+  const limited = await rateLimit('reports:generate', { windowMs: RATE_LIMITS.REPORT_WINDOW_MS, max: RATE_LIMITS.REPORT_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -142,6 +151,56 @@ analytics.get('/reports/generate', async (c) => {
       assessments: assessmentSummaries,
       // Report data is returned inline; S3 persistence can be added when needed
       downloadUrl: `/api/v1/reports/${reportId}.json`,
+    },
+  });
+});
+
+analytics.get('/analytics/dashboard', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const orgAssessments = hasDatabase()
+    ? await dbListAssessmentsByOrganisation(auth.organisationId)
+    : Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
+
+  const orgPurchases = hasDatabase()
+    ? await dbListPurchasesByOrganisation(auth.organisationId)
+    : Array.from(purchasesById.values()).filter((p) => p.organisationId === auth.organisationId);
+
+  const orgKeypasses = hasDatabase()
+    ? await dbListKeypassesByOrganisation(auth.organisationId)
+    : Array.from(keypassesByCode.values()).filter((k) => k.organisationId === auth.organisationId);
+
+  const assessmentsByStatus = orgAssessments.reduce<Record<string, number>>(
+    (acc, a) => { acc[a.status] = (acc[a.status] ?? 0) + 1; return acc; },
+    { draft: 0, in_progress: 0, submitted: 0, completed: 0 }
+  );
+
+  const keypassesByStatus = orgKeypasses.reduce<Record<string, number>>(
+    (acc, k) => { acc[k.status] = (acc[k.status] ?? 0) + 1; return acc; },
+    { available: 0, used: 0, revoked: 0, expired: 0 }
+  );
+
+  const activePurchases = orgPurchases.filter((p) => p.status === 'succeeded');
+  const totalSpent = activePurchases.reduce((sum, p) => sum + p.amountCents, 0);
+
+  return c.json({
+    success: true,
+    data: {
+      organisationId: auth.organisationId,
+      assessments: {
+        total: orgAssessments.length,
+        byStatus: assessmentsByStatus,
+      },
+      keypasses: {
+        total: orgKeypasses.length,
+        byStatus: keypassesByStatus,
+      },
+      purchases: {
+        total: orgPurchases.length,
+        active: activePurchases.length,
+        totalSpentCents: totalSpent,
+      },
     },
   });
 });

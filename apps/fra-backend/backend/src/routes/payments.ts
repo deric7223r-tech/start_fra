@@ -4,13 +4,14 @@ import { getAuth, hasDatabase, jsonError, requireAuth } from '../helpers.js';
 import { createLogger } from '../logger.js';
 import {
   paymentCreateIntentSchema, purchasesCreateSchema, purchasesConfirmSchema,
-  stripeWebhookSchema, FALLBACK_PACKAGES, RISK_THRESHOLDS,
+  stripeWebhookSchema, FALLBACK_PACKAGES, RISK_THRESHOLDS, RATE_LIMITS,
+  parsePagination, paginate,
 } from '../types.js';
 
 const logger = createLogger('payments');
 import type { Assessment, Purchase } from '../types.js';
 import { assessmentsById, purchasesById } from '../stores.js';
-import { getClientIp } from '../middleware.js';
+import { getClientIp, rateLimit } from '../middleware.js';
 import {
   dbInsertPurchase, dbGetPurchaseById, dbUpdatePurchaseStatus,
   dbListPurchasesByOrganisation, dbListPackages, dbGetPackageById,
@@ -19,6 +20,9 @@ import {
 } from '../db/index.js';
 
 const payments = new Hono();
+
+// Track processed webhook event IDs for idempotency
+const processedWebhookIds = new Set<string>();
 
 payments.post('/payments/create-intent', async (c) => {
   const auth = requireAuth(c);
@@ -107,22 +111,44 @@ payments.get('/packages/recommended', async (c) => {
 });
 
 payments.post('/purchases', async (c) => {
+  const limited = await rateLimit('purchases:create', { windowMs: RATE_LIMITS.PURCHASE_WINDOW_MS, max: RATE_LIMITS.PURCHASE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
   const parsed = purchasesCreateSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid purchase payload');
 
-  // Look up the package to get price
-  let amountCents = 0;
-  let currency = 'gbp';
+  // Look up the package — reject if not found or inactive
+  let pkg: { priceCents: number; currency: string; isActive?: boolean } | null = null;
   if (hasDatabase()) {
-    const pkg = await dbGetPackageById(parsed.data.packageId);
-    if (pkg) { amountCents = pkg.priceCents; currency = pkg.currency; }
+    pkg = await dbGetPackageById(parsed.data.packageId);
   } else {
-    const pkg = FALLBACK_PACKAGES.find((p) => p.id === parsed.data.packageId);
-    if (pkg) { amountCents = pkg.priceCents; currency = pkg.currency; }
+    pkg = FALLBACK_PACKAGES.find((p) => p.id === parsed.data.packageId) ?? null;
   }
+
+  if (!pkg) {
+    return jsonError(c, 400, 'INVALID_PACKAGE', 'Package not found');
+  }
+  if ('isActive' in pkg && pkg.isActive === false) {
+    return jsonError(c, 400, 'INVALID_PACKAGE', 'Package is no longer available');
+  }
+
+  // Prevent duplicate active purchase for the same package
+  const orgPurchases = hasDatabase()
+    ? await dbListPurchasesByOrganisation(auth.organisationId)
+    : Array.from(purchasesById.values()).filter((p) => p.organisationId === auth.organisationId);
+
+  const existingActive = orgPurchases.find(
+    (p) => p.packageId === parsed.data.packageId && (p.status === 'succeeded' || p.status === 'requires_confirmation')
+  );
+  if (existingActive) {
+    return jsonError(c, 409, 'DUPLICATE_PURCHASE', 'An active purchase for this package already exists');
+  }
+
+  const amountCents = pkg.priceCents;
+  const currency = pkg.currency;
 
   const paymentIntentId = `pi_${crypto.randomUUID().replace(/-/g, '')}`;
   const clientSecret = `${paymentIntentId}_secret_${crypto.randomUUID().replace(/-/g, '')}`;
@@ -165,13 +191,27 @@ payments.post('/purchases/:id/confirm', async (c) => {
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid purchase confirmation payload');
 
   const purchaseId = c.req.param('id');
+
+  // Verify purchase exists and belongs to the authenticated user's organisation
+  const purchase = hasDatabase()
+    ? await dbGetPurchaseById(purchaseId)
+    : purchasesById.get(purchaseId) ?? null;
+
+  if (!purchase || purchase.organisationId !== auth.organisationId) {
+    return jsonError(c, 404, 'NOT_FOUND', 'Purchase not found');
+  }
+
+  if (purchase.status === 'succeeded') {
+    return jsonError(c, 400, 'ALREADY_CONFIRMED', 'Purchase is already confirmed');
+  }
+
   const now = new Date().toISOString();
 
   if (hasDatabase()) {
     await dbUpdatePurchaseStatus(purchaseId, 'succeeded', now);
   } else {
-    const existing = purchasesById.get(purchaseId);
-    if (existing) { existing.status = 'succeeded'; existing.confirmedAt = now; }
+    purchase.status = 'succeeded';
+    purchase.confirmedAt = now;
   }
 
   await auditLog({
@@ -217,13 +257,14 @@ payments.get('/purchases/organisation/:orgId', async (c) => {
   const orgId = c.req.param('orgId');
   if (orgId !== auth.organisationId) return jsonError(c, 403, 'FORBIDDEN', 'Forbidden');
 
-  if (hasDatabase()) {
-    const purchases = await dbListPurchasesByOrganisation(orgId);
-    return c.json({ success: true, data: purchases });
-  }
+  const allPurchases = hasDatabase()
+    ? await dbListPurchasesByOrganisation(orgId)
+    : Array.from(purchasesById.values()).filter((p) => p.organisationId === orgId);
 
-  const purchases = Array.from(purchasesById.values()).filter((p) => p.organisationId === orgId);
-  return c.json({ success: true, data: purchases });
+  const { page, pageSize } = parsePagination(c.req.query());
+  const result = paginate(allPurchases, page, pageSize);
+
+  return c.json({ success: true, data: result.items, pagination: { page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages } });
 });
 
 function verifyStripeSignature(payload: string, sigHeader: string, secret: string): boolean {
@@ -276,59 +317,74 @@ payments.post('/webhooks/stripe', async (c) => {
   const parsed = stripeWebhookSchema.safeParse(body);
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid stripe webhook payload');
 
+  const eventId = parsed.data.id;
   const eventType = parsed.data.type;
   const eventData = parsed.data.data as Record<string, unknown> | undefined;
   const now = new Date().toISOString();
 
-  logger.info('Stripe webhook received', { type: eventType });
+  // Simple in-memory idempotency check to prevent duplicate processing
+  if (eventId && processedWebhookIds.has(eventId)) {
+    logger.info('Duplicate webhook event ignored', { eventId, type: eventType });
+    return c.json({ success: true, data: { received: true, type: eventType, duplicate: true } });
+  }
 
-  switch (eventType) {
-    case 'checkout.session.completed': {
-      // Extract purchase/payment info from the session object
-      const sessionObj = (eventData as Record<string, unknown> | undefined)?.object as Record<string, unknown> | undefined;
-      const paymentIntentId = (sessionObj?.payment_intent as string) ?? null;
-      const metadata = sessionObj?.metadata as Record<string, string> | undefined;
-      const purchaseId = metadata?.purchaseId;
+  logger.info('Stripe webhook received', { eventId, type: eventType });
 
-      if (purchaseId) {
-        if (hasDatabase()) {
-          await dbUpdatePurchaseStatus(purchaseId, 'succeeded', now);
-        } else {
-          const existing = purchasesById.get(purchaseId);
-          if (existing) { existing.status = 'succeeded'; existing.confirmedAt = now; }
+  try {
+    switch (eventType) {
+      case 'checkout.session.completed': {
+        const sessionObj = (eventData as Record<string, unknown> | undefined)?.object as Record<string, unknown> | undefined;
+        const paymentIntentId = (sessionObj?.payment_intent as string) ?? null;
+        const metadata = sessionObj?.metadata as Record<string, string> | undefined;
+        const purchaseId = metadata?.purchaseId;
+
+        if (purchaseId) {
+          if (hasDatabase()) {
+            await dbUpdatePurchaseStatus(purchaseId, 'succeeded', now);
+          } else {
+            const existing = purchasesById.get(purchaseId);
+            if (existing) { existing.status = 'succeeded'; existing.confirmedAt = now; }
+          }
+          logger.info('Purchase status updated', { purchaseId, status: 'succeeded', paymentIntentId });
         }
-        logger.info('Purchase status updated', { purchaseId, status: 'succeeded', paymentIntentId });
+        break;
       }
-      break;
-    }
 
-    case 'payment_intent.succeeded': {
-      // Confirm payment for a purchase linked via paymentIntentId
-      const intentObj = (eventData as Record<string, unknown> | undefined)?.object as Record<string, unknown> | undefined;
-      const piId = (intentObj?.id as string) ?? null;
+      case 'payment_intent.succeeded': {
+        const intentObj = (eventData as Record<string, unknown> | undefined)?.object as Record<string, unknown> | undefined;
+        const piId = (intentObj?.id as string) ?? null;
 
-      if (piId) {
-        // Search for the purchase with this paymentIntentId
-        if (hasDatabase()) {
-          // In DB mode, we rely on checkout.session.completed for status updates.
-          // Log the confirmation for auditing purposes.
-          logger.info('Payment intent confirmed', { paymentIntentId: piId });
-        } else {
-          const purchase = Array.from(purchasesById.values()).find((p) => p.paymentIntentId === piId);
-          if (purchase && purchase.status !== 'succeeded') {
-            purchase.status = 'succeeded';
-            purchase.confirmedAt = now;
-            logger.info('Purchase confirmed via intent', { purchaseId: purchase.id, paymentIntentId: piId });
+        if (piId) {
+          if (hasDatabase()) {
+            logger.info('Payment intent confirmed', { paymentIntentId: piId });
+          } else {
+            const purchase = Array.from(purchasesById.values()).find((p) => p.paymentIntentId === piId);
+            if (purchase && purchase.status !== 'succeeded') {
+              purchase.status = 'succeeded';
+              purchase.confirmedAt = now;
+              logger.info('Purchase confirmed via intent', { purchaseId: purchase.id, paymentIntentId: piId });
+            }
           }
         }
+        break;
       }
-      break;
-    }
 
-    default: {
-      // Acknowledge unhandled event types
-      logger.info('Unhandled Stripe webhook event', { type: eventType });
-      break;
+      default: {
+        logger.info('Unhandled Stripe webhook event', { type: eventType });
+        break;
+      }
+    }
+  } catch (err: unknown) {
+    logger.error('Webhook processing error', { eventId, type: eventType, error: String(err) });
+    return jsonError(c, 500, 'WEBHOOK_ERROR', 'Failed to process webhook event');
+  }
+
+  if (eventId) {
+    processedWebhookIds.add(eventId);
+    // Prevent unbounded memory growth — keep last 10 000 event IDs
+    if (processedWebhookIds.size > 10_000) {
+      const first = processedWebhookIds.values().next().value;
+      if (first) processedWebhookIds.delete(first);
     }
   }
 

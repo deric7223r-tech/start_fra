@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import { app, createAuthenticatedUser, authHeaders } from './helpers';
+import { app, createAuthenticatedUser, authHeaders, seedPurchase } from './helpers';
 
 describe('Backend API', () => {
   it('GET /health returns ok', async () => {
@@ -117,6 +117,9 @@ describe('Backend API', () => {
     });
     const signupJson = (await signupRes.json()) as any;
     const accessToken: string = signupJson.data.accessToken;
+    const organisationId: string = signupJson.data.organisation.organisationId;
+    const userId: string = signupJson.data.user.userId;
+    seedPurchase(organisationId, userId);
 
     const allocateRes = await app.request('http://localhost/api/v1/keypasses/allocate', {
       method: 'POST',
