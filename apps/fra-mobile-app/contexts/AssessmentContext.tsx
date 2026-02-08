@@ -35,8 +35,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     lastSync: null,
   });
   const [isOnline, setIsOnline] = useState(true);
+  const isOnlineRef = useRef(true);
   const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const processSyncQueueRef = useRef<() => Promise<void>>(async () => {});
 
   const ensureRemoteAssessment = async (current: AssessmentData): Promise<AssessmentData> => {
     if (!apiService.isAuthenticated() || !isOnline) {
@@ -64,23 +66,24 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     throw new Error(response.error?.message || 'Failed to create assessment');
   };
 
-  // Network detection
+  // Network detection — stable listener, no re-subscription
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
-      const wasOffline = !isOnline;
+      const wasOffline = !isOnlineRef.current;
       const isNowOnline = state.isConnected === true;
 
+      isOnlineRef.current = isNowOnline;
       setIsOnline(isNowOnline);
 
       // If we just came back online, process sync queue
       if (wasOffline && isNowOnline) {
         logger.info('Network restored, processing sync queue');
-        processSyncQueue();
+        processSyncQueueRef.current();
       }
     });
 
     return () => unsubscribe();
-  }, [isOnline]);
+  }, []);
 
   useEffect(() => {
     loadDraft();
@@ -154,6 +157,9 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
 
     await saveSyncQueue(remainingQueue);
   };
+
+  // Keep ref in sync so the stable NetInfo listener always calls the latest version
+  processSyncQueueRef.current = processSyncQueue;
 
   // Sync to backend (immediate, no debounce)
   const syncToBackendImmediate = async (data: Partial<AssessmentData>) => {

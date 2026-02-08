@@ -44,23 +44,26 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
     lastSync: null,
   });
   const [isOnline, setIsOnline] = useState(true);
+  const isOnlineRef = useRef(true);
   const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const processSyncQueueRef = useRef<() => Promise<void>>(async () => {});
 
-  // Network monitoring
+  // Network monitoring — stable listener, no re-subscription
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      const wasOffline = !isOnline;
+      const wasOffline = !isOnlineRef.current;
       const isNowOnline = state.isConnected === true;
+      isOnlineRef.current = isNowOnline;
       setIsOnline(isNowOnline);
 
       if (wasOffline && isNowOnline) {
-        processSyncQueue();
+        processSyncQueueRef.current();
       }
     });
 
     return () => unsubscribe();
-  }, [isOnline]);
+  }, []);
 
   // Load sync queue on mount
   useEffect(() => {
@@ -143,6 +146,9 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
       });
     }
   };
+
+  // Keep ref in sync so the stable NetInfo listener always calls the latest version
+  processSyncQueueRef.current = processSyncQueue;
 
   // Debounced sync: collect changes over SYNC_DEBOUNCE_MS then push
   const debouncedSyncProgress = useCallback(() => {
