@@ -103,8 +103,8 @@ export function useSession(sessionCode?: string) {
         `/api/v1/workshop/sessions/${sessionId}/questions`
       );
       setQuestions(data);
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      logger.warn('Failed to fetch questions', err);
     }
   };
 
@@ -120,8 +120,8 @@ export function useSession(sessionCode?: string) {
         `/api/v1/workshop/sessions/${sessionId}/participants`
       );
       setParticipantCount(data.count);
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      logger.warn('Failed to fetch participant count', err);
     }
   };
 
