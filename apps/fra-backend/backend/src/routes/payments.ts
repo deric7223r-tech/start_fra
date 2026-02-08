@@ -25,6 +25,9 @@ const payments = new Hono();
 const processedWebhookIds = new Set<string>();
 
 payments.post('/payments/create-intent', async (c) => {
+  const limited = await rateLimit('payments:intent', { windowMs: RATE_LIMITS.PAYMENT_INTENT_WINDOW_MS, max: RATE_LIMITS.PAYMENT_INTENT_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -178,6 +181,7 @@ payments.post('/purchases', async (c) => {
     organisationId: auth.organisationId, resourceType: 'purchase', resourceId: purchaseId,
     details: { packageId: parsed.data.packageId, amountCents, previousPackageId, transitionType },
     ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({
@@ -225,6 +229,7 @@ payments.post('/purchases/:id/confirm', async (c) => {
     eventType: 'purchase.confirmed', actorId: auth.userId, actorEmail: auth.email,
     organisationId: auth.organisationId, resourceType: 'purchase', resourceId: purchaseId,
     ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({

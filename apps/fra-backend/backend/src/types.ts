@@ -182,6 +182,10 @@ export const RATE_LIMITS = {
   REPORT_MAX: 5,
   KEYPASS_GENERATE_WINDOW_MS: 60 * 60 * 1000, // 1 hour
   KEYPASS_GENERATE_MAX: 10,
+  REFRESH_WINDOW_MS: 60 * 1000,  // 1 minute
+  REFRESH_MAX: 10,
+  PAYMENT_INTENT_WINDOW_MS: 60 * 1000,  // 1 minute
+  PAYMENT_INTENT_MAX: 10,
 } as const;
 
 // ── Keypass grace period ────────────────────────────────────────

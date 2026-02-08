@@ -69,6 +69,7 @@ assessments.post('/assessments', async (c) => {
     eventType: 'assessment.created', actorId: auth.userId, actorEmail: auth.email,
     organisationId: auth.organisationId, resourceType: 'assessment', resourceId: assessment.id,
     details: { title: assessment.title }, ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({ success: true, data: assessment }, 201);
@@ -168,6 +169,7 @@ assessments.post('/assessments/:id/submit', async (c) => {
       organisationId: auth.organisationId, resourceType: 'assessment', resourceId: id,
       details: { title: updated.title, answerCount: Object.keys(updated.answers).length },
       ipAddress: getClientIp(c),
+      userAgent: c.req.header('user-agent'),
     });
 
     return c.json({ success: true, data: updated });
@@ -192,6 +194,7 @@ assessments.post('/assessments/:id/submit', async (c) => {
     organisationId: auth.organisationId, resourceType: 'assessment', resourceId: id,
     details: { title: updated.title, answerCount: Object.keys(updated.answers).length },
     ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({ success: true, data: updated });

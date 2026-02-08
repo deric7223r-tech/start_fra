@@ -25,7 +25,7 @@ import { createLogger } from '../logger.js';
 
 const logger = createLogger('auth');
 
-const { AUTH_WINDOW_MS, SIGNUP_MAX, LOGIN_MAX, FORGOT_PASSWORD_MAX, RESET_PASSWORD_MAX } = RATE_LIMITS;
+const { AUTH_WINDOW_MS, SIGNUP_MAX, LOGIN_MAX, FORGOT_PASSWORD_MAX, RESET_PASSWORD_MAX, REFRESH_WINDOW_MS, REFRESH_MAX } = RATE_LIMITS;
 
 // ── Auth helpers ────────────────────────────────────────────────
 
@@ -137,6 +137,7 @@ auth.post('/auth/signup', async (c) => {
     eventType: 'auth.signup', actorId: user.id, actorEmail: user.email,
     organisationId: user.organisationId, resourceType: 'user', resourceId: user.id,
     ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({
@@ -168,6 +169,7 @@ auth.post('/auth/login', async (c) => {
     await auditLog({
       eventType: 'auth.lockout', actorEmail: emailLc,
       details: { reason: 'Too many failed login attempts' }, ipAddress: getClientIp(c),
+      userAgent: c.req.header('user-agent'),
     });
     // Return the same generic error as invalid credentials to prevent
     // account enumeration via lockout timing differences.
@@ -186,6 +188,7 @@ auth.post('/auth/login', async (c) => {
     await auditLog({
       eventType: 'auth.failed_login', actorEmail: emailLc,
       details: { remaining: lockout.remaining - 1 }, ipAddress: getClientIp(c),
+      userAgent: c.req.header('user-agent'),
     });
     return jsonError(c, 401, 'INVALID_CREDENTIALS', 'Invalid email or password');
   }
@@ -211,6 +214,7 @@ auth.post('/auth/login', async (c) => {
     eventType: 'auth.login', actorId: user.id, actorEmail: user.email,
     organisationId: user.organisationId, resourceType: 'user', resourceId: user.id,
     ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({
@@ -268,6 +272,9 @@ auth.post('/auth/logout', async (c) => {
 });
 
 auth.post('/auth/refresh', async (c) => {
+  const limited = await rateLimit('auth:refresh', { windowMs: REFRESH_WINDOW_MS, max: REFRESH_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const parsed = refreshSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success || !parsed.data.refreshToken) {
     return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid refresh payload');
@@ -339,6 +346,7 @@ auth.post('/auth/forgot-password', async (c) => {
     await auditLog({
       eventType: 'auth.forgot_password', actorEmail: emailLc,
       resourceType: 'user', resourceId: user.id, ipAddress: getClientIp(c),
+      userAgent: c.req.header('user-agent'),
     });
   }
 
@@ -394,6 +402,7 @@ auth.post('/auth/reset-password', async (c) => {
   await auditLog({
     eventType: 'auth.reset_password', actorId: user.id, actorEmail: user.email,
     resourceType: 'user', resourceId: user.id, ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({ success: true });

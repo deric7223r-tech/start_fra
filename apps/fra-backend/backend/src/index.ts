@@ -44,7 +44,7 @@ app.onError((err, c) => {
 // ── 404 handler ─────────────────────────────────────────────────
 app.notFound((c) => {
   return c.json(
-    { success: false, error: { code: 'NOT_FOUND', message: `Route ${c.req.method} ${c.req.path} not found` } },
+    { success: false, error: { code: 'NOT_FOUND', message: 'Not found' } },
     404
   );
 });
@@ -83,7 +83,11 @@ app.get('/health', async (c) => {
   }
 
   const status = healthy ? 'ok' : 'degraded';
-  return c.json({ status, checks, uptime: Math.floor(process.uptime()) }, healthy ? 200 : 503);
+  return c.json({
+    status, checks, uptime: Math.floor(process.uptime()),
+    version: process.env.APP_VERSION ?? '2.0.0',
+    commit: process.env.GIT_SHA ?? undefined,
+  }, healthy ? 200 : 503);
 });
 
 // ── API routes ──────────────────────────────────────────────────

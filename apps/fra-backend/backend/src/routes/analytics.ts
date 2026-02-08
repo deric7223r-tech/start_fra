@@ -148,6 +148,7 @@ analytics.get('/reports/generate', async (c) => {
     organisationId: auth.organisationId, resourceType: 'report', resourceId: reportId,
     details: { assessmentCount: completedAssessments.length, overallRisk },
     ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({

@@ -111,6 +111,7 @@ keypasses.post('/keypasses/generate', async (c) => {
     eventType: 'keypass.generate', actorId: auth.userId, actorEmail: auth.email,
     organisationId: auth.organisationId, resourceType: 'keypass',
     details: { quantity: parsed.data.quantity }, ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({ success: true, data: { organisationId: auth.organisationId, expiresAt, codes } });
@@ -141,6 +142,7 @@ keypasses.post('/keypasses/allocate', async (c) => {
     eventType: 'keypass.allocate', actorId: auth.userId, actorEmail: auth.email,
     organisationId: auth.organisationId, resourceType: 'keypass',
     details: { quantity: parsed.data.quantity }, ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({ success: true, data: { organisationId: auth.organisationId, expiresAt, codes } });
@@ -231,6 +233,7 @@ keypasses.post('/keypasses/use', async (c) => {
     eventType: 'keypass.use', actorId: user.id, actorEmail: user.email,
     organisationId: user.organisationId, resourceType: 'keypass', resourceId: code,
     ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({
@@ -268,6 +271,7 @@ keypasses.post('/keypasses/revoke', async (c) => {
     eventType: 'keypass.revoke', actorId: auth.userId, actorEmail: auth.email,
     organisationId: auth.organisationId, resourceType: 'keypass', resourceId: code,
     ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({ success: true });
@@ -408,6 +412,7 @@ keypasses.post('/keypasses/bulk-revoke', async (c) => {
     organisationId: auth.organisationId, resourceType: 'keypass',
     details: { count: results.filter((r) => r.revoked).length, total: parsed.data.codes.length },
     ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
   });
 
   return c.json({ success: true, data: { results } });
