@@ -35,6 +35,7 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
+  Download,
 } from 'lucide-react';
 
 const statusChartConfig = {
@@ -64,12 +65,6 @@ interface EmployeeRow {
   riskLevel: 'high' | 'medium' | 'low' | null;
 }
 
-interface DashboardAggregates {
-  assessments: { total: number; byStatus: Record<string, number> };
-  keypasses: { total: number; byStatus: Record<string, number> };
-  purchases: { total: number; active: number; totalSpentCents: number };
-}
-
 interface EmployeeDetail {
   userId: string;
   userName: string;
@@ -93,12 +88,12 @@ export default function EmployerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
-  const [aggregates, setAggregates] = useState<DashboardAggregates | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [riskFilter, setRiskFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [employeeDetail, setEmployeeDetail] = useState<EmployeeDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -109,12 +104,8 @@ export default function EmployerDashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const [empData, dashData] = await Promise.all([
-        api.get<EmployeeRow[]>('/api/v1/analytics/employees'),
-        api.get<DashboardAggregates>('/api/v1/analytics/dashboard'),
-      ]);
+      const empData = await api.get<EmployeeRow[]>('/api/v1/analytics/employees');
       setEmployees(empData);
-      setAggregates(dashData);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
       if (message.includes('PACKAGE_REQUIRED')) {
@@ -137,13 +128,19 @@ export default function EmployerDashboard() {
     return employees.filter((e) => {
       if (statusFilter !== 'all' && e.status !== statusFilter) return false;
       if (riskFilter !== 'all' && e.riskLevel !== riskFilter) return false;
+      if (departmentFilter !== 'all' && (e.department || 'General') !== departmentFilter) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         return e.userName.toLowerCase().includes(q) || e.email.toLowerCase().includes(q);
       }
       return true;
     });
-  }, [employees, statusFilter, riskFilter, searchQuery]);
+  }, [employees, statusFilter, riskFilter, departmentFilter, searchQuery]);
+
+  const departments = useMemo(() => {
+    const depts = new Set(employees.map(e => e.department || 'General'));
+    return Array.from(depts).sort();
+  }, [employees]);
 
   const stats = useMemo(() => {
     const total = employees.length;
@@ -313,7 +310,7 @@ export default function EmployerDashboard() {
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.highRisk}</div>
                   <p className="text-xs text-muted-foreground">
-                    {aggregates ? `${aggregates.keypasses.byStatus.available ?? 0} key-passes available` : ''}
+                    {stats.highRisk > 0 ? 'Require attention' : 'No high-risk employees'}
                   </p>
                 </CardContent>
               </Card>
@@ -410,6 +407,19 @@ export default function EmployerDashboard() {
                         <SelectItem value="low">Low Risk</SelectItem>
                       </SelectContent>
                     </Select>
+                    {departments.length > 1 && (
+                      <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                          <SelectValue placeholder="Filter by department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Departments</SelectItem>
+                          {departments.map(dept => (
+                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -422,10 +432,39 @@ export default function EmployerDashboard() {
               transition={{ delay: 0.3 }}
             >
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg">
-                    Employees ({filteredEmployees.length})
+                    Employees ({filteredEmployees.length}{filteredEmployees.length !== employees.length ? ` of ${employees.length}` : ''})
                   </CardTitle>
+                  {filteredEmployees.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const header = 'Name,Email,Department,Status,Risk Level,Assessments,Completed';
+                        const rows = filteredEmployees.map(e => [
+                          `"${e.userName}"`,
+                          `"${e.email}"`,
+                          `"${e.department || 'General'}"`,
+                          e.status,
+                          e.riskLevel || 'N/A',
+                          e.assessmentCount,
+                          e.completedAt ? new Date(e.completedAt).toLocaleDateString('en-GB') : '',
+                        ].join(','));
+                        const csv = [header, ...rows].join('\n');
+                        const blob = new Blob([csv], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `employees-${new Date().toISOString().split('T')[0]}.csv`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Export CSV
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {filteredEmployees.length === 0 ? (

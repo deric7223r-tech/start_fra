@@ -179,6 +179,15 @@ export default function DashboardScreen() {
         {error && (
           <View style={styles.errorBanner}>
             <Text style={styles.errorBannerText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.errorRetryButton}
+              onPress={onRefresh}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading data"
+            >
+              <Text style={styles.errorRetryText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -468,15 +477,31 @@ const styles = StyleSheet.create({
     color: colors.govGrey2,
   },
   errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#FEF3C7',
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
     borderColor: '#F59E0B',
+    gap: 12,
   },
   errorBannerText: {
+    flex: 1,
     fontSize: 13,
     color: '#92400E',
     lineHeight: 18,
+  },
+  errorRetryButton: {
+    backgroundColor: '#F59E0B',
+    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  errorRetryText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: colors.white,
   },
 });

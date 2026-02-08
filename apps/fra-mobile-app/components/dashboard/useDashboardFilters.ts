@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { FilterStatus, SortOption, ViewMode, EmployeeData } from './types';
-import { mockEmployeeData } from './mockData';
 import { apiService } from '@/services/api.service';
 
 interface EmployeeApiRow {
@@ -46,13 +45,10 @@ export function useDashboardFilters() {
         }));
         setEmployees(mapped);
       } else {
-        // Fallback to mock data if API returns unsuccessful
-        setEmployees(mockEmployeeData);
+        setError('Unable to load employee data. Please try again.');
       }
     } catch {
-      // Fallback to mock data on error (e.g. offline, no package)
-      setEmployees(mockEmployeeData);
-      setError('Unable to load employee data. Showing sample data.');
+      setError('Could not connect to the server. Please check your connection and try again.');
     }
     setIsLoading(false);
   }, []);
