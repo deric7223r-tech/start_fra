@@ -121,9 +121,9 @@ export default function Workshop() {
     saveScenarioChoice(`step${scenarioStep}`, choiceId);
   };
 
-  const goToSlide = (index: number) => {
+  const goToSlide = async (index: number) => {
     setCurrentSlide(index);
-    updateSection(index);
+    await updateSection(index);
     setQuizAnswer(null);
     setQuizSubmitted(false);
   };

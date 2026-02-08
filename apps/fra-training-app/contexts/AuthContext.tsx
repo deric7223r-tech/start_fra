@@ -97,7 +97,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     setAccessToken(null);
     setRefreshToken(null);
     setUser(null);
-  }, []);
+  }, [refreshToken]);
 
   return {
     user,
