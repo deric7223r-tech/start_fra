@@ -219,6 +219,18 @@ payments.post('/purchases/:id/confirm', async (c) => {
     return jsonError(c, 400, 'ALREADY_CONFIRMED', `Purchase cannot be confirmed (status: ${purchase.status})`);
   }
 
+  // Re-check for duplicate active purchases to prevent double-spend race condition
+  const orgPurchases = hasDatabase()
+    ? await dbListPurchasesByOrganisation(auth.organisationId)
+    : Array.from(purchasesById.values()).filter((p) => p.organisationId === auth.organisationId);
+
+  const alreadySucceeded = orgPurchases.find(
+    (p) => p.packageId === purchase.packageId && p.status === 'succeeded'
+  );
+  if (alreadySucceeded) {
+    return jsonError(c, 409, 'DUPLICATE_PURCHASE', 'An active purchase for this package already exists');
+  }
+
   const now = new Date().toISOString();
 
   if (hasDatabase()) {

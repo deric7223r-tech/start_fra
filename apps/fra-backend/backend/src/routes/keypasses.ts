@@ -8,7 +8,7 @@ import { getClientIp, rateLimit } from '../middleware.js';
 import { generateKeypassCode } from '../s3.js';
 import {
   dbGetUserByEmail, dbInsertUser,
-  dbInsertKeypassBatch, dbGetKeypassByCode, dbUpdateKeypassStatus, dbListKeypassesByOrganisation, dbGetKeypassStatsByOrganisation,
+  dbInsertKeypassBatch, dbGetKeypassByCode, dbUpdateKeypassStatus, dbClaimKeypass, dbListKeypassesByOrganisation, dbGetKeypassStatsByOrganisation,
   dbGetOrganisationById, dbGetPackageById,
   dbListPurchasesByOrganisation,
   dbUpsertRefreshToken,
@@ -209,8 +209,10 @@ keypasses.post('/keypasses/use', async (c) => {
   }
 
   if (hasDatabase()) {
-    await dbUpdateKeypassStatus(code, 'used', now, user.id);
+    const claimed = await dbClaimKeypass(code, now, user.id);
+    if (!claimed) return jsonError(c, 409, 'ALREADY_USED', 'Keypass has already been used');
   } else {
+    if (kp.status !== 'available') return jsonError(c, 409, 'ALREADY_USED', 'Keypass has already been used');
     kp.status = 'used';
     kp.usedAt = now;
   }

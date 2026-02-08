@@ -301,6 +301,9 @@ const answersSchema = z.record(
 ).optional().refine(
   (val) => !val || Object.keys(val).length <= 500,
   { message: 'Answers object exceeds 500 key limit' },
+).refine(
+  (val) => !val || JSON.stringify(val).length <= 100_000,
+  { message: 'Answers payload exceeds 100 KB size limit' },
 );
 
 export const assessmentCreateSchema = z.object({
