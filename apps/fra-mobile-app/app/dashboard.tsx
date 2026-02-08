@@ -259,6 +259,7 @@ export default function DashboardScreen() {
             usedKeyPasses={usedKeyPasses}
             totalKeyPasses={totalKeyPasses}
             remainingKeyPasses={remainingKeyPasses}
+            organisationId={organisation.organisationId}
           />
         )}
         {activeTab === 'signoff' && (
