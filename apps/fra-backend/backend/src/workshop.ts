@@ -700,6 +700,19 @@ workshop.post('/sessions/:sessionId/questions', async (c) => {
   const pool = getDbPool();
   const sessionId = requireUUID(c, 'sessionId');
   if (sessionId instanceof Response) return sessionId;
+
+  // Verify user is a participant or facilitator of the session
+  const participantCheck = await pool.query(
+    'SELECT 1 FROM session_participants WHERE session_id = $1 AND user_id = $2 LIMIT 1',
+    [sessionId, auth.userId]
+  );
+  if (!participantCheck.rows[0]) {
+    const facCheck = await pool.query('SELECT 1 FROM workshop_sessions WHERE id = $1 AND facilitator_id = $2', [sessionId, auth.userId]);
+    if (!facCheck.rows[0]) {
+      return jsonError(c, 403, 'FORBIDDEN', 'You must join the session before posting questions');
+    }
+  }
+
   const res = await pool.query(
     'INSERT INTO questions (session_id, user_id, question_text) VALUES ($1, $2, $3) RETURNING *',
     [sessionId, auth.userId, parsed.data.questionText]
@@ -816,8 +829,11 @@ workshop.post('/action-plans', async (c) => {
 
   const schema = z.object({
     sessionId: z.string().uuid().optional(),
-    actionItems: z.unknown(),
-    commitments: z.array(z.string()).optional(),
+    actionItems: z.unknown().refine(
+      (v) => JSON.stringify(v).length <= 100_000,
+      'actionItems payload too large (max 100KB)'
+    ),
+    commitments: z.array(z.string().max(2000)).max(50).optional(),
   });
   const parsed = schema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid action plan data');
@@ -839,8 +855,11 @@ workshop.patch('/action-plans/:id', async (c) => {
   if (auth instanceof Response) return auth;
 
   const schema = z.object({
-    actionItems: z.unknown().optional(),
-    commitments: z.array(z.string()).optional(),
+    actionItems: z.unknown().refine(
+      (v) => v === undefined || JSON.stringify(v).length <= 100_000,
+      'actionItems payload too large (max 100KB)'
+    ).optional(),
+    commitments: z.array(z.string().max(2000)).max(50).optional(),
   });
   const parsed = schema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid data');

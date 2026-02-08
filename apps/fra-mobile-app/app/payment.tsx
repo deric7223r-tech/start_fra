@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
@@ -15,6 +15,7 @@ export default function PaymentScreen() {
   const [cvc, setCvc] = useState('');
   const [cardholderName, setCardholderName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const processingRef = useRef(false);
 
   const formatCardNumber = (text: string) => {
     const cleaned = text.replace(/\s/g, '');
@@ -52,11 +53,13 @@ export default function PaymentScreen() {
   };
 
   const handlePayment = async () => {
+    if (processingRef.current) return;
     if (!cardNumber || !expiry || !cvc || !cardholderName) {
       Alert.alert('Missing Information', 'Please fill in all card details');
       return;
     }
 
+    processingRef.current = true;
     setIsProcessing(true);
     try {
       await processPayment({
@@ -89,6 +92,7 @@ export default function PaymentScreen() {
         Alert.alert('Payment Failed', 'There was an issue processing your payment. Please try again.');
       }
     } finally {
+      processingRef.current = false;
       setIsProcessing(false);
     }
   };

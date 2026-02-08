@@ -123,14 +123,14 @@ export class ApiService {
 
       clearTimeout(timeoutId);
 
-      const data: ApiResponse<T> = await response.json();
-
       if (response.status === 401 && requiresAuth && this.refreshToken && !options?.retried) {
         const refreshed = await this.refreshAccessToken();
         if (refreshed) {
           return this.makeRequest<T>(endpoint, { ...options, retried: true });
         }
       }
+
+      const data: ApiResponse<T> = await response.json();
 
       if (!response.ok) {
         return {

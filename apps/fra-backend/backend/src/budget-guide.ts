@@ -139,7 +139,7 @@ budgetGuide.post('/pledge', async (c) => {
 
   const body = await c.req.json().catch(() => null);
   const schema = z.object({
-    signature: z.string().min(1, 'Signature is required'),
+    signature: z.string().min(1, 'Signature is required').max(500_000, 'Signature too large'),
   });
   const parsed = schema.safeParse(body);
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION', 'Invalid pledge payload');
