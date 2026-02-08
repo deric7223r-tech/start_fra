@@ -420,12 +420,7 @@ analytics.get('/analytics/employees/:userId', async (c) => {
         code: k.code, status: k.status, createdAt: k.createdAt,
         expiresAt: k.expiresAt, usedAt: k.usedAt ?? null,
       }))
-    : Array.from(keypassesByCode.values())
-        .filter((k) => k.organisationId === auth.organisationId)
-        .map((k) => ({
-          code: k.code, status: k.status, createdAt: k.createdAt,
-          expiresAt: k.expiresAt, usedAt: k.usedAt ?? null,
-        }));
+    : [];  // In-memory store does not track used_by_user_id — return empty
 
   return c.json({
     success: true,

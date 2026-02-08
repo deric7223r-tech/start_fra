@@ -144,6 +144,9 @@ workshop.get('/profile', async (c) => {
 });
 
 workshop.put('/profile', async (c) => {
+  const limited = await rateLimit('workshop:profile', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -219,6 +222,9 @@ workshop.get('/sessions', async (c) => {
 });
 
 workshop.post('/sessions', async (c) => {
+  const limited = await rateLimit('workshop:sessions', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -370,6 +376,9 @@ workshop.post('/sessions/:id/end', async (c) => {
 });
 
 workshop.post('/sessions/:id/join', async (c) => {
+  const limited = await rateLimit('workshop:join', { windowMs: RATE_LIMITS.WORKSHOP_JOIN_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_JOIN_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -467,6 +476,9 @@ workshop.get('/progress', async (c) => {
 });
 
 workshop.post('/progress', async (c) => {
+  const limited = await rateLimit('workshop:progress', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -670,6 +682,9 @@ workshop.patch('/polls/:pollId', async (c) => {
 });
 
 workshop.post('/polls/:pollId/respond', async (c) => {
+  const limited = await rateLimit('workshop:poll-respond', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -750,6 +765,9 @@ workshop.get('/sessions/:sessionId/questions', async (c) => {
 });
 
 workshop.post('/sessions/:sessionId/questions', async (c) => {
+  const limited = await rateLimit('workshop:questions', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -818,6 +836,9 @@ workshop.patch('/questions/:questionId', async (c) => {
 });
 
 workshop.post('/questions/:questionId/upvote', async (c) => {
+  const limited = await rateLimit('workshop:upvote', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -905,6 +926,9 @@ workshop.get('/action-plans', async (c) => {
 });
 
 workshop.post('/action-plans', async (c) => {
+  const limited = await rateLimit('workshop:action-plans', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
