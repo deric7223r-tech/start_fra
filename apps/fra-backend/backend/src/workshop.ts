@@ -72,6 +72,14 @@ async function storeSseToken(token: string, auth: AuthContext): Promise<void> {
     return;
   }
   sseTokenStore.set(token, { auth, expiresAt: Date.now() + SSE_TOKEN_TTL_MS });
+
+  // Lazy cleanup of expired tokens to prevent unbounded memory growth
+  if (sseTokenStore.size > 1000) {
+    const now = Date.now();
+    for (const [key, entry] of sseTokenStore) {
+      if (entry.expiresAt < now) sseTokenStore.delete(key);
+    }
+  }
 }
 
 async function consumeSseToken(token: string): Promise<AuthContext | null> {
@@ -405,6 +413,10 @@ workshop.get('/progress', async (c) => {
 
   const pool = getDbPool();
   const sessionId = c.req.query('sessionId');
+
+  if (sessionId && !isValidUUID(sessionId)) {
+    return jsonError(c, 400, 'INVALID_PARAM', 'Invalid sessionId format');
+  }
 
   let res;
   if (sessionId) {
@@ -871,6 +883,15 @@ workshop.post('/certificates', async (c) => {
   // Check if already has a certificate
   const existing = await pool.query('SELECT * FROM certificates WHERE user_id = $1 LIMIT 1', [auth.userId]);
   if (existing.rows[0]) return c.json({ success: true, data: existing.rows[0] });
+
+  // Verify workshop completion before issuing certificate
+  const progress = await pool.query(
+    'SELECT completed_at FROM workshop_progress WHERE user_id = $1 AND completed_at IS NOT NULL LIMIT 1',
+    [auth.userId]
+  );
+  if (!progress.rows[0]) {
+    return jsonError(c, 400, 'NOT_COMPLETED', 'Workshop must be completed before generating a certificate');
+  }
 
   // Generate certificate number server-side
   const certNumber = `FRA-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
