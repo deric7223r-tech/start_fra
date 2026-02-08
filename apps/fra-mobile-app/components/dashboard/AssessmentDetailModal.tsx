@@ -24,29 +24,35 @@ export default function AssessmentDetailModal({
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (visible && selectedEmployee) {
-      setIsFetching(true);
-      setFetchError(null);
-      apiService.get<{
-        assessments: { id: string; answers: Record<string, unknown> }[];
-      }>(`/api/v1/analytics/employees/${selectedEmployee}`)
-        .then((response) => {
-          if (response.success && response.data?.assessments?.[0]?.answers) {
-            setFetchedAssessment(response.data.assessments[0].answers as Partial<AssessmentData>);
-          } else {
-            setFetchedAssessment(null);
-          }
-        })
-        .catch((err: unknown) => {
-          const message = err instanceof Error ? err.message : 'Failed to load assessment details';
-          setFetchError(message);
-          setFetchedAssessment(null);
-        })
-        .finally(() => setIsFetching(false));
-    } else {
+    if (!visible || !selectedEmployee) {
       setFetchedAssessment(null);
       setFetchError(null);
+      return;
     }
+
+    let isMounted = true;
+    setIsFetching(true);
+    setFetchError(null);
+    apiService.get<{
+      assessments: { id: string; answers: Record<string, unknown> }[];
+    }>(`/api/v1/analytics/employees/${selectedEmployee}`)
+      .then((response) => {
+        if (!isMounted) return;
+        if (response.success && response.data?.assessments?.[0]?.answers) {
+          setFetchedAssessment(response.data.assessments[0].answers as Partial<AssessmentData>);
+        } else {
+          setFetchedAssessment(null);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!isMounted) return;
+        const message = err instanceof Error ? err.message : 'Failed to load assessment details';
+        setFetchError(message);
+        setFetchedAssessment(null);
+      })
+      .finally(() => { if (isMounted) setIsFetching(false); });
+
+    return () => { isMounted = false; };
   }, [visible, selectedEmployee]);
 
   const assessment = fetchedAssessment;

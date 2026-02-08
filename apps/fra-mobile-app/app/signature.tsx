@@ -100,10 +100,15 @@ export default function SignatureScreen() {
       return;
     }
 
+    if (!user?.userId) {
+      Alert.alert('Authentication Error', 'Unable to sign: user session not found. Please sign out and sign back in.');
+      return;
+    }
+
     const signatureData = {
       id: `sig-${Date.now()}`,
       assessmentId: assessment.id,
-      signedByUserId: user?.userId || 'demo-user',
+      signedByUserId: user.userId,
       signatoryName: signatoryName.trim(),
       signatoryRole: signatoryRole.trim(),
       signatureImage: 'data:signature/base64',
