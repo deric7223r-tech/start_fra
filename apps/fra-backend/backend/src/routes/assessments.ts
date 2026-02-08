@@ -218,10 +218,18 @@ assessments.post('/assessments/:id/submit', async (c) => {
   const id = requireUUIDParam(c, 'id');
   if (id instanceof Response) return id;
 
+  const allowedFrom: AssessmentStatus[] = ['draft', 'in_progress'];
+
   if (!hasDatabase()) {
     const assessment = assessmentsById.get(id);
     if (!assessment || assessment.organisationId !== auth.organisationId) {
       return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
+    }
+    if (assessment.createdByUserId !== auth.userId && auth.role !== 'employer' && auth.role !== 'admin') {
+      return jsonError(c, 403, 'FORBIDDEN', 'Cannot submit another user\'s assessment');
+    }
+    if (!allowedFrom.includes(assessment.status)) {
+      return jsonError(c, 400, 'INVALID_STATUS_TRANSITION', `Cannot submit from ${assessment.status}`);
     }
 
     const now = new Date().toISOString();
@@ -247,6 +255,12 @@ assessments.post('/assessments/:id/submit', async (c) => {
   const existing = await dbGetAssessmentById(id);
   if (!existing || existing.organisationId !== auth.organisationId) {
     return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
+  }
+  if (existing.createdByUserId !== auth.userId && auth.role !== 'employer' && auth.role !== 'admin') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Cannot submit another user\'s assessment');
+  }
+  if (!allowedFrom.includes(existing.status)) {
+    return jsonError(c, 400, 'INVALID_STATUS_TRANSITION', `Cannot submit from ${existing.status}`);
   }
 
   const now = new Date().toISOString();
