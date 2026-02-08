@@ -19,7 +19,8 @@ export default function Checkout() {
 
   const packageName = searchParams.get('package');
   const priceParam = searchParams.get('price');
-  const price = priceParam ? parseFloat(priceParam) : 0;
+  const parsedPrice = priceParam ? parseFloat(priceParam) : 0;
+  const price = Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : 0;
 
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -30,7 +31,7 @@ export default function Checkout() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  if (!packageName || !priceParam) {
+  if (!packageName || !priceParam || price <= 0) {
     return <Navigate to="/" replace />;
   }
 

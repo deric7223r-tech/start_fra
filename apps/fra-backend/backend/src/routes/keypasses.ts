@@ -463,7 +463,11 @@ keypasses.post('/keypasses/bulk-validate', async (c) => {
       continue;
     }
 
-    if (new Date(kp.expiresAt).getTime() < Date.now()) {
+    const expiresAtMs = new Date(kp.expiresAt).getTime();
+    const graceEndMs = expiresAtMs + KEYPASS_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+    const nowMs = Date.now();
+
+    if (nowMs > graceEndMs) {
       if (hasDatabase()) {
         await dbUpdateKeypassStatus(code, 'expired');
       } else {
@@ -473,7 +477,8 @@ keypasses.post('/keypasses/bulk-validate', async (c) => {
       continue;
     }
 
-    results.push({ code, valid: true, status: 'available' });
+    const inGracePeriod = nowMs > expiresAtMs;
+    results.push({ code, valid: true, status: 'available', ...(inGracePeriod ? { warning: 'grace_period' } : {}) });
   }
 
   return c.json({ success: true, data: { results } });
