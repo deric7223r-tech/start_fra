@@ -3,8 +3,10 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { View, Text, StyleSheet } from "react-native";
+import { WifiOff } from "lucide-react-native";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { AssessmentProvider } from "@/contexts/AssessmentContext";
+import { AssessmentProvider, useAssessment } from "@/contexts/AssessmentContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import colors from "@/constants/colors";
 
@@ -21,6 +23,34 @@ const queryClient = new QueryClient({
     mutations: {
       retry: 1,
     },
+  },
+});
+
+function OfflineBanner() {
+  const { isOnline } = useAssessment();
+  if (isOnline) return null;
+  return (
+    <View style={offlineStyles.banner} accessibilityRole="alert">
+      <WifiOff size={14} color={colors.white} />
+      <Text style={offlineStyles.text}>You are offline — changes will sync when reconnected</Text>
+    </View>
+  );
+}
+
+const offlineStyles = StyleSheet.create({
+  banner: {
+    backgroundColor: '#d4351c',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  text: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: '600' as const,
   },
 });
 
@@ -174,6 +204,7 @@ export default function RootLayout() {
         <ErrorBoundary>
           <AuthProvider>
             <AssessmentProvider>
+              <OfflineBanner />
               <RootLayoutNav />
             </AssessmentProvider>
           </AuthProvider>

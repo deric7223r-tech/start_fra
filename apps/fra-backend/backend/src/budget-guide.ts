@@ -141,7 +141,7 @@ budgetGuide.post('/pledge', async (c) => {
     signature: z.string().min(1, 'Signature is required'),
   });
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return jsonError(c, 400, 'VALIDATION', parsed.error.issues[0].message);
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION', 'Invalid pledge payload');
 
   const pool = getDbPool();
   const res = await pool.query(

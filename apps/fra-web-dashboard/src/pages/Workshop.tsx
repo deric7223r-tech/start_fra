@@ -316,10 +316,10 @@ export default function Workshop() {
                                 {option}
                               </Label>
                               {quizSubmitted && index === currentQuiz.correctAnswer && (
-                                <CheckCircle2 className="h-4 w-4 text-success" />
+                                <CheckCircle2 className="h-4 w-4 text-success" aria-label="Correct answer" />
                               )}
                               {quizSubmitted && quizAnswer === index && index !== currentQuiz.correctAnswer && (
-                                <AlertCircle className="h-4 w-4 text-destructive" />
+                                <AlertCircle className="h-4 w-4 text-destructive" aria-label="Incorrect answer" />
                               )}
                             </div>
                           ))}
@@ -413,7 +413,7 @@ export default function Workshop() {
                                 </div>
 
                                 {showFeedback && (
-                                  <div className="mt-4 p-4 rounded-lg bg-muted">
+                                  <div className="mt-4 p-4 rounded-lg bg-muted" role="status" aria-live="polite">
                                     <p className="font-medium mb-1">
                                       {scenarioExercise.steps[scenarioStep].options.find(o => o.id === scenarioChoice)?.isCorrect
                                         ? '✓ Good choice!'

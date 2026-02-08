@@ -20,12 +20,12 @@ export default function QuizScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
 
-  if (!question) {
+  if (!question || isNaN(sectionIdNum)) {
     return (
       <ScreenContainer>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>
-            No quiz available for this section
+            {isNaN(sectionIdNum) ? 'Invalid section' : 'No quiz available for this section'}
           </Text>
           <ActionButton
             label="Go Back"

@@ -20,6 +20,7 @@ import {
   Loader2,
   Clock,
   Calendar,
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -31,9 +32,11 @@ export default function ActionPlan() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [customCommitments, setCustomCommitments] = useState('');
+  const [fetchError, setFetchError] = useState(false);
 
   const fetchActionPlan = useCallback(async () => {
     if (!user) return;
+    setFetchError(false);
 
     try {
       const plans = await api.get<ActionPlanType[]>('/api/v1/workshop/action-plans');
@@ -61,6 +64,7 @@ export default function ActionPlan() {
     } catch (err: unknown) {
       logger.error('Error fetching action plan', err);
       toast.error('Failed to load action plan');
+      setFetchError(true);
     }
 
     setIsLoading(false);
@@ -149,6 +153,27 @@ export default function ActionPlan() {
   }
 
   if (!user || !profile) return null;
+
+  if (fetchError && !actionPlan) {
+    return (
+      <Layout>
+        <div className="container py-8 lg:py-12">
+          <Card className="max-w-md mx-auto text-center">
+            <CardContent className="pt-8 pb-6">
+              <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-4" />
+              <h2 className="text-lg font-semibold mb-2">Failed to load action plan</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Please check your connection and try again.
+              </p>
+              <Button onClick={() => { setIsLoading(true); fetchActionPlan(); }}>
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
 
   const groupedItems = {
     immediate: actionPlan?.action_items.filter(i => i.timeframe === 'Immediate') || [],
