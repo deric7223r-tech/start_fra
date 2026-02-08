@@ -216,7 +216,7 @@ payments.post('/purchases/:id/confirm', async (c) => {
   }
 
   if (purchase.status !== 'requires_confirmation') {
-    return jsonError(c, 400, 'ALREADY_CONFIRMED', `Purchase cannot be confirmed (status: ${purchase.status})`);
+    return jsonError(c, 409, 'ALREADY_CONFIRMED', `Purchase cannot be confirmed (status: ${purchase.status})`);
   }
 
   // Re-check for duplicate active purchases to prevent double-spend race condition

@@ -269,10 +269,13 @@ workshop.get('/sessions/code/:code', async (c) => {
 
   if (!hasDatabase()) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
 
+  const sanitisedCode = c.req.param('code').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+  if (!sanitisedCode) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid session code');
+
   const pool = getDbPool();
   const res = await pool.query(
     'SELECT * FROM workshop_sessions WHERE session_code = $1 LIMIT 1',
-    [c.req.param('code').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10)]
+    [sanitisedCode]
   );
 
   if (!res.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
@@ -628,9 +631,23 @@ workshop.post('/polls/:pollId/respond', async (c) => {
   if (pollId instanceof Response) return pollId;
 
   // Verify poll exists and is active
-  const pollCheck = await pool.query('SELECT is_active, options FROM polls WHERE id = $1', [pollId]);
+  const pollCheck = await pool.query('SELECT is_active, options, session_id FROM polls WHERE id = $1', [pollId]);
   if (!pollCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Poll not found');
   if (!pollCheck.rows[0].is_active) return jsonError(c, 400, 'POLL_CLOSED', 'Poll is no longer active');
+
+  // Verify user is a participant of the poll's session (or the facilitator)
+  const sessionId = pollCheck.rows[0].session_id;
+  const participantCheck = await pool.query(
+    'SELECT 1 FROM session_participants WHERE session_id = $1 AND user_id = $2 LIMIT 1',
+    [sessionId, auth.userId]
+  );
+  if (!participantCheck.rows[0]) {
+    // Also allow the facilitator to respond
+    const facCheck = await pool.query('SELECT 1 FROM workshop_sessions WHERE id = $1 AND facilitator_id = $2', [sessionId, auth.userId]);
+    if (!facCheck.rows[0]) {
+      return jsonError(c, 403, 'FORBIDDEN', 'You must join the session before responding to polls');
+    }
+  }
 
   // Validate selectedOption is within bounds of poll options
   const options = typeof pollCheck.rows[0].options === 'string'
