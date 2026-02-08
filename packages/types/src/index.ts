@@ -6,3 +6,6 @@ export * from './auth';
 
 // API types
 export * from './api';
+
+// Workshop types
+export * from './workshop';

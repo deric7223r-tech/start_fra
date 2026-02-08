@@ -26,6 +26,10 @@
     "./services": {
       "import": "./src/services/index.ts",
       "types": "./src/services/index.ts"
+    },
+    "./data": {
+      "import": "./src/data/index.ts",
+      "types": "./src/data/index.ts"
     }
   },
   "dependencies": {

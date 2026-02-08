@@ -22,6 +22,10 @@
     "./api": {
       "import": "./src/api.ts",
       "types": "./src/api.ts"
+    },
+    "./workshop": {
+      "import": "./src/workshop.ts",
+      "types": "./src/workshop.ts"
     }
   },
   "scripts": {

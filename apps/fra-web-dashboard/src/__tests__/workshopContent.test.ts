@@ -25,7 +25,7 @@ describe('Workshop sections', () => {
     expect(titles).toContain('Welcome & Introduction');
     expect(titles).toContain('Regulatory Landscape');
     expect(titles).toContain('Types of Fraud Risks');
-    expect(titles).toContain('Defense Strategies');
+    expect(titles).toContain('Defence Strategies');
     expect(titles).toContain('Action Planning');
   });
 });

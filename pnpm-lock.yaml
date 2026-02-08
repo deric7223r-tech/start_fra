@@ -419,6 +419,9 @@ importers:
       '@stopfra/shared':
         specifier: workspace:^
         version: link:../../packages/shared
+      '@stopfra/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@tanstack/react-query':
         specifier: ^5.83.0
         version: 5.90.20(react@19.1.0)

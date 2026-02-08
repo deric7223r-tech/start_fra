@@ -108,12 +108,8 @@ export interface WorkshopSlide {
   quiz?: QuizQuestion;
 }
 
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation: string;
-}
+// Re-export shared types from @stopfra/types
+export type { QuizQuestion, ScenarioOption, ScenarioStep } from '@stopfra/types';
 
 export interface CaseStudy {
   id: string;
@@ -122,18 +118,4 @@ export interface CaseStudy {
   scenario: string;
   questions: string[];
   learningPoints: string[];
-}
-
-export interface ScenarioStep {
-  id: string;
-  description: string;
-  options: ScenarioOption[];
-}
-
-export interface ScenarioOption {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-  feedback: string;
-  nextStepId?: string;
 }
