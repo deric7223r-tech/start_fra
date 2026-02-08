@@ -8,7 +8,7 @@ import { getClientIp, rateLimit } from '../middleware.js';
 import { generateKeypassCode } from '../s3.js';
 import {
   dbGetUserByEmail, dbInsertUser,
-  dbInsertKeypass, dbGetKeypassByCode, dbUpdateKeypassStatus, dbListKeypassesByOrganisation, dbGetKeypassStatsByOrganisation,
+  dbInsertKeypassBatch, dbGetKeypassByCode, dbUpdateKeypassStatus, dbListKeypassesByOrganisation, dbGetKeypassStatsByOrganisation,
   dbGetOrganisationById, dbGetPackageById,
   dbListPurchasesByOrganisation,
   dbUpsertRefreshToken,
@@ -58,7 +58,7 @@ async function createKeypasses(orgId: string, quantity: number, expiresInDays: n
   const expiresAt = new Date(now + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
   const createdAt = new Date(now).toISOString();
 
-  const codes: string[] = [];
+  const keypasses: Keypass[] = [];
   for (let i = 0; i < quantity; i++) {
     let code = generateKeypassCode();
     // Ensure uniqueness (check both in-memory and DB)
@@ -68,18 +68,18 @@ async function createKeypasses(orgId: string, quantity: number, expiresInDays: n
       while (keypassesByCode.has(code)) code = generateKeypassCode();
     }
 
-    const kp: Keypass = { code, organisationId: orgId, status: 'available', createdAt, expiresAt };
-
-    if (hasDatabase()) {
-      await dbInsertKeypass(kp);
-    } else {
-      keypassesByCode.set(code, kp);
-    }
-
-    codes.push(code);
+    keypasses.push({ code, organisationId: orgId, status: 'available', createdAt, expiresAt });
   }
 
-  return { codes, expiresAt };
+  if (hasDatabase()) {
+    await dbInsertKeypassBatch(keypasses);
+  } else {
+    for (const kp of keypasses) {
+      keypassesByCode.set(kp.code, kp);
+    }
+  }
+
+  return { codes: keypasses.map((kp) => kp.code), expiresAt };
 }
 
 // ── Routes ──────────────────────────────────────────────────────

@@ -10,13 +10,13 @@ import {
   LOCKOUT_PREFIX, LOCKOUT_MAX_ATTEMPTS, LOCKOUT_WINDOW_SECONDS,
   RATE_LIMITS,
 } from '../types.js';
-import type { User, Organisation } from '../types.js';
+import type { User } from '../types.js';
 import { usersByEmail, refreshTokenAllowlist, organisationsById } from '../stores.js';
 import { getClientIp, rateLimit } from '../middleware.js';
 import {
-  dbGetUserByEmail, dbGetUserById, dbInsertUser, dbUpdateUserPasswordHash,
+  dbGetUserByEmail, dbGetUserById, dbUpdateUserPasswordHash,
   dbUpsertRefreshToken, dbHasRefreshToken, dbDeleteRefreshToken, dbDeleteAllRefreshTokensForUser,
-  dbInsertOrganisation, dbGetOrganisationById,
+  dbGetOrganisationById,
   auditLog,
   setPasswordResetToken, getPasswordResetUserId, deletePasswordResetToken,
 } from '../db/index.js';
@@ -88,44 +88,57 @@ auth.post('/auth/signup', async (c) => {
 
   const orgName = parsed.data.organisationName ?? 'Organisation';
 
+  let workshopProfile = null;
+  const workshopRoles: string[] = [];
+
   if (hasDatabase()) {
-    await dbInsertUser(user);
-    const org: Organisation = {
-      id: user.organisationId, name: orgName, createdByUserId: user.id,
-      createdAt: now, updatedAt: now,
-    };
-    await dbInsertOrganisation(org);
+    const pool = getDbPool();
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      await client.query(
+        'INSERT INTO public.users (id, email, name, password_hash, role, organisation_id, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+        [user.id, user.email, user.name, user.passwordHash, user.role, user.organisationId, user.createdAt]
+      );
+      await client.query(
+        'INSERT INTO public.organisations (id, name, created_by_user_id, created_at, updated_at) VALUES ($1,$2,$3,$4,$5)',
+        [user.organisationId, orgName, user.id, now, now]
+      );
+
+      const fullName = parsed.data.name;
+      const sector = parsed.data.sector ?? 'private';
+      const jobTitle = parsed.data.jobTitle ?? null;
+
+      const profileRes = await client.query(
+        `INSERT INTO workshop_profiles (user_id, full_name, organization_name, sector, job_title)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (user_id) DO NOTHING
+         RETURNING *`,
+        [user.id, fullName, orgName, sector, jobTitle]
+      );
+      workshopProfile = profileRes.rows[0] ?? null;
+
+      const role = parsed.data.workshopRole ?? 'participant';
+      await client.query(
+        'INSERT INTO workshop_roles (user_id, role) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [user.id, role]
+      );
+      workshopRoles.push(role);
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   } else {
     usersByEmail.set(user.email, user);
     organisationsById.set(user.organisationId, {
       id: user.organisationId, name: orgName, createdByUserId: user.id,
       createdAt: now, updatedAt: now,
     });
-  }
-
-  // Create workshop profile and role if database is available
-  let workshopProfile = null;
-  const workshopRoles: string[] = [];
-  if (hasDatabase()) {
-    const fullName = parsed.data.name;
-    const sector = parsed.data.sector ?? 'private';
-    const jobTitle = parsed.data.jobTitle ?? null;
-
-    const profileRes = await getDbPool().query(
-      `INSERT INTO workshop_profiles (user_id, full_name, organization_name, sector, job_title)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (user_id) DO NOTHING
-       RETURNING *`,
-      [user.id, fullName, orgName, sector, jobTitle]
-    );
-    workshopProfile = profileRes.rows[0] ?? null;
-
-    const role = parsed.data.workshopRole ?? 'participant';
-    await getDbPool().query(
-      'INSERT INTO workshop_roles (user_id, role) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-      [user.id, role]
-    );
-    workshopRoles.push(role);
   }
 
   const { accessToken, refreshToken } = issueTokens(user);

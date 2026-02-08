@@ -39,7 +39,7 @@ class ErrorBoundary extends Component<Props, State> {
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4">
               <p className="text-center text-sm text-muted-foreground">
-                {this.state.error?.message}
+                An unexpected error occurred. Please try again or contact support if the problem persists.
               </p>
               <Button
                 onClick={() => this.setState({ hasError: false, error: null })}

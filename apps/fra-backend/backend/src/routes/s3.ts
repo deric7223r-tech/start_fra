@@ -3,7 +3,8 @@ import { PutObjectCommand, GetObjectCommand, CopyObjectCommand } from '@aws-sdk/
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { jsonError, requireAuth } from '../helpers.js';
 import { s3PresignUploadSchema, s3PresignDownloadSchema, s3PromoteUploadSchema, RATE_LIMITS } from '../types.js';
-import { rateLimit } from '../middleware.js';
+import { rateLimit, getClientIp } from '../middleware.js';
+import { auditLog } from '../db/index.js';
 import {
   s3Bucket, s3Region, s3UploadPrefix, s3DownloadPrefix,
   s3UrlExpiresSeconds, s3MaxUploadBytes, s3AllowedContentTypes,
@@ -52,6 +53,14 @@ s3Routes.post('/uploads/presign', async (c) => {
   });
 
   const uploadUrl = await getSignedUrl(s3, cmd, { expiresIn: s3UrlExpiresSeconds });
+
+  await auditLog({
+    eventType: 's3.presign_upload', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 's3_object', resourceId: key,
+    details: { filename, contentType, sizeBytes },
+    ipAddress: getClientIp(c), userAgent: c.req.header('user-agent'),
+  });
+
   return c.json({
     success: true,
     data: {
@@ -96,6 +105,12 @@ s3Routes.post('/uploads/promote', async (c) => {
     })
   );
 
+  await auditLog({
+    eventType: 's3.promote_upload', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 's3_object', resourceId: destKey,
+    details: { sourceKey }, ipAddress: getClientIp(c), userAgent: c.req.header('user-agent'),
+  });
+
   return c.json({
     success: true,
     data: {
@@ -128,6 +143,13 @@ s3Routes.post('/downloads/presign', async (c) => {
 
   const cmd = new GetObjectCommand({ Bucket: s3Bucket, Key: key });
   const downloadUrl = await getSignedUrl(s3, cmd, { expiresIn: s3UrlExpiresSeconds });
+
+  await auditLog({
+    eventType: 's3.presign_download', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 's3_object', resourceId: key,
+    ipAddress: getClientIp(c), userAgent: c.req.header('user-agent'),
+  });
+
   return c.json({
     success: true,
     data: {

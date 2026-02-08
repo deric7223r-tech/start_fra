@@ -12,8 +12,9 @@ import { getDbPool } from './db.js';
 import { type AuthContext, hasDatabase, jsonError, getAuth as getAuthBase, requireAuth } from './helpers.js';
 import { createLogger } from './logger.js';
 import { getRedis } from './redis.js';
-import { rateLimit } from './middleware.js';
+import { rateLimit, getClientIp } from './middleware.js';
 import { RATE_LIMITS, isValidUUID } from './types.js';
+import { auditLog } from './db/index.js';
 
 function requireUUID(c: Context, name: string): string | Response {
   const value = c.req.param(name);
@@ -228,6 +229,13 @@ workshop.post('/sessions', async (c) => {
     [auth.userId, sessionCode, parsed.data.title]
   );
 
+  await auditLog({
+    eventType: 'workshop.session_create', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 'workshop_session', resourceId: res.rows[0].id,
+    details: { title: parsed.data.title, sessionCode },
+    ipAddress: getClientIp(c), userAgent: c.req.header('user-agent'),
+  });
+
   return c.json({ success: true, data: res.rows[0] }, 201);
 });
 
@@ -328,6 +336,12 @@ workshop.post('/sessions/:id/end', async (c) => {
   );
 
   broadcastToSession(sessionId, 'session_update', res.rows[0]);
+
+  await auditLog({
+    eventType: 'workshop.session_end', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 'workshop_session', resourceId: sessionId,
+    ipAddress: getClientIp(c), userAgent: c.req.header('user-agent'),
+  });
 
   return c.json({ success: true, data: res.rows[0] });
 });
@@ -866,6 +880,12 @@ workshop.post('/certificates', async (c) => {
      VALUES ($1, $2, $3) RETURNING *`,
     [auth.userId, parsed.data?.sessionId ?? null, certNumber]
   );
+
+  await auditLog({
+    eventType: 'workshop.certificate_generate', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 'certificate', resourceId: certNumber,
+    ipAddress: getClientIp(c), userAgent: c.req.header('user-agent'),
+  });
 
   return c.json({ success: true, data: res.rows[0] }, 201);
 });

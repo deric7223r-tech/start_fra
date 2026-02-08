@@ -17,6 +17,23 @@ export async function dbInsertKeypass(kp: Keypass): Promise<void> {
   );
 }
 
+export async function dbInsertKeypassBatch(keypasses: Keypass[]): Promise<void> {
+  if (keypasses.length === 0) return;
+  const pool = getDbPool();
+  const values: unknown[] = [];
+  const placeholders: string[] = [];
+  for (let i = 0; i < keypasses.length; i++) {
+    const offset = i * 6;
+    placeholders.push(`($${offset + 1},$${offset + 2},$${offset + 3},$${offset + 4},$${offset + 5},$${offset + 6})`);
+    const kp = keypasses[i];
+    values.push(kp.code, kp.organisationId, kp.status, kp.createdAt, kp.expiresAt, kp.usedAt ?? null);
+  }
+  await pool.query(
+    `insert into public.keypasses (code, organisation_id, status, created_at, expires_at, used_at) values ${placeholders.join(',')}`,
+    values
+  );
+}
+
 export async function dbGetKeypassByCode(code: string): Promise<Keypass | null> {
   const pool = getDbPool();
   const res = await pool.query<DbKeypassRow>(
