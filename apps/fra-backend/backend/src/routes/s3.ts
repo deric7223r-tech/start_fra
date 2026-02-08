@@ -2,7 +2,8 @@ import { Hono } from 'hono';
 import { PutObjectCommand, GetObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { jsonError, requireAuth } from '../helpers.js';
-import { s3PresignUploadSchema, s3PresignDownloadSchema, s3PromoteUploadSchema } from '../types.js';
+import { s3PresignUploadSchema, s3PresignDownloadSchema, s3PromoteUploadSchema, RATE_LIMITS } from '../types.js';
+import { rateLimit } from '../middleware.js';
 import {
   s3Bucket, s3Region, s3UploadPrefix, s3DownloadPrefix,
   s3UrlExpiresSeconds, s3MaxUploadBytes, s3AllowedContentTypes,
@@ -12,6 +13,9 @@ import {
 const s3Routes = new Hono();
 
 s3Routes.post('/uploads/presign', async (c) => {
+  const limited = await rateLimit('s3:presign', { windowMs: RATE_LIMITS.S3_PRESIGN_WINDOW_MS, max: RATE_LIMITS.S3_PRESIGN_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -61,6 +65,9 @@ s3Routes.post('/uploads/presign', async (c) => {
 });
 
 s3Routes.post('/uploads/promote', async (c) => {
+  const limited = await rateLimit('s3:promote', { windowMs: RATE_LIMITS.S3_PRESIGN_WINDOW_MS, max: RATE_LIMITS.S3_PRESIGN_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -101,6 +108,9 @@ s3Routes.post('/uploads/promote', async (c) => {
 });
 
 s3Routes.post('/downloads/presign', async (c) => {
+  const limited = await rateLimit('s3:presign', { windowMs: RATE_LIMITS.S3_PRESIGN_WINDOW_MS, max: RATE_LIMITS.S3_PRESIGN_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 

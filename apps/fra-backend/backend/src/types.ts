@@ -186,6 +186,8 @@ export const RATE_LIMITS = {
   REFRESH_MAX: 10,
   PAYMENT_INTENT_WINDOW_MS: 60 * 1000,  // 1 minute
   PAYMENT_INTENT_MAX: 10,
+  S3_PRESIGN_WINDOW_MS: 60 * 1000,  // 1 minute
+  S3_PRESIGN_MAX: 20,
 } as const;
 
 // ── Keypass grace period ────────────────────────────────────────

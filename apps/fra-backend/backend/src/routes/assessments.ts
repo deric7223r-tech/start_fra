@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
-import { requireUUIDParam, assessmentCreateSchema, assessmentPatchSchema } from '../types.js';
+import { requireUUIDParam, assessmentCreateSchema, assessmentPatchSchema, parsePagination, paginate } from '../types.js';
 import type { Assessment } from '../types.js';
 import { assessmentsById } from '../stores.js';
 import {
@@ -33,23 +33,28 @@ assessments.get('/assessments', async (c) => {
     items = items.filter((a) => a.status === statusFilter);
   }
 
-  return c.json({ success: true, data: items });
+  const { page, pageSize } = parsePagination(c.req.query());
+  const result = paginate(items, page, pageSize);
+
+  return c.json({ success: true, data: result.items, pagination: { page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages } });
 });
 
 assessments.get('/assessments/organisation/:orgId', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
-  const orgId = c.req.param('orgId');
+  const orgId = requireUUIDParam(c, 'orgId');
+  if (orgId instanceof Response) return orgId;
   if (orgId !== auth.organisationId) return jsonError(c, 403, 'FORBIDDEN', 'Forbidden');
 
-  if (!hasDatabase()) {
-    const items = Array.from(assessmentsById.values()).filter((a) => a.organisationId === orgId);
-    return c.json({ success: true, data: items });
-  }
+  const items = !hasDatabase()
+    ? Array.from(assessmentsById.values()).filter((a) => a.organisationId === orgId)
+    : await dbListAssessmentsByOrganisation(orgId);
 
-  const items = await dbListAssessmentsByOrganisation(orgId);
-  return c.json({ success: true, data: items });
+  const { page, pageSize } = parsePagination(c.req.query());
+  const result = paginate(items, page, pageSize);
+
+  return c.json({ success: true, data: result.items, pagination: { page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages } });
 });
 
 assessments.post('/assessments', async (c) => {

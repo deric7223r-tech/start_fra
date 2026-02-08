@@ -421,8 +421,8 @@ auth.get('/debug/db/ping', async (c) => {
     const result = await pool.query('select 1 as ok');
     return c.json({ success: true, data: { ok: result.rows?.[0]?.ok === 1 } });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Database unavailable';
-    return jsonError(c, 500, 'DB_UNAVAILABLE', message);
+    logger.error('Debug DB ping failed', { error: error instanceof Error ? error.message : String(error) });
+    return jsonError(c, 500, 'DB_UNAVAILABLE', 'Database health check failed');
   }
 });
 

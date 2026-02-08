@@ -5,7 +5,7 @@ import { createLogger } from '../logger.js';
 import {
   paymentCreateIntentSchema, purchasesCreateSchema, purchasesConfirmSchema,
   stripeWebhookSchema, FALLBACK_PACKAGES, RISK_THRESHOLDS, RATE_LIMITS,
-  parsePagination, paginate,
+  parsePagination, paginate, requireUUIDParam,
 } from '../types.js';
 
 const logger = createLogger('payments');
@@ -268,12 +268,23 @@ payments.get('/purchases/organisation/:orgId', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
-  const orgId = c.req.param('orgId');
+  const orgId = requireUUIDParam(c, 'orgId');
+  if (orgId instanceof Response) return orgId;
   if (orgId !== auth.organisationId) return jsonError(c, 403, 'FORBIDDEN', 'Forbidden');
 
-  const allPurchases = hasDatabase()
+  const statusFilter = c.req.query('status');
+  const validStatuses = new Set(['requires_confirmation', 'succeeded', 'failed', 'refunded']);
+  if (statusFilter && !validStatuses.has(statusFilter)) {
+    return jsonError(c, 400, 'INVALID_PARAM', 'Invalid status filter');
+  }
+
+  let allPurchases = hasDatabase()
     ? await dbListPurchasesByOrganisation(orgId)
     : Array.from(purchasesById.values()).filter((p) => p.organisationId === orgId);
+
+  if (statusFilter) {
+    allPurchases = allPurchases.filter((p) => p.status === statusFilter);
+  }
 
   const { page, pageSize } = parsePagination(c.req.query());
   const result = paginate(allPurchases, page, pageSize);

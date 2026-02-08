@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import bcrypt from 'bcryptjs';
 import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
-import { keypassGenerateSchema, keypassValidateSchema, keypassUseSchema, keypassBulkSchema, RATE_LIMITS, FALLBACK_PACKAGES, KEYPASS_GRACE_PERIOD_DAYS, parsePagination, paginate } from '../types.js';
+import { keypassGenerateSchema, keypassValidateSchema, keypassUseSchema, keypassBulkSchema, RATE_LIMITS, FALLBACK_PACKAGES, KEYPASS_GRACE_PERIOD_DAYS, parsePagination, paginate, requireUUIDParam } from '../types.js';
 import type { User, Keypass } from '../types.js';
 import { usersByEmail, organisationsById, keypassesByCode, purchasesById } from '../stores.js';
 import { getClientIp, rateLimit } from '../middleware.js';
@@ -281,7 +281,8 @@ keypasses.get('/keypasses/organisation/:orgId', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
-  const orgId = c.req.param('orgId');
+  const orgId = requireUUIDParam(c, 'orgId');
+  if (orgId instanceof Response) return orgId;
   if (orgId !== auth.organisationId) return jsonError(c, 403, 'FORBIDDEN', 'Forbidden');
 
   const statusFilter = c.req.query('status') as KeypassStatus | undefined;
@@ -309,7 +310,8 @@ keypasses.get('/keypasses/organisation/:orgId/stats', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
-  const orgId = c.req.param('orgId');
+  const orgId = requireUUIDParam(c, 'orgId');
+  if (orgId instanceof Response) return orgId;
   if (orgId !== auth.organisationId) return jsonError(c, 403, 'FORBIDDEN', 'Forbidden');
 
   if (hasDatabase()) {
@@ -372,7 +374,8 @@ keypasses.get('/keypasses/organisation/:orgId/quota', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
-  const orgId = c.req.param('orgId');
+  const orgId = requireUUIDParam(c, 'orgId');
+  if (orgId instanceof Response) return orgId;
   if (orgId !== auth.organisationId) return jsonError(c, 403, 'FORBIDDEN', 'Forbidden');
 
   const quota = await getOrgKeypassQuota(orgId);
