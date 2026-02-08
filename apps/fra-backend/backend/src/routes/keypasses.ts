@@ -452,4 +452,35 @@ keypasses.post('/keypasses/bulk-validate', async (c) => {
   return c.json({ success: true, data: { results } });
 });
 
+keypasses.get('/keypasses/expiring', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const daysParam = c.req.query('days') ?? '7';
+  const days = Math.min(90, Math.max(1, parseInt(daysParam, 10) || 7));
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() + days);
+
+  const orgKeypasses = hasDatabase()
+    ? await dbListKeypassesByOrganisation(auth.organisationId)
+    : Array.from(keypassesByCode.values()).filter((k) => k.organisationId === auth.organisationId);
+
+  const now = new Date();
+  const expiring = orgKeypasses.filter((kp) => {
+    if (kp.status !== 'available') return false;
+    const expiresAt = new Date(kp.expiresAt);
+    return expiresAt > now && expiresAt <= cutoff;
+  });
+
+  return c.json({
+    success: true,
+    data: {
+      organisationId: auth.organisationId,
+      days,
+      count: expiring.length,
+      keypasses: expiring.map((kp) => ({ code: kp.code, expiresAt: kp.expiresAt })),
+    },
+  });
+});
+
 export default keypasses;

@@ -219,7 +219,7 @@ export default function Checkout() {
                   </div>
 
                   <div className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-4 py-1.5 text-xs font-semibold text-primary-foreground/90 backdrop-blur">
-                    <Shield className="h-3.5 w-3.5" />
+                    <Shield className="h-3.5 w-3.5" aria-hidden="true" />
                     <span>GovS-013 & ECCTA 2023 Compliant</span>
                   </div>
                 </CardContent>
@@ -250,7 +250,7 @@ export default function Checkout() {
                         Card Number
                       </label>
                       <div className="relative">
-                        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                         <input
                           id="card-number"
                           type="text"
@@ -350,7 +350,7 @@ export default function Checkout() {
                     </Button>
 
                     <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                      <Lock className="h-3.5 w-3.5" />
+                      <Lock className="h-3.5 w-3.5" aria-hidden="true" />
                       <span>Secure payment</span>
                     </div>
                   </form>

@@ -167,10 +167,17 @@ payments.post('/purchases', async (c) => {
     purchasesById.set(purchaseId, purchase);
   }
 
+  const previousPurchase = orgPurchases.find((p) => p.status === 'succeeded');
+  const previousPackageId = previousPurchase?.packageId ?? null;
+  const transitionType = !previousPackageId ? 'new_customer'
+    : previousPackageId === parsed.data.packageId ? 'renewal'
+    : 'upgrade';
+
   await auditLog({
     eventType: 'purchase.created', actorId: auth.userId, actorEmail: auth.email,
     organisationId: auth.organisationId, resourceType: 'purchase', resourceId: purchaseId,
-    details: { packageId: parsed.data.packageId, amountCents }, ipAddress: getClientIp(c),
+    details: { packageId: parsed.data.packageId, amountCents, previousPackageId, transitionType },
+    ipAddress: getClientIp(c),
   });
 
   return c.json({

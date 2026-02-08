@@ -4,8 +4,8 @@ import { hasDatabase, hasPackageEntitlement, jsonError, requireAuth } from '../h
 import { RISK_THRESHOLDS, RATE_LIMITS, parsePagination, paginate } from '../types.js';
 import type { AssessmentStatus } from '../types.js';
 import { assessmentsById, purchasesById, keypassesByCode } from '../stores.js';
-import { dbListAssessmentsByOrganisation, dbListPurchasesByOrganisation, dbListKeypassesByOrganisation } from '../db/index.js';
-import { rateLimit } from '../middleware.js';
+import { dbListAssessmentsByOrganisation, dbListPurchasesByOrganisation, dbListKeypassesByOrganisation, auditLog } from '../db/index.js';
+import { rateLimit, getClientIp } from '../middleware.js';
 
 const analytics = new Hono();
 
@@ -142,6 +142,13 @@ analytics.get('/reports/generate', async (c) => {
 
   const reportId = `rpt_${crypto.randomUUID().replace(/-/g, '')}`;
   const generatedAt = new Date().toISOString();
+
+  await auditLog({
+    eventType: 'report.generated', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 'report', resourceId: reportId,
+    details: { assessmentCount: completedAssessments.length, overallRisk },
+    ipAddress: getClientIp(c),
+  });
 
   return c.json({
     success: true,

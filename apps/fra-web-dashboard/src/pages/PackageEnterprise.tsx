@@ -16,6 +16,12 @@ import {
   FileText,
   Award,
 } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 export default function PackageEnterprise() {
   const { user } = useAuth();
@@ -254,8 +260,94 @@ export default function PackageEnterprise() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Onboarding Steps */}
       <section className="py-20 lg:py-32">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
+              Your Enterprise Onboarding
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              From purchase to live dashboard in days, not months.
+            </p>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { step: 1, title: 'Complete Payment', time: '5 minutes', desc: 'Secure checkout with instant confirmation.' },
+              { step: 2, title: 'Team Invitation', time: 'Within 24 hours', desc: 'Distribute key-passes and invite your team.' },
+              { step: 3, title: 'Initial Setup', time: '30 minutes', desc: 'Configure departments, roles, and risk areas.' },
+              { step: 4, title: 'Dashboard Live', time: 'Same day', desc: 'Real-time monitoring and compliance reports.' },
+            ].map((item, index) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-lg font-bold dark:bg-amber-500/20 dark:text-amber-400">
+                  {item.step}
+                </div>
+                <h3 className="font-semibold mb-1">{item.title}</h3>
+                <p className="text-sm text-amber-600 font-medium mb-2">{item.time}</p>
+                <p className="text-sm text-muted-foreground">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 lg:py-32 bg-muted/50">
+        <div className="container max-w-3xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
+              Common Questions
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Everything you need to know about the Enterprise package.
+            </p>
+          </div>
+
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="onboarding">
+              <AccordionTrigger>How long is the onboarding process?</AccordionTrigger>
+              <AccordionContent>
+                Most organisations are fully operational within 1–2 business days. You can distribute key-passes and begin assessments immediately after payment. Dashboard configuration typically takes 30 minutes.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="upgrade">
+              <AccordionTrigger>Can I upgrade from Professional mid-year?</AccordionTrigger>
+              <AccordionContent>
+                Yes. Contact our team and we will apply your remaining Professional subscription value as credit towards the Enterprise package. The upgrade takes effect immediately.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="api">
+              <AccordionTrigger>Is API access included or paid separately?</AccordionTrigger>
+              <AccordionContent>
+                API access is included at no additional cost with the Enterprise package. You will receive API documentation and credentials during onboarding.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="support">
+              <AccordionTrigger>What does priority support cover?</AccordionTrigger>
+              <AccordionContent>
+                Priority support includes dedicated assistance Monday to Friday, 9am–6pm GMT, with a 4-hour response guarantee. This covers onboarding help, compliance queries, and ongoing platform support.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="keypasses">
+              <AccordionTrigger>How do employee key-passes work?</AccordionTrigger>
+              <AccordionContent>
+                Key-passes are unique access codes you distribute to staff. Each code allows an employee to create an account and complete their fraud risk assessment. Enterprise includes unlimited key-passes with no cap on team size.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 lg:py-32 bg-muted/30">
         <div className="container">
           <Card className="border-0 gradient-hero overflow-hidden">
             <CardContent className="p-12 lg:p-16 text-center">

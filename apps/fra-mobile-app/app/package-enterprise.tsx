@@ -28,7 +28,7 @@ export default function PackageEnterpriseScreen() {
           </View>
 
           <Text style={styles.heroTitle} accessibilityRole="header">Enterprise</Text>
-          <Text style={styles.heroTitleAccent}>Full Dashboard</Text>
+          <Text style={styles.heroTitleAccent} accessibilityRole="header">Full Dashboard</Text>
 
           <Text style={styles.heroSubtitle}>
             The complete fraud risk management solution. Real-time monitoring dashboard, unlimited employee key-passes, and full compliance reporting.
@@ -158,7 +158,6 @@ const styles = StyleSheet.create({
   },
   heroBadgeText: {
     color: colors.white,
-    opacity: 0.9,
     fontSize: 13,
     fontWeight: '600' as const,
   },
@@ -178,8 +177,7 @@ const styles = StyleSheet.create({
   heroSubtitle: {
     fontSize: 16,
     lineHeight: 24,
-    color: colors.white,
-    opacity: 0.85,
+    color: 'rgba(255, 255, 255, 0.9)',
     marginBottom: 20,
   },
   priceCard: {
@@ -194,8 +192,7 @@ const styles = StyleSheet.create({
   priceLabel: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: colors.white,
-    opacity: 0.8,
+    color: 'rgba(255, 255, 255, 0.9)',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 6,
@@ -213,13 +210,11 @@ const styles = StyleSheet.create({
   pricePeriod: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: colors.white,
-    opacity: 0.75,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   priceNote: {
     fontSize: 13,
-    color: colors.white,
-    opacity: 0.65,
+    color: 'rgba(255, 255, 255, 0.85)',
     marginTop: 4,
   },
   ctaRow: {
@@ -294,6 +289,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: colors.white,
-    opacity: 0.9,
   },
 });

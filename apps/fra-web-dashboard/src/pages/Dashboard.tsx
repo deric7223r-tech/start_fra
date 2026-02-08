@@ -99,11 +99,11 @@ export default function Dashboard() {
                     </p>
                     <div className="flex items-center gap-4 text-sm text-primary-foreground/70">
                       <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
+                        <Clock className="h-4 w-4" aria-hidden="true" />
                         30 minutes
                       </span>
                       <span className="flex items-center gap-1">
-                        <BookOpen className="h-4 w-4" />
+                        <BookOpen className="h-4 w-4" aria-hidden="true" />
                         {totalSections} modules
                       </span>
                     </div>
@@ -210,7 +210,7 @@ export default function Dashboard() {
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center">
-                      <Award className="h-5 w-5 text-success" />
+                      <Award className="h-5 w-5 text-success" aria-hidden="true" />
                     </div>
                     <div>
                       <div className="font-medium">Workshop Complete!</div>
@@ -234,10 +234,10 @@ export default function Dashboard() {
         >
           <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/resources')}>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" role="button" tabIndex={0} onClick={() => navigate('/resources')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/resources'); } }}>
               <CardContent className="flex items-center gap-4 p-4">
                 <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-primary" />
+                  <FileText className="h-5 w-5 text-primary" aria-hidden="true" />
                 </div>
                 <div>
                   <div className="font-medium">Resources</div>
@@ -246,10 +246,10 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/action-plan')}>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" role="button" tabIndex={0} onClick={() => navigate('/action-plan')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/action-plan'); } }}>
               <CardContent className="flex items-center gap-4 p-4">
                 <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <Target className="h-5 w-5 text-accent" />
+                  <Target className="h-5 w-5 text-accent" aria-hidden="true" />
                 </div>
                 <div>
                   <div className="font-medium">Action Plan</div>
@@ -258,10 +258,10 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/workshop')}>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" role="button" tabIndex={0} onClick={() => navigate('/workshop')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/workshop'); } }}>
               <CardContent className="flex items-center gap-4 p-4">
                 <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-info" />
+                  <Users className="h-5 w-5 text-info" aria-hidden="true" />
                 </div>
                 <div>
                   <div className="font-medium">Join Session</div>
@@ -271,10 +271,10 @@ export default function Dashboard() {
             </Card>
 
             {isCompleted && (
-              <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/certificate')}>
+              <Card className="hover:shadow-md transition-shadow cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" role="button" tabIndex={0} onClick={() => navigate('/certificate')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/certificate'); } }}>
                 <CardContent className="flex items-center gap-4 p-4">
                   <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
-                    <Award className="h-5 w-5 text-success" />
+                    <Award className="h-5 w-5 text-success" aria-hidden="true" />
                   </div>
                   <div>
                     <div className="font-medium">Certificate</div>
