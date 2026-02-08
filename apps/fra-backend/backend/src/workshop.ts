@@ -301,6 +301,9 @@ workshop.get('/sessions/code/:code', async (c) => {
 });
 
 workshop.patch('/sessions/:id', async (c) => {
+  const limited = await rateLimit('workshop:sessions', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -509,6 +512,9 @@ workshop.post('/progress', async (c) => {
 });
 
 workshop.patch('/progress/:id', async (c) => {
+  const limited = await rateLimit('workshop:progress', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -647,6 +653,9 @@ workshop.post('/sessions/:sessionId/polls', async (c) => {
 });
 
 workshop.patch('/polls/:pollId', async (c) => {
+  const limited = await rateLimit('workshop:polls', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -804,6 +813,9 @@ workshop.post('/sessions/:sessionId/questions', async (c) => {
 });
 
 workshop.patch('/questions/:questionId', async (c) => {
+  const limited = await rateLimit('workshop:questions', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -956,6 +968,9 @@ workshop.post('/action-plans', async (c) => {
 });
 
 workshop.patch('/action-plans/:id', async (c) => {
+  const limited = await rateLimit('workshop:action-plans', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 

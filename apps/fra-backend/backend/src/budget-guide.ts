@@ -7,7 +7,8 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { getDbPool } from './db.js';
 import { hasDatabase, jsonError, requireAuth } from './helpers.js';
-import { requireUUIDParam } from './types.js';
+import { requireUUIDParam, RATE_LIMITS } from './types.js';
+import { rateLimit } from './middleware.js';
 
 // ── Budget Guide Hono App ────────────────────────────────────
 
@@ -59,6 +60,9 @@ budgetGuide.post('/progress', async (c) => {
 
 // PATCH /progress — Update progress
 budgetGuide.patch('/progress', async (c) => {
+  const limited = await rateLimit('budget-guide:progress', { windowMs: RATE_LIMITS.WORKSHOP_WRITE_WINDOW_MS, max: RATE_LIMITS.WORKSHOP_WRITE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
