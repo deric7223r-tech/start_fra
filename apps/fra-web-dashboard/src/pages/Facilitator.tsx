@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -60,11 +60,15 @@ export default function Facilitator() {
   const [pollOptions, setPollOptions] = useState('');
 
   // Auth and role checks handled by ProtectedRoute in App.tsx
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    return () => { isMountedRef.current = false; };
+  }, []);
 
   const fetchPolls = useCallback(async (sessionId: string) => {
     try {
       const data = await api.get<Poll[]>(`/api/v1/workshop/sessions/${sessionId}/polls`);
-      setPolls(data.map(p => ({ ...p, options: p.options as string[] })));
+      if (isMountedRef.current) setPolls(data.map(p => ({ ...p, options: p.options as string[] })));
     } catch (err: unknown) {
       logger.warn('Failed to fetch polls', err);
     }
@@ -73,7 +77,7 @@ export default function Facilitator() {
   const fetchQuestions = useCallback(async (sessionId: string) => {
     try {
       const data = await api.get<Question[]>(`/api/v1/workshop/sessions/${sessionId}/questions`);
-      setQuestions(data);
+      if (isMountedRef.current) setQuestions(data);
     } catch (err: unknown) {
       logger.warn('Failed to fetch questions', err);
     }
@@ -82,7 +86,7 @@ export default function Facilitator() {
   const fetchParticipantCount = useCallback(async (sessionId: string) => {
     try {
       const data = await api.get<{ count: number }>(`/api/v1/workshop/sessions/${sessionId}/participants`);
-      setParticipantCount(data.count);
+      if (isMountedRef.current) setParticipantCount(data.count);
     } catch (err: unknown) {
       logger.warn('Failed to fetch participant count', err);
     }
@@ -101,14 +105,15 @@ export default function Facilitator() {
 
     try {
       const data = await api.get<WorkshopSession[]>('/api/v1/workshop/sessions');
+      if (!isMountedRef.current) return;
       setSessions(data);
       const active = data.find(s => s.is_active);
       if (active) setActiveSession(active);
     } catch (err: unknown) {
       logger.error('Error fetching sessions', err);
-      toast.error('Failed to load sessions');
+      if (isMountedRef.current) toast.error('Failed to load sessions');
     }
-    setIsLoading(false);
+    if (isMountedRef.current) setIsLoading(false);
   }, [user]);
 
   useEffect(() => {

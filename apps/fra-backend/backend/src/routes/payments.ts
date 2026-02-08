@@ -369,6 +369,16 @@ payments.post('/webhooks/stripe', async (c) => {
 
   logger.info('Stripe webhook received', { eventId, type: eventType });
 
+  // Mark as processed BEFORE handling to prevent duplicate processing on retry
+  if (eventId) {
+    processedWebhookIds.add(eventId);
+    // Prevent unbounded memory growth — keep last 10 000 event IDs
+    if (processedWebhookIds.size > 10_000) {
+      const first = processedWebhookIds.values().next().value;
+      if (first) processedWebhookIds.delete(first);
+    }
+  }
+
   try {
     switch (eventType) {
       case 'checkout.session.completed': {
@@ -416,15 +426,6 @@ payments.post('/webhooks/stripe', async (c) => {
   } catch (err: unknown) {
     logger.error('Webhook processing error', { eventId, type: eventType, error: String(err) });
     return jsonError(c, 500, 'WEBHOOK_ERROR', 'Failed to process webhook event');
-  }
-
-  if (eventId) {
-    processedWebhookIds.add(eventId);
-    // Prevent unbounded memory growth — keep last 10 000 event IDs
-    if (processedWebhookIds.size > 10_000) {
-      const first = processedWebhookIds.values().next().value;
-      if (first) processedWebhookIds.delete(first);
-    }
   }
 
   return c.json({ success: true, data: { received: true, type: eventType } });
