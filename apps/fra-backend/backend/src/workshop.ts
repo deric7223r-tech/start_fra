@@ -485,10 +485,16 @@ workshop.patch('/progress/:id', async (c) => {
 
   const schema = z.object({
     currentSection: z.number().int().min(0).optional(),
-    completedSections: z.array(z.number().int()).optional(),
-    quizScores: z.record(z.number()).optional(),
-    scenarioChoices: z.record(z.string()).optional(),
-    completedAt: z.string().nullable().optional(),
+    completedSections: z.array(z.number().int()).max(100).optional(),
+    quizScores: z.record(z.number()).refine(
+      (v) => JSON.stringify(v).length <= 100_000,
+      'quizScores payload too large (max 100KB)'
+    ).optional(),
+    scenarioChoices: z.record(z.string().max(2000)).refine(
+      (v) => JSON.stringify(v).length <= 100_000,
+      'scenarioChoices payload too large (max 100KB)'
+    ).optional(),
+    completedAt: z.string().datetime({ message: 'completedAt must be a valid ISO 8601 datetime' }).nullable().optional(),
   });
   const parsed = schema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid progress data');
@@ -535,6 +541,15 @@ workshop.get('/sessions/:sessionId/polls', async (c) => {
   if (!hasDatabase()) return c.json({ success: true, data: [] });
 
   const pool = getDbPool();
+
+  // Verify session membership
+  const sessionCheck = await pool.query('SELECT facilitator_id FROM workshop_sessions WHERE id = $1', [sid]);
+  if (!sessionCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  if (sessionCheck.rows[0].facilitator_id !== auth.userId) {
+    const partCheck = await pool.query('SELECT 1 FROM session_participants WHERE session_id = $1 AND user_id = $2 LIMIT 1', [sid, auth.userId]);
+    if (!partCheck.rows[0]) return jsonError(c, 403, 'FORBIDDEN', 'Not a member of this session');
+  }
+
   const res = await pool.query(
     'SELECT * FROM polls WHERE session_id = $1 ORDER BY created_at DESC',
     [sid]
@@ -553,6 +568,15 @@ workshop.get('/sessions/:sessionId/polls/active', async (c) => {
   if (!hasDatabase()) return c.json({ success: true, data: null });
 
   const pool = getDbPool();
+
+  // Verify session membership
+  const sessionCheck = await pool.query('SELECT facilitator_id FROM workshop_sessions WHERE id = $1', [sid]);
+  if (!sessionCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  if (sessionCheck.rows[0].facilitator_id !== auth.userId) {
+    const partCheck = await pool.query('SELECT 1 FROM session_participants WHERE session_id = $1 AND user_id = $2 LIMIT 1', [sid, auth.userId]);
+    if (!partCheck.rows[0]) return jsonError(c, 403, 'FORBIDDEN', 'Not a member of this session');
+  }
+
   const res = await pool.query(
     'SELECT * FROM polls WHERE session_id = $1 AND is_active = true LIMIT 1',
     [sid]
@@ -691,6 +715,15 @@ workshop.get('/sessions/:sessionId/questions', async (c) => {
   if (!hasDatabase()) return c.json({ success: true, data: [] });
 
   const pool = getDbPool();
+
+  // Verify session membership
+  const sessionCheck = await pool.query('SELECT facilitator_id FROM workshop_sessions WHERE id = $1', [sid]);
+  if (!sessionCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+  if (sessionCheck.rows[0].facilitator_id !== auth.userId) {
+    const partCheck = await pool.query('SELECT 1 FROM session_participants WHERE session_id = $1 AND user_id = $2 LIMIT 1', [sid, auth.userId]);
+    if (!partCheck.rows[0]) return jsonError(c, 403, 'FORBIDDEN', 'Not a member of this session');
+  }
+
   const res = await pool.query(
     'SELECT * FROM questions WHERE session_id = $1 ORDER BY upvotes DESC, created_at DESC',
     [sid]

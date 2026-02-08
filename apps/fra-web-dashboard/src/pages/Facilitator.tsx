@@ -231,9 +231,13 @@ export default function Facilitator() {
     }
   };
 
-  const copySessionCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast.success('Session code copied!');
+  const copySessionCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success('Session code copied!');
+    } catch {
+      toast.error('Unable to copy. Please select and copy manually.');
+    }
   };
 
   if (authLoading || isLoading) {
