@@ -97,6 +97,7 @@ export default function EmployerDashboard() {
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [employeeDetail, setEmployeeDetail] = useState<EmployeeDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
 
   const isEmployerOrAdmin = user?.role === 'employer' || user?.role === 'admin';
 
@@ -170,21 +171,28 @@ export default function EmployerDashboard() {
     ].filter(d => d.value > 0);
   }, [employees]);
 
-  const toggleEmployeeDetail = async (userId: string) => {
-    if (expandedUserId === userId) {
-      setExpandedUserId(null);
-      setEmployeeDetail(null);
-      return;
-    }
-    setExpandedUserId(userId);
+  const fetchEmployeeDetail = async (userId: string) => {
     setDetailLoading(true);
+    setDetailError(null);
     try {
       const detail = await api.get<EmployeeDetail>(`/api/v1/analytics/employees/${userId}`);
       setEmployeeDetail(detail);
     } catch {
       setEmployeeDetail(null);
+      setDetailError('Failed to load employee details. Please try again.');
     }
     setDetailLoading(false);
+  };
+
+  const toggleEmployeeDetail = async (userId: string) => {
+    if (expandedUserId === userId) {
+      setExpandedUserId(null);
+      setEmployeeDetail(null);
+      setDetailError(null);
+      return;
+    }
+    setExpandedUserId(userId);
+    await fetchEmployeeDetail(userId);
   };
 
   if (!user) return null;
@@ -534,6 +542,8 @@ export default function EmployerDashboard() {
                                       <EmployeeDetailPanel
                                         detail={employeeDetail}
                                         loading={detailLoading}
+                                        error={detailError}
+                                        onRetry={() => fetchEmployeeDetail(employee.userId)}
                                       />
                                     </TableCell>
                                   </TableRow>
@@ -555,12 +565,25 @@ export default function EmployerDashboard() {
   );
 }
 
-function EmployeeDetailPanel({ detail, loading }: { detail: EmployeeDetail | null; loading: boolean }) {
+function EmployeeDetailPanel({ detail, loading, error, onRetry }: { detail: EmployeeDetail | null; loading: boolean; error: string | null; onRetry: () => void }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-6">
         <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
         <span className="text-sm text-muted-foreground">Loading assessment details...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center gap-3 py-6">
+        <AlertTriangle className="h-4 w-4 text-destructive" />
+        <span className="text-sm text-destructive">{error}</span>
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          <RefreshCw className="h-3 w-3 mr-1" />
+          Retry
+        </Button>
       </div>
     );
   }

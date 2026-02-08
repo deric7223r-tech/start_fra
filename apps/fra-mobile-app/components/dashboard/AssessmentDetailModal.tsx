@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, ActivityIndicator, Share } from 'react-native';
-import { X, FileText, CheckCircle, AlertCircle, Download } from 'lucide-react-native';
+import { X, FileText, CheckCircle, AlertCircle, Share2 } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { apiService } from '@/services/api.service';
 import type { AssessmentData } from '@/types/assessment';
@@ -852,10 +852,10 @@ export default function AssessmentDetailModal({
                         onPress={handleExport}
                         activeOpacity={0.8}
                         accessibilityRole="button"
-                        accessibilityLabel="Export assessment as PDF"
+                        accessibilityLabel="Share assessment report"
                       >
-                        <Download size={18} color={colors.govBlue} />
-                        <Text style={styles.exportDetailButtonText}>Export as PDF</Text>
+                        <Share2 size={18} color={colors.govBlue} />
+                        <Text style={styles.exportDetailButtonText}>Share Report</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.closeDetailButton}
