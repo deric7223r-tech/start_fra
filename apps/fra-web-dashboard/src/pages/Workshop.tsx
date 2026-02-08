@@ -360,9 +360,9 @@ export default function Workshop() {
                         <div>
                           <h4 className="font-medium mb-3">Discussion Questions:</h4>
                           <ul className="space-y-2">
-                            {sectorCaseStudy.questions.map((q) => (
+                            {sectorCaseStudy.questions.map((q, qIndex) => (
                               <li key={q} className="flex items-start gap-2">
-                                <span className="font-medium text-primary">{i + 1}.</span>
+                                <span className="font-medium text-primary">{qIndex + 1}.</span>
                                 <span>{q}</span>
                               </li>
                             ))}

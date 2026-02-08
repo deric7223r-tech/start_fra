@@ -64,8 +64,8 @@ export default function Facilitator() {
     try {
       const data = await api.get<Poll[]>(`/api/v1/workshop/sessions/${sessionId}/polls`);
       setPolls(data.map(p => ({ ...p, options: p.options as string[] })));
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      logger.warn('Failed to fetch polls', err);
     }
   }, []);
 
@@ -73,8 +73,8 @@ export default function Facilitator() {
     try {
       const data = await api.get<Question[]>(`/api/v1/workshop/sessions/${sessionId}/questions`);
       setQuestions(data);
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      logger.warn('Failed to fetch questions', err);
     }
   }, []);
 
@@ -82,8 +82,8 @@ export default function Facilitator() {
     try {
       const data = await api.get<{ count: number }>(`/api/v1/workshop/sessions/${sessionId}/participants`);
       setParticipantCount(data.count);
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      logger.warn('Failed to fetch participant count', err);
     }
   }, []);
 
