@@ -241,7 +241,7 @@ function verifyStripeSignature(payload: string, sigHeader: string, secret: strin
   // Check timestamp is within 5 minutes
   const tolerance = 300; // 5 minutes
   const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp)) > tolerance) return false;
+  if (Math.abs(now - parseInt(timestamp, 10)) > tolerance) return false;
 
   const signedPayload = `${timestamp}.${payload}`;
   const expectedSig = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');

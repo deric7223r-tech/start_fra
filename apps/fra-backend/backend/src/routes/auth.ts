@@ -308,9 +308,10 @@ auth.post('/auth/refresh', async (c) => {
         refreshToken: tokens.refreshToken,
       },
     });
-  } catch {
+  } catch (err: unknown) {
+    logger.warn('Refresh token verification failed', { error: String(err) });
     if (hasDatabase()) {
-      await dbDeleteRefreshToken(refreshToken).catch((err) => logger.warn('Failed to delete refresh token during cleanup', { error: String(err) }));
+      await dbDeleteRefreshToken(refreshToken).catch((e) => logger.warn('Failed to delete refresh token during cleanup', { error: String(e) }));
     } else {
       refreshTokenAllowlist.delete(refreshToken);
     }
