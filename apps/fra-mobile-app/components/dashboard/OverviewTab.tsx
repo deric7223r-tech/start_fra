@@ -174,6 +174,8 @@ export default function OverviewTab({
             style={styles.metricCard}
             onPress={() => setActiveTab('keypasses')}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Key-Passes: ${usedKeyPasses} of ${totalKeyPasses} used. Tap to view details`}
           >
             <View style={styles.metricIcon}>
               <Key size={24} color={colors.govBlue} />
@@ -186,6 +188,8 @@ export default function OverviewTab({
             style={styles.metricCard}
             onPress={() => setActiveTab('employees')}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`${employeesCompleted} employees completed. Tap to view details`}
           >
             <View style={styles.metricIcon}>
               <Users size={24} color={colors.govGreen} />
@@ -194,7 +198,7 @@ export default function OverviewTab({
             <Text style={styles.metricLabel}>Completed</Text>
           </TouchableOpacity>
 
-          <View style={styles.metricCard}>
+          <View style={styles.metricCard} accessible accessibilityLabel={`Completion rate: ${completionRate}%`}>
             <View style={styles.metricIcon}>
               <TrendingUp size={24} color={colors.warningOrange} />
             </View>
@@ -202,7 +206,7 @@ export default function OverviewTab({
             <Text style={styles.metricLabel}>Completion Rate</Text>
           </View>
 
-          <View style={styles.metricCard}>
+          <View style={styles.metricCard} accessible accessibilityLabel={`${employeesStarted} employees in progress`}>
             <View style={styles.metricIcon}>
               <FileText size={24} color={colors.govBlue} />
             </View>
@@ -217,7 +221,11 @@ export default function OverviewTab({
         <View style={styles.chartCard}>
           <View style={styles.chartHeader}>
             <Text style={styles.sectionTitle}>Completion by Department</Text>
-            <TouchableOpacity onPress={() => Alert.alert('Chart Info', 'Shows the percentage of completed assessments by department.')}>
+            <TouchableOpacity
+              onPress={() => Alert.alert('Chart Info', 'Shows the percentage of completed assessments by department.')}
+              accessibilityRole="button"
+              accessibilityLabel="Department chart information"
+            >
               <Info size={18} color={colors.govGrey2} />
             </TouchableOpacity>
           </View>
@@ -228,6 +236,8 @@ export default function OverviewTab({
                 style={styles.barChartRow}
                 activeOpacity={0.7}
                 onPress={() => Alert.alert(item.department, `${Math.round(item.rate)}% completed`)}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.department}: ${Math.round(item.rate)}% completed`}
               >
                 <Text style={styles.barChartLabel}>{item.department}</Text>
                 <View style={styles.barChartBarContainer}>
@@ -248,7 +258,11 @@ export default function OverviewTab({
         <View style={styles.chartCard}>
           <View style={styles.chartHeader}>
             <Text style={styles.sectionTitle}>Completion Trend</Text>
-            <TouchableOpacity onPress={() => Alert.alert('Chart Info', 'Shows how many assessments were completed over the past 4 weeks.')}>
+            <TouchableOpacity
+              onPress={() => Alert.alert('Chart Info', 'Shows how many assessments were completed over the past 4 weeks.')}
+              accessibilityRole="button"
+              accessibilityLabel="Completion trend chart information"
+            >
               <Info size={18} color={colors.govGrey2} />
             </TouchableOpacity>
           </View>
@@ -273,6 +287,8 @@ export default function OverviewTab({
                     style={styles.lineChartPoint}
                     activeOpacity={0.7}
                     onPress={() => Alert.alert(item.date, `${item.completed} assessments completed`)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.date}: ${item.completed} assessments completed`}
                   >
                     <View style={styles.lineChartBar}>
                       <View style={[styles.lineChartBarFill, { height: `${(item.completed / maxTrend) * 100}%` }]} />
