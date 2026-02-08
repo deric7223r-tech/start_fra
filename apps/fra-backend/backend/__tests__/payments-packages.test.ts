@@ -209,7 +209,7 @@ describe('Payments & Packages endpoints', () => {
       const res = await app.request('http://localhost/api/v1/webhooks/stripe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'payment_intent.succeeded', data: {} }),
+        body: JSON.stringify({ id: 'evt_test_001', type: 'payment_intent.succeeded', data: {} }),
       });
       expect(res.status).toBe(200);
       const json = (await res.json()) as any;
@@ -232,7 +232,7 @@ describe('Payments & Packages endpoints', () => {
         const res = await app.request('http://localhost/api/v1/webhooks/stripe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'payment_intent.succeeded', data: {} }),
+          body: JSON.stringify({ id: 'evt_test_prod', type: 'payment_intent.succeeded', data: {} }),
         });
         expect(res.status).toBe(500);
         const json = (await res.json()) as any;

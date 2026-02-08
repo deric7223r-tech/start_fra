@@ -106,6 +106,21 @@ api.route('/', s3Routes);
 api.route('/workshop', workshop);
 api.route('/budget-guide', budgetGuide);
 
+// ── Catch-all for unversioned /api requests ─────────────────────
+app.all('/api/*', (c) => {
+  // Allow /api/v1/* to fall through to the normal 404 handler
+  if (c.req.path.startsWith('/api/v1/')) {
+    return c.json(
+      { success: false, error: { code: 'NOT_FOUND', message: 'Not found' } },
+      404
+    );
+  }
+  return c.json(
+    { success: false, error: { code: 'VERSION_REQUIRED', message: 'API version prefix required (e.g., /api/v1)' } },
+    400
+  );
+});
+
 // ── Server startup ──────────────────────────────────────────────
 const port = Number(process.env.PORT ?? 3000);
 const hostname =

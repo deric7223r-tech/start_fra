@@ -18,12 +18,29 @@ async function main() {
 
   const pool = getDbPool();
 
-  // Minimal idempotent runner: each migration file uses IF NOT EXISTS.
+  // Create schema_migrations tracking table if it does not exist
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public.schema_migrations (
+      version text PRIMARY KEY,
+      applied_at timestamptz DEFAULT now()
+    )
+  `);
+
+  // Query already-applied migrations
+  const applied = await pool.query('SELECT version FROM public.schema_migrations');
+  const appliedSet = new Set(applied.rows.map((r: { version: string }) => r.version));
+
   for (const file of files) {
+    if (appliedSet.has(file)) {
+      logger.info(`Skipping already-applied migration ${file}`);
+      continue;
+    }
+
     const fullPath = join(migrationsDir, file);
     const sql = readFileSync(fullPath, 'utf8');
     logger.info(`Applying migration ${file}`);
     await pool.query(sql);
+    await pool.query('INSERT INTO public.schema_migrations (version) VALUES ($1)', [file]);
   }
 
   logger.info('Migrations applied');

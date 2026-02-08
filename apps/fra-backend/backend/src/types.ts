@@ -304,7 +304,7 @@ export const purchasesConfirmSchema = z.object({
 });
 
 export const stripeWebhookSchema = z.object({
-  id: z.string().min(1).optional(),
+  id: z.string().min(1),
   type: z.string().min(1),
   data: z.unknown().optional(),
 });
