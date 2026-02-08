@@ -1,6 +1,6 @@
 import type { RiskPriority } from '@/types/assessment';
 
-export type TabType = 'overview' | 'employees' | 'assessments' | 'keypasses' | 'signoff';
+export type TabType = 'overview' | 'employees' | 'keypasses' | 'signoff';
 export type FilterStatus = 'all' | 'completed' | 'in-progress' | 'not-started';
 export type SortOption = 'name' | 'status' | 'risk' | 'department';
 export type ViewMode = 'list' | 'grid';

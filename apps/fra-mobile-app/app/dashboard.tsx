@@ -63,7 +63,7 @@ export default function DashboardScreen() {
 
   const employeesStarted = useMemo(() => filteredEmployees.filter(e => e.status !== 'not-started').length, [filteredEmployees]);
   const employeesCompleted = useMemo(() => filteredEmployees.filter(e => e.status === 'completed').length, [filteredEmployees]);
-  const completionRate = useMemo(() => usedKeyPasses > 0 ? Math.round((employeesCompleted / usedKeyPasses) * 100) : 0, [employeesCompleted, usedKeyPasses]);
+  const completionRate = useMemo(() => filteredEmployees.length > 0 ? Math.round((employeesCompleted / filteredEmployees.length) * 100) : 0, [employeesCompleted, filteredEmployees]);
 
   const riskDistribution = useMemo(() => {
     const completed = filteredEmployees.filter(e => e.status === 'completed');

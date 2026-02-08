@@ -176,7 +176,8 @@ export default function EmployerDashboard() {
     try {
       const detail = await api.get<EmployeeDetail>(`/api/v1/analytics/employees/${userId}`);
       setEmployeeDetail(detail);
-    } catch {
+    } catch (err) {
+      logger.error('Failed to fetch employee detail', err);
       setEmployeeDetail(null);
       setDetailError('Failed to load employee details. Please try again.');
     }
