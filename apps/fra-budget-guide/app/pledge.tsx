@@ -99,7 +99,7 @@ export default function PledgeScreen() {
             <View style={styles.itemsContainer}>
               {pledgeItems.map((item, index) => (
                 <TouchableOpacity
-                  key={index}
+                  key={item}
                   style={styles.pledgeItem}
                   onPress={() => toggleItem(index)}
                   activeOpacity={0.7}

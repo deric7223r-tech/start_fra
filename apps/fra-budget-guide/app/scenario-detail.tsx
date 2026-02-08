@@ -53,8 +53,8 @@ export default function ScenarioDetailScreen() {
               <Eye color={colors.danger} size={20} />
               <Text style={styles.sectionTitle}>Red Flags</Text>
             </View>
-            {scenario.redFlags.map((flag, index) => (
-              <View key={index} style={styles.listItem}>
+            {scenario.redFlags.map((flag) => (
+              <View key={flag} style={styles.listItem}>
                 <View style={styles.bulletRed} />
                 <Text style={styles.listText}>{flag}</Text>
               </View>
@@ -66,8 +66,8 @@ export default function ScenarioDetailScreen() {
               <CheckCircle2 color={colors.success} size={20} />
               <Text style={styles.sectionTitle}>What To Do</Text>
             </View>
-            {scenario.whatToDo.map((action, index) => (
-              <View key={index} style={styles.listItem}>
+            {scenario.whatToDo.map((action) => (
+              <View key={action} style={styles.listItem}>
                 <View style={styles.bulletGreen} />
                 <Text style={styles.listText}>{action}</Text>
               </View>
@@ -79,8 +79,8 @@ export default function ScenarioDetailScreen() {
               <Shield color={colors.primary} size={20} />
               <Text style={styles.sectionTitle}>Controls</Text>
             </View>
-            {scenario.controls.map((control, index) => (
-              <View key={index} style={styles.listItem}>
+            {scenario.controls.map((control) => (
+              <View key={control} style={styles.listItem}>
                 <View style={styles.bulletBlue} />
                 <Text style={styles.listText}>{control}</Text>
               </View>
@@ -102,7 +102,7 @@ export default function ScenarioDetailScreen() {
                   const isCorrect = option.correct;
 
                   return (
-                    <View key={index}>
+                    <View key={option.text}>
                       <TouchableOpacity
                         style={[
                           styles.optionButton,

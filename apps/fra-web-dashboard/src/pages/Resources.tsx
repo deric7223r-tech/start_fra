@@ -121,9 +121,9 @@ export default function Resources() {
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  {preWorkshopResources.map((resource, index) => (
+                  {preWorkshopResources.map((resource) => (
                     <div
-                      key={index}
+                      key={resource.title}
                       className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-4">
