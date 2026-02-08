@@ -7,6 +7,9 @@ import { API_DEFAULTS } from '@stopfra/shared/constants';
 const logger = createLogger('ApiClient');
 
 const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? API_DEFAULTS.PRODUCTION_URL : API_DEFAULTS.DEV_URL);
+if (import.meta.env.PROD && API_URL && !API_URL.startsWith('https://')) {
+  logger.warn('API URL is not HTTPS in production — tokens may be sent over an insecure connection');
+}
 const TOKEN_KEY = 'fra_access_token';
 const REFRESH_KEY = 'fra_refresh_token';
 

@@ -17,7 +17,9 @@ import {
 export default function Checkout() {
   const [searchParams] = useSearchParams();
 
-  const packageName = searchParams.get('package');
+  const VALID_PACKAGES = ['Professional', 'Enterprise', 'Health-Check'] as const;
+
+  const rawPackageName = searchParams.get('package');
   const priceParam = searchParams.get('price');
   const parsedPrice = priceParam ? parseFloat(priceParam) : 0;
   const price = Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : 0;
@@ -30,6 +32,10 @@ export default function Checkout() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const packageName = VALID_PACKAGES.includes(rawPackageName as typeof VALID_PACKAGES[number])
+    ? rawPackageName!
+    : null;
 
   if (!packageName || !priceParam || price <= 0) {
     return <Navigate to="/" replace />;

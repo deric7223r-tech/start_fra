@@ -223,6 +223,10 @@ export const RATE_LIMITS = {
   S3_PRESIGN_MAX: 20,
   CERTIFICATE_WINDOW_MS: 60 * 1000,  // 1 minute
   CERTIFICATE_MAX: 5,
+  WORKSHOP_WRITE_WINDOW_MS: 60 * 1000,  // 1 minute
+  WORKSHOP_WRITE_MAX: 30,
+  WORKSHOP_JOIN_WINDOW_MS: 60 * 1000,   // 1 minute
+  WORKSHOP_JOIN_MAX: 10,
 } as const;
 
 // ── Keypass grace period ────────────────────────────────────────

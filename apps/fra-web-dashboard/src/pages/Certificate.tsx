@@ -99,9 +99,10 @@ export default function Certificate() {
   const handleShareCertificate = async () => {
     if (!certificate || !profile) return;
 
+    const safeName = profile.full_name.replace(/[\n\r\t]/g, ' ').trim();
     const shareData = {
       title: 'Fraud Risk Awareness Certificate',
-      text: `${profile.full_name} has completed the Fraud Risk Awareness Workshop. Certificate: ${certificate.certificate_number}`,
+      text: `${safeName} has completed the Fraud Risk Awareness Workshop. Certificate: ${certificate.certificate_number}`,
       url: window.location.href,
     };
 
