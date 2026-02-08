@@ -65,12 +65,18 @@ budgetGuide.patch('/progress', async (c) => {
 
   const body = await c.req.json().catch(() => null);
   const schema = z.object({
-    selectedRoles: z.array(z.string()).optional(),
-    completedScreens: z.array(z.string()).optional(),
-    watchItems: z.record(z.string(), z.unknown()).optional(),
-    contactDetails: z.record(z.string(), z.unknown()).optional(),
-    currentScreen: z.string().optional(),
-    completedAt: z.string().nullable().optional(),
+    selectedRoles: z.array(z.string().max(200)).max(50).optional(),
+    completedScreens: z.array(z.string().max(200)).max(100).optional(),
+    watchItems: z.record(z.string(), z.unknown()).refine(
+      (v) => JSON.stringify(v).length <= 100_000,
+      'watchItems payload too large (max 100KB)'
+    ).optional(),
+    contactDetails: z.record(z.string(), z.unknown()).refine(
+      (v) => JSON.stringify(v).length <= 100_000,
+      'contactDetails payload too large (max 100KB)'
+    ).optional(),
+    currentScreen: z.string().max(200).optional(),
+    completedAt: z.string().datetime({ message: 'completedAt must be a valid ISO 8601 datetime' }).nullable().optional(),
   });
   const parsed = schema.safeParse(body);
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION', 'Invalid request body');
