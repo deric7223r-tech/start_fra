@@ -38,6 +38,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
   const { user } = useAuth();
   const [progress, setProgress] = useState<WorkshopProgress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchProgress = useCallback(async () => {
     if (!user) return;
@@ -55,8 +56,10 @@ export function useWorkshopProgress(sessionId?: string | null) {
         });
         setProgress(mapProgress(newData));
       }
+      setError(null);
     } catch (err: unknown) {
       logger.error('Error fetching progress', err);
+      setError((err as Error).message || 'Failed to load progress');
       toast.error('Failed to load progress');
     }
 
@@ -155,6 +158,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
   return {
     progress,
     isLoading,
+    error,
     updateSection,
     completeSection,
     saveQuizScore,

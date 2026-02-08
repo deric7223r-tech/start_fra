@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import { api, setTokens, clearTokens, hasStoredTokens } from '@/lib/api';
 import { createLogger } from '@/lib/logger';
 const logger = createLogger('Auth');
@@ -85,10 +85,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const isMountedRef = useRef(true);
 
   const hydrateFromMe = async () => {
     try {
       const data = await api.get<MeResponse>('/api/v1/auth/me');
+      if (!isMountedRef.current) return;
       setUser({
         userId: data.userId,
         email: data.email,
@@ -100,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(mapProfile(data.profile));
       setRoles((data.workshopRoles ?? []) as AppRole[]);
     } catch (err: unknown) {
+      if (!isMountedRef.current) return;
       logger.warn('Failed to hydrate session, clearing tokens', err);
       clearTokens();
       setUser(null);
@@ -116,10 +119,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (hasStoredTokens()) {
-      hydrateFromMe().finally(() => setIsLoading(false));
+      hydrateFromMe().finally(() => {
+        if (isMountedRef.current) setIsLoading(false);
+      });
     } else {
       setIsLoading(false);
     }
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, metadata: SignUpMetadata) => {
