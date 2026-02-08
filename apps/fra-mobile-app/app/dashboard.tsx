@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { LayoutDashboard, Users, Key, FileText, HelpCircle, Bell } from 'lucide-react-native';
@@ -32,6 +32,7 @@ export default function DashboardScreen() {
   const [alertsCount] = useState(1);
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [showAssessmentDetails, setShowAssessmentDetails] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const {
     filterStatus, setFilterStatus,
@@ -62,6 +63,13 @@ export default function DashboardScreen() {
     };
   }, [filteredEmployees]);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    // Simulate data refresh — in a real implementation this would re-fetch from API
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setRefreshing(false);
+  }, []);
+
   if (!organisation || organisation.packageType !== 'with-dashboard') {
     return (
       <View style={styles.container}>
@@ -89,7 +97,11 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.govBlue} />}
+      >
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={styles.orgIconContainer}>

@@ -6,6 +6,7 @@ import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppContext } from "@/contexts/AppContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import OfflineBanner from "@/components/OfflineBanner";
 import { colors, darkColors } from "@/constants/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -56,6 +57,7 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AppContext>
           <GestureHandlerRootView>
+            <OfflineBanner />
             <RootLayoutNav />
           </GestureHandlerRootView>
         </AppContext>
