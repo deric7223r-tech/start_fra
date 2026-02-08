@@ -22,7 +22,14 @@
     "./logger": {
       "import": "./src/logger.ts",
       "types": "./src/logger.ts"
+    },
+    "./services": {
+      "import": "./src/services/index.ts",
+      "types": "./src/services/index.ts"
     }
+  },
+  "dependencies": {
+    "@stopfra/types": "workspace:*"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

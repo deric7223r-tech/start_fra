@@ -4,6 +4,14 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: ApiError;
   meta?: ApiMeta;
+  message?: string;
+}
+
+/** Options for API requests extending the standard RequestInit. */
+export interface ApiRequestOptions extends RequestInit {
+  requiresAuth?: boolean;
+  timeout?: number;
+  retried?: boolean;
 }
 
 /** Structured API error with a machine-readable code, human-readable message, and optional details. */
