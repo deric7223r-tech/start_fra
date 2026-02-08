@@ -37,6 +37,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   const [isOnline, setIsOnline] = useState(true);
   const isOnlineRef = useRef(true);
   const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
+  const syncQueueRef = useRef<SyncQueueItem[]>([]);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const processSyncQueueRef = useRef<() => Promise<void>>(async () => {});
 
@@ -125,7 +126,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       retryCount: 0,
     };
 
-    const newQueue = [...syncQueue, queueItem];
+    const newQueue = [...syncQueueRef.current, queueItem];
     await saveSyncQueue(newQueue);
     logger.info('Added to sync queue:', queueItem.id);
   };
@@ -158,7 +159,8 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     await saveSyncQueue(remainingQueue);
   };
 
-  // Keep ref in sync so the stable NetInfo listener always calls the latest version
+  // Keep refs in sync so stable callbacks always use the latest values
+  syncQueueRef.current = syncQueue;
   processSyncQueueRef.current = processSyncQueue;
 
   // Sync to backend (immediate, no debounce)
@@ -203,10 +205,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   // Debounced sync function
   const debouncedSync = useCallback(
     debounce(async (data: Partial<AssessmentData>) => {
-      if (!isOnline) {
+      if (!isOnlineRef.current) {
         logger.info('Offline, adding to sync queue');
         await addToSyncQueue(data);
-        setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
+        setSyncStatus((prev) => ({ state: 'pending', lastSync: prev.lastSync }));
         return;
       }
 
@@ -220,10 +222,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       } catch (error: unknown) {
         // Add to queue for retry
         await addToSyncQueue(data);
-        setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
+        setSyncStatus((prev) => ({ state: 'pending', lastSync: prev.lastSync }));
       }
     }, SYNC_DEBOUNCE_MS),
-    [isOnline, syncQueue, syncStatus]
+    []
   );
 
   const loadDraft = async () => {
@@ -308,10 +310,10 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     setAssessment(newAssessment);
     saveDraft(newAssessment);
 
-    if (apiService.isAuthenticated() && isOnline) {
+    if (apiService.isAuthenticated() && isOnlineRef.current) {
       ensureRemoteAssessment(newAssessment).catch(async () => {
         await addToSyncQueue(newAssessment);
-        setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
+        setSyncStatus((prev) => ({ state: 'pending', lastSync: prev.lastSync }));
       });
     }
   }, [saveDraft]);
@@ -323,7 +325,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       riskRegister,
     });
 
-    if (apiService.isAuthenticated() && isOnline) {
+    if (apiService.isAuthenticated() && isOnlineRef.current) {
       ensureRemoteAssessment(assessment)
         .then((target) =>
           apiService.post(
@@ -334,13 +336,13 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
         )
         .catch(async () => {
           await addToSyncQueue({ status: 'submitted' as AssessmentStatus, riskRegister });
-          setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
+          setSyncStatus((prev) => ({ state: 'pending', lastSync: prev.lastSync }));
         });
     } else {
       addToSyncQueue({ status: 'submitted' as AssessmentStatus, riskRegister }).catch((err: unknown) => logger.error('Failed to add submit to sync queue:', err));
-      setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
+      setSyncStatus((prev) => ({ state: 'pending', lastSync: prev.lastSync }));
     }
-  }, [assessment, updateAssessment, isOnline]);
+  }, [assessment, updateAssessment]);
 
   const validateAssessment = useCallback(() => {
     if (!assessment.signature) {
