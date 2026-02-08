@@ -2,7 +2,8 @@ import React, { Component, ErrorInfo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+const logger = createLogger('ErrorBoundary');
 
 interface Props {
   children: React.ReactNode;

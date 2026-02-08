@@ -2,7 +2,8 @@
 // Stop FRA - API Client (replaces Supabase client)
 // ============================================================
 
-import { logger } from './logger';
+import { createLogger } from './logger';
+const logger = createLogger('ApiClient');
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const TOKEN_KEY = 'fra_access_token';

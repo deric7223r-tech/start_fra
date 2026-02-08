@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { api, setTokens, clearTokens, hasStoredTokens } from '@/lib/api';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+const logger = createLogger('Auth');
 import { Profile, AppRole } from '@/types/workshop';
 
 export interface AuthUser {

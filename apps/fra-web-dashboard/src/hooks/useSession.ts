@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api, connectSSE } from '@/lib/api';
 import { useAuth } from './useAuth';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+const logger = createLogger('Session');
 import { toast } from 'sonner';
 import { WorkshopSession, Poll, Question } from '@/types/workshop';
 

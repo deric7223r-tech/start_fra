@@ -6,23 +6,32 @@ describe('logger', () => {
     vi.spyOn(console, 'info').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('prefixes messages with [FRA]', async () => {
-    const { logger } = await import('@/lib/logger');
-    logger.warn('test message');
-    expect(console.warn).toHaveBeenCalledWith('[FRA] test message', '');
+  it('createLogger produces contextual log messages', async () => {
+    const { createLogger } = await import('@/lib/logger');
+    const log = createLogger('TestCtx');
+    log.warn('test message');
+    expect(console.warn).toHaveBeenCalledWith('[WARN][TestCtx] test message', '');
   });
 
   it('passes data as second argument', async () => {
-    const { logger } = await import('@/lib/logger');
+    const { createLogger } = await import('@/lib/logger');
+    const log = createLogger('TestCtx');
     const data = { key: 'value' };
-    logger.error('test', data);
-    expect(console.error).toHaveBeenCalledWith('[FRA] test', data);
+    log.error('test', data);
+    expect(console.error).toHaveBeenCalledWith('[ERROR][TestCtx] test', data);
+  });
+
+  it('backward-compat logger uses FRA context', async () => {
+    const { logger } = await import('@/lib/logger');
+    logger.warn('test message');
+    expect(console.warn).toHaveBeenCalledWith('[WARN][FRA] test message', '');
   });
 
   it('warn and error always log', async () => {

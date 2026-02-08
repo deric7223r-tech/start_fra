@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from './useAuth';
-import { logger } from '@/lib/logger';
+import { createLogger } from '@/lib/logger';
+const logger = createLogger('WorkshopProgress');
 import { toast } from 'sonner';
 import { WorkshopProgress } from '@/types/workshop';
 
