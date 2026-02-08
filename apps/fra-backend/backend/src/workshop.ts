@@ -264,7 +264,7 @@ workshop.get('/sessions/code/:code', async (c) => {
   const pool = getDbPool();
   const res = await pool.query(
     'SELECT * FROM workshop_sessions WHERE session_code = $1 LIMIT 1',
-    [c.req.param('code').toUpperCase()]
+    [c.req.param('code').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10)]
   );
 
   if (!res.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');

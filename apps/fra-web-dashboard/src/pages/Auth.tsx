@@ -82,7 +82,7 @@ export default function Auth() {
       if (error.message.includes('Invalid login credentials')) {
         toast.error('Invalid email or password');
       } else {
-        toast.error(error.message);
+        toast.error('Sign in failed. Please try again.');
       }
     } else {
       toast.success('Welcome back!');
@@ -104,7 +104,7 @@ export default function Auth() {
       if (error.message.includes('already registered')) {
         toast.error('This email is already registered. Please sign in instead.');
       } else {
-        toast.error(error.message);
+        toast.error('Registration failed. Please try again.');
       }
     } else {
       toast.success('Account created successfully!');
