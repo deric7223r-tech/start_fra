@@ -263,6 +263,10 @@ analytics.get('/analytics/employees', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
+  if (auth.role !== 'employer' && auth.role !== 'admin') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Employee analytics requires employer or admin role');
+  }
+
   // Require pkg_full for employee analytics
   const orgPurchases = hasDatabase()
     ? await dbListPurchasesByOrganisation(auth.organisationId)
@@ -364,6 +368,10 @@ analytics.get('/analytics/employees/:userId', async (c) => {
 
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
+
+  if (auth.role !== 'employer' && auth.role !== 'admin') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Employee detail requires employer or admin role');
+  }
 
   const userId = requireUUIDParam(c, 'userId');
   if (userId instanceof Response) return userId;

@@ -110,7 +110,12 @@ async function request<T>(method: string, path: string, body?: unknown, retry = 
     throw new Error('Session expired. Please sign in again.');
   }
 
-  const json = await res.json() as ApiResponse<T>;
+  let json: ApiResponse<T>;
+  try {
+    json = await res.json() as ApiResponse<T>;
+  } catch {
+    throw new ApiError('NETWORK_ERROR', `Server returned ${res.status} with non-JSON response`);
+  }
 
   if (!json.success) {
     const err = json as { success: false; error: { code: string; message: string } };
@@ -147,7 +152,7 @@ export function connectSSE(path: string, handlers: SSEHandlers): () => void {
       const { sseToken } = await api.post<{ sseToken: string }>('/api/v1/workshop/sse-token');
       if (closed) return; // caller already called cleanup
 
-      const url = `${API_URL}${path}${path.includes('?') ? '&' : '?'}sse_token=${sseToken}`;
+      const url = `${API_URL}${path}${path.includes('?') ? '&' : '?'}sse_token=${encodeURIComponent(sseToken)}`;
       es = new EventSource(url);
 
       // If cleanup was called while we were creating the EventSource, close immediately

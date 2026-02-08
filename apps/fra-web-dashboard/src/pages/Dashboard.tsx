@@ -64,7 +64,7 @@ export default function Dashboard() {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold tracking-tight mb-2">
-            Welcome back, {profile.full_name.split(' ')[0]}
+            Welcome back, {profile.full_name?.split(' ')[0] || 'there'}
           </h1>
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
             <span>{profile.organization_name}</span>

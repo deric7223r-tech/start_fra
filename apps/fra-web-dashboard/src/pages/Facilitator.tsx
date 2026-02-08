@@ -191,7 +191,7 @@ export default function Facilitator() {
   const createPoll = async () => {
     if (!activeSession || !pollQuestion.trim() || !pollOptions.trim()) return;
 
-    const options = pollOptions.split('\n').filter(o => o.trim());
+    const options = pollOptions.split('\n').map(o => o.trim()).filter(Boolean);
     if (options.length < 2) {
       toast.error('Please provide at least 2 options');
       return;
