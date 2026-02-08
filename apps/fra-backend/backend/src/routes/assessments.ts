@@ -156,6 +156,14 @@ assessments.patch('/assessments/:id', async (c) => {
   });
 
   if (!updated) return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
+
+  await auditLog({
+    eventType: 'assessment.updated', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 'assessment', resourceId: id,
+    details: { title: updated.title, status: updated.status }, ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
+  });
+
   return c.json({ success: true, data: updated });
 });
 

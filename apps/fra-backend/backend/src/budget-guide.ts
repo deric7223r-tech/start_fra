@@ -7,6 +7,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { getDbPool } from './db.js';
 import { hasDatabase, jsonError, requireAuth } from './helpers.js';
+import { isValidUUID } from './types.js';
 
 // ── Budget Guide Hono App ────────────────────────────────────
 
@@ -222,6 +223,9 @@ budgetGuide.get('/analytics/org/:orgId', async (c) => {
 
   // Only admins or users in the same org can view org analytics
   const orgId = c.req.param('orgId');
+  if (!isValidUUID(orgId)) {
+    return jsonError(c, 400, 'INVALID_PARAM', 'orgId must be a valid UUID');
+  }
   if (auth.role !== 'admin' && auth.organisationId !== orgId) {
     return jsonError(c, 403, 'FORBIDDEN', 'Not authorized to view this organisation');
   }

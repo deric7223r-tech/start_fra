@@ -61,7 +61,7 @@ export default function Certificate() {
       setCertificate(data);
       toast.success('Certificate generated!');
     } catch (err: unknown) {
-      toast.error('Failed to generate certificate');
+      toast.error('Failed to generate certificate. Please try again.');
       logger.error('Error generating certificate', err);
     }
 
@@ -243,7 +243,7 @@ export default function Certificate() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-success" />
-                      <span>Defense Strategies</span>
+                      <span>Defence Strategies</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CheckCircle2 className="h-4 w-4 text-success" />
