@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { useAuth } from '@/hooks/useAuth';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { createLogger } from '@/lib/logger';
 const logger = createLogger('EmployerDashboard');
 import { Layout } from '@/components/layout/Layout';
@@ -109,10 +109,10 @@ export default function EmployerDashboard() {
       const empData = await api.get<EmployeeRow[]>('/api/v1/analytics/employees');
       setEmployees(empData);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
-      if (message.includes('PACKAGE_REQUIRED')) {
+      if (err instanceof ApiError && err.code === 'PACKAGE_REQUIRED') {
         setError('The employer dashboard requires the Full package. Please upgrade to access employee analytics.');
       } else {
+        const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
         setError(message);
       }
       logger.error('Failed to fetch employer dashboard data', err);
@@ -456,11 +456,12 @@ export default function EmployerDashboard() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
+                        const csvEscape = (v: string) => `"${v.replace(/"/g, '""')}"`;
                         const header = 'Name,Email,Department,Status,Risk Level,Assessments,Completed';
                         const rows = filteredEmployees.map(e => [
-                          `"${e.userName}"`,
-                          `"${e.email}"`,
-                          `"${e.department || 'General'}"`,
+                          csvEscape(e.userName),
+                          csvEscape(e.email),
+                          csvEscape(e.department || 'General'),
                           e.status,
                           e.riskLevel || 'N/A',
                           e.assessmentCount,

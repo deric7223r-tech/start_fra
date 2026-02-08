@@ -941,6 +941,9 @@ workshop.post('/certificates', async (c) => {
 // Exchange a valid JWT for a short-lived, single-use SSE token.
 // The frontend calls this before opening an EventSource connection.
 workshop.post('/sse-token', async (c) => {
+  const limited = await rateLimit('workshop:sse-token', { windowMs: 60_000, max: 20 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
