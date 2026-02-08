@@ -130,12 +130,14 @@ assessments.patch('/assessments/:id', async (c) => {
     }
 
     const now = new Date().toISOString();
+    const newStatus = parsed.data.status ?? assessment.status;
     const updated: Assessment = {
       ...assessment,
       title: parsed.data.title ?? assessment.title,
-      status: parsed.data.status ?? assessment.status,
+      status: newStatus,
       answers: parsed.data.answers ?? assessment.answers,
       updatedAt: now,
+      submittedAt: newStatus === 'submitted' && assessment.status !== 'submitted' ? now : assessment.submittedAt,
     };
 
     assessmentsById.set(id, updated);
@@ -148,11 +150,13 @@ assessments.patch('/assessments/:id', async (c) => {
   }
 
   const now = new Date().toISOString();
+  const newStatus = parsed.data.status ?? existing.status;
   const updated = await dbUpdateAssessment(id, {
     title: parsed.data.title ?? existing.title,
-    status: parsed.data.status ?? existing.status,
+    status: newStatus,
     answers: parsed.data.answers ?? existing.answers,
     updatedAt: now,
+    submittedAt: newStatus === 'submitted' && existing.status !== 'submitted' ? now : undefined,
   });
 
   if (!updated) return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
