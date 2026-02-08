@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -32,6 +32,9 @@ import {
   Loader2,
   ArrowLeft,
   RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  FileText,
 } from 'lucide-react';
 
 const statusChartConfig = {
@@ -66,6 +69,25 @@ interface DashboardAggregates {
   purchases: { total: number; active: number; totalSpentCents: number };
 }
 
+interface EmployeeDetail {
+  userId: string;
+  userName: string;
+  email: string;
+  assessments: {
+    id: string;
+    title: string;
+    status: string;
+    answers: Record<string, unknown>;
+    createdAt: string;
+    submittedAt: string | null;
+  }[];
+  keypasses: {
+    code: string;
+    status: string;
+    usedAt: string | null;
+  }[];
+}
+
 export default function EmployerDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -76,6 +98,9 @@ export default function EmployerDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [riskFilter, setRiskFilter] = useState('all');
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [employeeDetail, setEmployeeDetail] = useState<EmployeeDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const isEmployerOrAdmin = user?.role === 'employer' || user?.role === 'admin';
 
@@ -146,6 +171,23 @@ export default function EmployerDashboard() {
       { name: 'Not Assessed', value: none, fill: 'var(--color-none)' },
     ].filter(d => d.value > 0);
   }, [employees]);
+
+  const toggleEmployeeDetail = async (userId: string) => {
+    if (expandedUserId === userId) {
+      setExpandedUserId(null);
+      setEmployeeDetail(null);
+      return;
+    }
+    setExpandedUserId(userId);
+    setDetailLoading(true);
+    try {
+      const detail = await api.get<EmployeeDetail>(`/api/v1/analytics/employees/${userId}`);
+      setEmployeeDetail(detail);
+    } catch {
+      setEmployeeDetail(null);
+    }
+    setDetailLoading(false);
+  };
 
   if (!user) return null;
 
@@ -399,6 +441,7 @@ export default function EmployerDashboard() {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead className="w-8"></TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Email</TableHead>
                             <TableHead>Status</TableHead>
@@ -408,28 +451,54 @@ export default function EmployerDashboard() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {filteredEmployees.map((employee) => (
-                            <TableRow key={employee.userId}>
-                              <TableCell className="font-medium">{employee.userName}</TableCell>
-                              <TableCell className="text-muted-foreground">{employee.email}</TableCell>
-                              <TableCell>
-                                <StatusBadge status={employee.status} />
-                              </TableCell>
-                              <TableCell>
-                                <RiskBadge riskLevel={employee.riskLevel} />
-                              </TableCell>
-                              <TableCell>{employee.assessmentCount}</TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {employee.completedAt
-                                  ? new Date(employee.completedAt).toLocaleDateString('en-GB', {
-                                      day: 'numeric',
-                                      month: 'short',
-                                      year: 'numeric',
-                                    })
-                                  : '—'}
-                              </TableCell>
-                            </TableRow>
-                          ))}
+                          {filteredEmployees.map((employee) => {
+                            const isExpanded = expandedUserId === employee.userId;
+                            const hasCompleted = employee.status === 'completed';
+                            return (
+                              <React.Fragment key={employee.userId}>
+                                <TableRow
+                                  className={hasCompleted ? 'cursor-pointer hover:bg-muted/50' : ''}
+                                  onClick={() => hasCompleted && toggleEmployeeDetail(employee.userId)}
+                                >
+                                  <TableCell className="px-2">
+                                    {hasCompleted && (
+                                      isExpanded
+                                        ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                                        : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="font-medium">{employee.userName}</TableCell>
+                                  <TableCell className="text-muted-foreground">{employee.email}</TableCell>
+                                  <TableCell>
+                                    <StatusBadge status={employee.status} />
+                                  </TableCell>
+                                  <TableCell>
+                                    <RiskBadge riskLevel={employee.riskLevel} />
+                                  </TableCell>
+                                  <TableCell>{employee.assessmentCount}</TableCell>
+                                  <TableCell className="text-muted-foreground">
+                                    {employee.completedAt
+                                      ? new Date(employee.completedAt).toLocaleDateString('en-GB', {
+                                          day: 'numeric',
+                                          month: 'short',
+                                          year: 'numeric',
+                                        })
+                                      : '—'}
+                                  </TableCell>
+                                </TableRow>
+                                {isExpanded && (
+                                  <TableRow>
+                                    <TableCell colSpan={7} className="bg-muted/30 p-0">
+                                      <EmployeeDetailPanel
+                                        detail={employeeDetail}
+                                        loading={detailLoading}
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </div>
@@ -441,6 +510,73 @@ export default function EmployerDashboard() {
         )}
       </div>
     </Layout>
+  );
+}
+
+function EmployeeDetailPanel({ detail, loading }: { detail: EmployeeDetail | null; loading: boolean }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+        <span className="text-sm text-muted-foreground">Loading assessment details...</span>
+      </div>
+    );
+  }
+
+  if (!detail || detail.assessments.length === 0) {
+    return (
+      <div className="text-center py-6 text-sm text-muted-foreground">
+        No assessment data available for this employee.
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-6 py-4 space-y-4">
+      {detail.assessments.map((assessment) => {
+        const answerCount = Object.keys(assessment.answers).length;
+        return (
+          <div key={assessment.id} className="rounded-lg border bg-background p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <span className="font-medium text-sm">{assessment.title || 'Assessment'}</span>
+              </div>
+              <Badge variant="secondary" className="text-xs">{assessment.status}</Badge>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+              <div>
+                <span className="text-muted-foreground block text-xs">Answers</span>
+                <span className="font-medium">{answerCount}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block text-xs">Started</span>
+                <span className="font-medium">
+                  {new Date(assessment.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block text-xs">Submitted</span>
+                <span className="font-medium">
+                  {assessment.submittedAt
+                    ? new Date(assessment.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : '—'}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block text-xs">ID</span>
+                <span className="font-mono text-xs text-muted-foreground">{assessment.id.slice(0, 8)}...</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      {detail.keypasses.length > 0 && (
+        <div className="text-xs text-muted-foreground">
+          {detail.keypasses.length} key-pass{detail.keypasses.length !== 1 ? 'es' : ''} associated
+        </div>
+      )}
+    </div>
   );
 }
 

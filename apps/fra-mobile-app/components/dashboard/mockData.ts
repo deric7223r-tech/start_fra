@@ -1,5 +1,5 @@
 import type { AssessmentData } from '@/types/assessment';
-import type { EmployeeData, CompletionByDepartment, CompletionTrend } from './types';
+import type { EmployeeData } from './types';
 
 export const mockEmployeeData: EmployeeData[] = [
   { userId: 'emp-1', userName: 'Sarah Johnson', email: 'sarah.j@company.com', department: 'Finance', status: 'completed', startedAt: '2024-01-15T09:00:00Z', completedAt: '2024-01-15T10:30:00Z', overallRiskLevel: 'medium' },
@@ -8,20 +8,6 @@ export const mockEmployeeData: EmployeeData[] = [
   { userId: 'emp-4', userName: 'James Wilson', email: 'james.w@company.com', department: 'Finance', status: 'completed', startedAt: '2024-01-10T08:00:00Z', completedAt: '2024-01-10T09:15:00Z', overallRiskLevel: 'low' },
   { userId: 'emp-5', userName: 'Olivia Taylor', email: 'olivia.t@company.com', department: 'IT', status: 'completed', startedAt: '2024-01-12T11:00:00Z', completedAt: '2024-01-12T12:00:00Z', overallRiskLevel: 'high' },
   { userId: 'emp-6', userName: 'Daniel Martinez', email: 'daniel.m@company.com', department: 'Operations', status: 'in-progress', startedAt: '2024-01-18T10:00:00Z', completedAt: null, overallRiskLevel: null },
-];
-
-export const completionByDepartment: CompletionByDepartment[] = [
-  { department: 'Finance', completed: 2, total: 2 },
-  { department: 'Operations', completed: 0, total: 2 },
-  { department: 'HR', completed: 0, total: 1 },
-  { department: 'IT', completed: 1, total: 1 },
-];
-
-export const completionTrend: CompletionTrend[] = [
-  { date: 'Week 1', completed: 0 },
-  { date: 'Week 2', completed: 2 },
-  { date: 'Week 3', completed: 3 },
-  { date: 'Week 4', completed: 3 },
 ];
 
 export const mockAssessmentDetails: Record<string, Partial<AssessmentData>> = {

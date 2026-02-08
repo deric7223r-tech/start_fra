@@ -22,10 +22,12 @@ export default function AssessmentDetailModal({
 }: AssessmentDetailModalProps) {
   const [fetchedAssessment, setFetchedAssessment] = useState<Partial<AssessmentData> | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible && selectedEmployee) {
       setIsFetching(true);
+      setFetchError(null);
       apiService.get<{
         assessments: { id: string; answers: Record<string, unknown> }[];
       }>(`/api/v1/analytics/employees/${selectedEmployee}`)
@@ -36,16 +38,21 @@ export default function AssessmentDetailModal({
             setFetchedAssessment(null);
           }
         })
-        .catch(() => {
+        .catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : 'Failed to load assessment details';
+          setFetchError(message);
           setFetchedAssessment(null);
         })
         .finally(() => setIsFetching(false));
     } else {
       setFetchedAssessment(null);
+      setFetchError(null);
     }
   }, [visible, selectedEmployee]);
 
-  const assessment = fetchedAssessment ?? (selectedEmployee ? mockAssessmentDetails[selectedEmployee] : undefined);
+  const mockFallback = selectedEmployee ? mockAssessmentDetails[selectedEmployee] : undefined;
+  const assessment = fetchedAssessment ?? mockFallback;
+  const usingMockData = !fetchedAssessment && !!mockFallback;
   const employee = employeeData;
 
   return (
@@ -71,6 +78,14 @@ export default function AssessmentDetailModal({
             </View>
           ) : selectedEmployee && assessment ? (
             <ScrollView style={styles.assessmentDetailsScroll} showsVerticalScrollIndicator={true}>
+              {fetchError && usingMockData && (
+                <View style={styles.warningBanner}>
+                  <AlertCircle size={16} color={colors.riskMedium} />
+                  <Text style={styles.warningBannerText}>
+                    Could not load live data. Showing cached assessment details.
+                  </Text>
+                </View>
+              )}
               {(() => {
 
                 if (!employee || !assessment) return (
@@ -796,10 +811,14 @@ export default function AssessmentDetailModal({
             </ScrollView>
           ) : (
             <View style={styles.emptyStateContainer}>
-              <AlertCircle size={48} color={colors.govGrey3} />
-              <Text style={styles.emptyStateTitle}>No Assessment Data</Text>
+              <AlertCircle size={48} color={fetchError ? colors.riskMedium : colors.govGrey3} />
+              <Text style={styles.emptyStateTitle}>
+                {fetchError ? 'Failed to Load Data' : 'No Assessment Data'}
+              </Text>
               <Text style={styles.emptyStateText}>
-                This employee has not completed their assessment yet or data is not available.
+                {fetchError
+                  ? 'Could not retrieve assessment details. Please check your connection and try again.'
+                  : 'This employee has not completed their assessment yet or data is not available.'}
               </Text>
               <TouchableOpacity
                 style={styles.closeDetailButton}
@@ -850,6 +869,23 @@ const styles = StyleSheet.create({
   assessmentDetailsScroll: {
     flexGrow: 1,
     flexShrink: 1,
+  },
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF8E1',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    gap: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.riskMedium,
+  },
+  warningBannerText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.govGrey1,
+    lineHeight: 18,
   },
   emptyStateContainer: {
     alignItems: 'center',
