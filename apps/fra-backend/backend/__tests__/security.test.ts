@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 
 import { app, createAuthenticatedUser, authHeaders, seedPurchase } from './helpers';
-import { accountLockouts, keypassesByCode } from '../src/stores';
+import { accountLockouts, keypassesByCode, purchasesById } from '../src/stores';
 
 async function signup() {
   return createAuthenticatedUser({ organisationName: 'Security Test Org' });
@@ -424,6 +424,151 @@ describe('Security hardening', () => {
       const json = (await res.json()) as any;
       expect(json.success).toBe(true);
       expect(json.data.email).toBeTruthy();
+    });
+  });
+
+  // ── Password reset token single-use ──────────────────────────
+
+  describe('Password reset token single-use', () => {
+    it('rejects reuse of a consumed reset token', async () => {
+      const email = `reset-${crypto.randomUUID()}@example.com`;
+      const password = 'SecurePass123!';
+
+      // Create user
+      await app.request('http://localhost/api/v1/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name: 'Reset User', organisationName: 'Reset Org' }),
+      });
+
+      // Request password reset
+      const forgotRes = await app.request('http://localhost/api/v1/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const forgotJson = (await forgotRes.json()) as any;
+      const resetToken = forgotJson.resetToken;
+      expect(resetToken).toBeTruthy();
+
+      // First reset — should succeed
+      const reset1 = await app.request('http://localhost/api/v1/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: resetToken, newPassword: 'NewSecurePass456!' }),
+      });
+      expect(reset1.status).toBe(200);
+
+      // Second reset with same token — should fail
+      const reset2 = await app.request('http://localhost/api/v1/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: resetToken, newPassword: 'AnotherPass789!' }),
+      });
+      expect(reset2.status).toBe(400);
+      const json2 = (await reset2.json()) as any;
+      expect(json2.error.code).toBe('INVALID_TOKEN');
+    });
+  });
+
+  // ── Refresh token rotation ────────────────────────────────────
+
+  describe('Refresh token rotation', () => {
+    it('invalidates old refresh token after rotation', async () => {
+      const { refreshToken } = await signup();
+
+      // Use refresh token to get new tokens
+      const refreshRes = await app.request('http://localhost/api/v1/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      expect(refreshRes.status).toBe(200);
+      const refreshJson = (await refreshRes.json()) as any;
+      expect(refreshJson.data.accessToken).toBeTruthy();
+      expect(refreshJson.data.refreshToken).toBeTruthy();
+      expect(refreshJson.data.refreshToken).not.toBe(refreshToken);
+
+      // Try using the old refresh token — should be rejected
+      const reuse = await app.request('http://localhost/api/v1/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      expect(reuse.status).toBe(401);
+      const reuseJson = (await reuse.json()) as any;
+      expect(reuseJson.error.code).toBe('REFRESH_REVOKED');
+    });
+  });
+
+  // ── Analytics employee endpoints role check ───────────────────
+
+  describe('Analytics employee endpoints role restriction', () => {
+    it('returns 403 for employee role on /analytics/employees', async () => {
+      // Create employer and generate keypass
+      const employer = await signup();
+      seedPurchase(employer.organisationId, employer.userId);
+
+      const genRes = await app.request('http://localhost/api/v1/keypasses/generate', {
+        method: 'POST',
+        headers: authHeaders(employer.accessToken),
+        body: JSON.stringify({ quantity: 1, expiresInDays: 30 }),
+      });
+      const genJson = (await genRes.json()) as any;
+      const code = genJson.data.codes[0];
+
+      // Employee joins via keypass
+      const useRes = await app.request('http://localhost/api/v1/keypasses/use', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, email: `emp-${crypto.randomUUID()}@example.com` }),
+      });
+      const useJson = (await useRes.json()) as any;
+      const employeeToken = useJson.data.accessToken;
+
+      // Employee tries to access analytics employees — should get 403
+      const res = await app.request('http://localhost/api/v1/analytics/employees', {
+        headers: { Authorization: `Bearer ${employeeToken}` },
+      });
+      expect(res.status).toBe(403);
+      const json = (await res.json()) as any;
+      expect(json.error.code).toBe('FORBIDDEN');
+    });
+  });
+
+  // ── Purchase confirmation atomicity ────────────────────────────
+
+  describe('Purchase confirmation atomicity', () => {
+    it('rejects second confirmation of the same purchase', async () => {
+      const { accessToken, organisationId, userId } = await signup();
+
+      // Create a purchase
+      const createRes = await app.request('http://localhost/api/v1/purchases', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ packageId: 'pkg_basic' }),
+      });
+      expect(createRes.status).toBe(200);
+      const createJson = (await createRes.json()) as any;
+      const purchaseId = createJson.data.purchaseId;
+
+      // First confirm — should succeed
+      const confirm1 = await app.request(`http://localhost/api/v1/purchases/${purchaseId}/confirm`, {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({}),
+      });
+      expect(confirm1.status).toBe(200);
+
+      // Second confirm — should fail (already confirmed)
+      const confirm2 = await app.request(`http://localhost/api/v1/purchases/${purchaseId}/confirm`, {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({}),
+      });
+      expect(confirm2.status).toBe(409);
+      const json2 = (await confirm2.json()) as any;
+      expect(json2.error.code).toBe('ALREADY_CONFIRMED');
     });
   });
 });

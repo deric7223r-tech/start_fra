@@ -65,15 +65,15 @@ export async function dbUpdateUserPasswordHash(userId: string, passwordHash: str
 
 export async function dbListUsersByOrganisation(organisationId: string): Promise<User[]> {
   const pool = getDbPool();
-  const res = await pool.query<DbUserRow>(
-    'select id, email, name, password_hash, role, organisation_id, department, created_at from public.users where organisation_id = $1 order by created_at desc',
+  const res = await pool.query<Omit<DbUserRow, 'password_hash'>>(
+    'select id, email, name, role, organisation_id, department, created_at from public.users where organisation_id = $1 order by created_at desc',
     [organisationId]
   );
   return res.rows.map((row) => ({
     id: row.id,
     email: row.email,
     name: row.name,
-    passwordHash: row.password_hash,
+    passwordHash: '',
     role: row.role,
     organisationId: row.organisation_id,
     department: row.department ?? undefined,

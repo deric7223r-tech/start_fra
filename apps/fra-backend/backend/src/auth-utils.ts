@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { hasDatabase, jwtSecret } from './helpers.js';
 import { refreshSecret, accessTokenExpiry, refreshTokenExpiry } from './types.js';
@@ -25,6 +26,7 @@ export function issueTokens(user: User) {
     {
       sub: user.id,
       type: 'refresh',
+      jti: crypto.randomUUID(),
     },
     refreshSecret,
     { algorithm: 'HS256', expiresIn: refreshTokenExpiry }
