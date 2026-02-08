@@ -215,8 +215,8 @@ payments.post('/purchases/:id/confirm', async (c) => {
     return jsonError(c, 404, 'NOT_FOUND', 'Purchase not found');
   }
 
-  if (purchase.status === 'succeeded') {
-    return jsonError(c, 400, 'ALREADY_CONFIRMED', 'Purchase is already confirmed');
+  if (purchase.status !== 'requires_confirmation') {
+    return jsonError(c, 400, 'ALREADY_CONFIRMED', `Purchase cannot be confirmed (status: ${purchase.status})`);
   }
 
   const now = new Date().toISOString();
