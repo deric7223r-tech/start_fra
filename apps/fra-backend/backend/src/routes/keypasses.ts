@@ -275,6 +275,12 @@ keypasses.post('/keypasses/revoke', async (c) => {
   if (!kp || kp.organisationId !== auth.organisationId) {
     return jsonError(c, 404, 'NOT_FOUND', 'Keypass not found');
   }
+  if (kp.status === 'used') {
+    return jsonError(c, 400, 'ALREADY_USED', 'Cannot revoke a keypass that has already been used');
+  }
+  if (kp.status === 'revoked') {
+    return jsonError(c, 400, 'ALREADY_REVOKED', 'Keypass is already revoked');
+  }
 
   if (hasDatabase()) {
     await dbUpdateKeypassStatus(code, 'revoked');
