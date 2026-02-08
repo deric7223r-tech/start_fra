@@ -39,7 +39,7 @@ export default function ConfirmationScreen() {
   const handleShareReport = async () => {
     try {
       await Share.share({
-        message: `Fraud Risk Assessment Version 2.0 completed for ${assessment.organisation.name}. Transaction ID: ${assessment.payment.transactionId}`,
+        message: `Fraud Risk Assessment Version 2.0 completed for ${assessment.organisation.name}.`,
         title: 'FRA Report',
       });
     } catch (error: unknown) {

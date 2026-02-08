@@ -48,7 +48,7 @@ export async function dbGetKeypassByCode(code: string): Promise<Keypass | null> 
 export async function dbUpdateKeypassStatus(code: string, status: KeypassStatus, usedAt?: string, usedByUserId?: string): Promise<void> {
   const pool = getDbPool();
   await pool.query(
-    'update public.keypasses set status = $1, used_at = $2, used_by_user_id = $3 where code = $4',
+    'update public.keypasses set status = $1, used_at = coalesce($2, used_at), used_by_user_id = coalesce($3, used_by_user_id) where code = $4',
     [status, usedAt ?? null, usedByUserId ?? null, code]
   );
 }

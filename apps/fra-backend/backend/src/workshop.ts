@@ -260,6 +260,18 @@ workshop.get('/sessions/:id', async (c) => {
   const res = await pool.query('SELECT * FROM workshop_sessions WHERE id = $1 LIMIT 1', [id]);
 
   if (!res.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
+
+  // Verify the user is the facilitator or a session participant
+  if (res.rows[0].facilitator_id !== auth.userId) {
+    const participantCheck = await pool.query(
+      'SELECT 1 FROM session_participants WHERE session_id = $1 AND user_id = $2 LIMIT 1',
+      [id, auth.userId]
+    );
+    if (!participantCheck.rows[0]) {
+      return jsonError(c, 403, 'FORBIDDEN', 'Not a member of this session');
+    }
+  }
+
   return c.json({ success: true, data: res.rows[0] });
 });
 

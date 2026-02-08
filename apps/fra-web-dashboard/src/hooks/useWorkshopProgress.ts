@@ -44,7 +44,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
     if (!user) return;
 
     try {
-      const queryParam = sessionId ? `?sessionId=${sessionId}` : '';
+      const queryParam = sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : '';
       const data = await api.get<ProgressRow | null>(`/api/v1/workshop/progress${queryParam}`);
 
       if (data) {
