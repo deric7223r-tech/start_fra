@@ -197,6 +197,9 @@ payments.post('/purchases', async (c) => {
 });
 
 payments.post('/purchases/:id/confirm', async (c) => {
+  const limited = await rateLimit('purchases:confirm', { windowMs: RATE_LIMITS.PURCHASE_WINDOW_MS, max: RATE_LIMITS.PURCHASE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -401,10 +404,10 @@ payments.post('/webhooks/stripe', async (c) => {
 
         if (purchaseId) {
           if (hasDatabase()) {
-            await dbUpdatePurchaseStatus(purchaseId, 'succeeded', now);
+            await dbUpdatePurchaseStatus(purchaseId, 'succeeded', now, 'requires_confirmation');
           } else {
             const existing = purchasesById.get(purchaseId);
-            if (existing) { existing.status = 'succeeded'; existing.confirmedAt = now; }
+            if (existing && existing.status === 'requires_confirmation') { existing.status = 'succeeded'; existing.confirmedAt = now; }
           }
           logger.info('Purchase status updated', { purchaseId, status: 'succeeded', paymentIntentId });
         }

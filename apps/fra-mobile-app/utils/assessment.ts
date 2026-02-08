@@ -34,8 +34,8 @@ export function isLocalOnlyAssessmentId(id: string): boolean {
  * to its default value.
  */
 export function createEmptyAssessment(
-  userId: string = 'demo-user',
-  organisationId: string = 'demo-org',
+  userId: string = '',
+  organisationId: string = '',
 ): AssessmentData {
   const now = new Date().toISOString();
   return {

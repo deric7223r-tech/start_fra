@@ -89,10 +89,10 @@ describe('createEmptyAssessment', () => {
     expect(a.organisationId).toBe('org-99');
   });
 
-  it('should default userId and organisationId when not provided', () => {
+  it('should default userId and organisationId to empty strings when not provided', () => {
     const a = createEmptyAssessment();
-    expect(a.userId).toBe('demo-user');
-    expect(a.organisationId).toBe('demo-org');
+    expect(a.userId).toBe('');
+    expect(a.organisationId).toBe('');
   });
 
   it('should set status to "draft"', () => {
