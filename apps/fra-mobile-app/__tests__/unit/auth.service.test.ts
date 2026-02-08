@@ -121,7 +121,7 @@ describe('AuthService', () => {
     it('should return error when API responds with failure', async () => {
       (apiService.post as jest.Mock).mockResolvedValueOnce({
         success: false,
-        error: { code: 'EMAIL_EXISTS', message: 'Email already registered' },
+        error: { code: 'SIGNUP_FAILED', message: 'Unable to create account. Please try signing in or resetting your password.' },
       });
 
       const result = await authService.signup({
@@ -132,7 +132,7 @@ describe('AuthService', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('EMAIL_EXISTS');
+      expect(result.error?.code).toBe('SIGNUP_FAILED');
       expect(apiService.setTokens).not.toHaveBeenCalled();
     });
 

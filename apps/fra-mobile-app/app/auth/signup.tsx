@@ -27,8 +27,8 @@ export default function SignUpScreen() {
     }
 
     // Validate password requirements (must match backend)
-    if (!password || password.length < 8) {
-      Alert.alert('Weak Password', 'Password must be at least 8 characters');
+    if (!password || password.length < 12) {
+      Alert.alert('Weak Password', 'Password must be at least 12 characters');
       return;
     }
 
@@ -44,11 +44,6 @@ export default function SignUpScreen() {
 
     if (!/[0-9]/.test(password)) {
       Alert.alert('Weak Password', 'Password must contain at least one number');
-      return;
-    }
-
-    if (!/[^a-zA-Z0-9]/.test(password)) {
-      Alert.alert('Weak Password', 'Password must contain at least one special character (!@#$%^&*)');
       return;
     }
 
