@@ -18,7 +18,7 @@ export function issueTokens(user: User) {
       organisationId: user.organisationId,
     },
     jwtSecret,
-    { expiresIn: accessTokenExpiry }
+    { algorithm: 'HS256', expiresIn: accessTokenExpiry }
   );
 
   const refreshToken = jwt.sign(
@@ -27,7 +27,7 @@ export function issueTokens(user: User) {
       type: 'refresh',
     },
     refreshSecret,
-    { expiresIn: refreshTokenExpiry }
+    { algorithm: 'HS256', expiresIn: refreshTokenExpiry }
   );
 
   if (!hasDatabase()) {

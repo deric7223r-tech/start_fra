@@ -234,8 +234,14 @@ payments.post('/purchases/:id/confirm', async (c) => {
   const now = new Date().toISOString();
 
   if (hasDatabase()) {
-    await dbUpdatePurchaseStatus(purchaseId, 'succeeded', now);
+    const updated = await dbUpdatePurchaseStatus(purchaseId, 'succeeded', now, 'requires_confirmation');
+    if (updated === 0) {
+      return jsonError(c, 409, 'ALREADY_CONFIRMED', 'Purchase was already confirmed by another request');
+    }
   } else {
+    if (purchase.status !== 'requires_confirmation') {
+      return jsonError(c, 409, 'ALREADY_CONFIRMED', 'Purchase was already confirmed by another request');
+    }
     purchase.status = 'succeeded';
     purchase.confirmedAt = now;
   }

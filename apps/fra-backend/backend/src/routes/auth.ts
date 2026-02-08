@@ -340,7 +340,7 @@ auth.post('/auth/refresh', async (c) => {
   }
 
   try {
-    const payload = jwt.verify(refreshToken, refreshSecret) as jwt.JwtPayload;
+    const payload = jwt.verify(refreshToken, refreshSecret, { algorithms: ['HS256'] }) as jwt.JwtPayload;
     if (payload.type !== 'refresh' || typeof payload.sub !== 'string') {
       return jsonError(c, 401, 'INVALID_REFRESH', 'Invalid refresh token');
     }
@@ -425,9 +425,11 @@ auth.post('/auth/reset-password', async (c) => {
     return jsonError(c, 400, 'INVALID_TOKEN', 'Invalid or expired reset token');
   }
 
+  // Delete token immediately to prevent reuse if password change fails
+  await deletePasswordResetToken(parsed.data.token);
+
   const user = hasDatabase() ? await dbGetUserById(userId) : Array.from(usersByEmail.values()).find((u) => u.id === userId) ?? null;
   if (!user) {
-    await deletePasswordResetToken(parsed.data.token);
     return jsonError(c, 400, 'INVALID_TOKEN', 'Invalid or expired reset token');
   }
 
@@ -446,7 +448,6 @@ auth.post('/auth/reset-password', async (c) => {
       }
     }
   }
-  await deletePasswordResetToken(parsed.data.token);
 
   await auditLog({
     eventType: 'auth.reset_password', actorId: user.id, actorEmail: user.email,
