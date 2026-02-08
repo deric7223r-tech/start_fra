@@ -1,3 +1,11 @@
+// API configuration
+export const API_DEFAULTS = {
+  PRODUCTION_URL: 'https://api.fraud-risk.co.uk',
+  DEV_URL: 'http://localhost:3000',
+  ANDROID_EMULATOR_URL: 'http://10.0.2.2:3000',
+  TIMEOUT: 30000,
+} as const;
+
 // Risk scoring constants
 export const RISK_SCORES = {
   HIGH: { min: 15, max: 25, label: 'High' },

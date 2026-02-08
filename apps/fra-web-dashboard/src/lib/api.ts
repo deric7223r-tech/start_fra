@@ -3,9 +3,10 @@
 // ============================================================
 
 import { createLogger } from './logger';
+import { API_DEFAULTS } from '@stopfra/shared/constants';
 const logger = createLogger('ApiClient');
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? API_DEFAULTS.PRODUCTION_URL : API_DEFAULTS.DEV_URL);
 const TOKEN_KEY = 'fra_access_token';
 const REFRESH_KEY = 'fra_refresh_token';
 

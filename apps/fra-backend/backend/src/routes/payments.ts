@@ -4,7 +4,7 @@ import { getAuth, hasDatabase, jsonError, requireAuth } from '../helpers.js';
 import { createLogger } from '../logger.js';
 import {
   paymentCreateIntentSchema, purchasesCreateSchema, purchasesConfirmSchema,
-  stripeWebhookSchema, FALLBACK_PACKAGES,
+  stripeWebhookSchema, FALLBACK_PACKAGES, RISK_THRESHOLDS,
 } from '../types.js';
 
 const logger = createLogger('payments');
@@ -96,10 +96,10 @@ payments.get('/packages/recommended', async (c) => {
   // High risk (many answers / flags): recommend enterprise (pkg_full)
   // Medium risk: recommend professional (pkg_training)
   // Low risk: recommend starter (pkg_basic)
-  if (answerCount >= 15) {
+  if (answerCount >= RISK_THRESHOLDS.HIGH_ANSWER_COUNT) {
     return c.json({ success: true, data: { packageId: 'pkg_full', reason: 'high_risk_score' } });
   }
-  if (answerCount >= 5) {
+  if (answerCount >= RISK_THRESHOLDS.MEDIUM_ANSWER_COUNT) {
     return c.json({ success: true, data: { packageId: 'pkg_training', reason: 'medium_risk_score' } });
   }
 

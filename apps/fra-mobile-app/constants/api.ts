@@ -4,28 +4,19 @@
  */
 
 import { Platform } from 'react-native';
+import { API_DEFAULTS } from '@stopfra/shared/constants';
 
 // Determine API base URL based on environment
 const getApiBaseUrl = (): string => {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
 
-  // For Expo development
   if (__DEV__) {
-    if (envUrl) {
-      return envUrl;
-    }
-
-    // For iOS simulator and Android emulator
-    // Use localhost for web, 10.0.2.2 for Android emulator, or your machine's IP
-    if (Platform.OS === 'android') {
-      return 'http://10.0.2.2:3000';
-    }
-
-    return 'http://localhost:3000';
+    if (envUrl) return envUrl;
+    if (Platform.OS === 'android') return API_DEFAULTS.ANDROID_EMULATOR_URL;
+    return API_DEFAULTS.DEV_URL;
   }
 
-  // Production API URL
-  return envUrl || 'https://api.fraud-risk.co.uk';
+  return envUrl || API_DEFAULTS.PRODUCTION_URL;
 };
 
 export const API_CONFIG = {
@@ -70,7 +61,7 @@ export const API_CONFIG = {
     // Health check
     HEALTH: '/health',
   },
-  TIMEOUT: 30000, // 30 seconds
+  TIMEOUT: API_DEFAULTS.TIMEOUT,
 };
 
 export default API_CONFIG;

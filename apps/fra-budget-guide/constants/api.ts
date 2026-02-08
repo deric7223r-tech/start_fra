@@ -1,15 +1,16 @@
 import { Platform } from 'react-native';
+import { API_DEFAULTS } from '@stopfra/shared/constants';
 
 const getApiBaseUrl = (): string => {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
 
   if (__DEV__) {
     if (envUrl) return envUrl;
-    if (Platform.OS === 'android') return 'http://10.0.2.2:3000';
-    return 'http://localhost:3000';
+    if (Platform.OS === 'android') return API_DEFAULTS.ANDROID_EMULATOR_URL;
+    return API_DEFAULTS.DEV_URL;
   }
 
-  return envUrl || 'https://api.fraud-risk.co.uk';
+  return envUrl || API_DEFAULTS.PRODUCTION_URL;
 };
 
 export const API_CONFIG = {
@@ -29,7 +30,7 @@ export const API_CONFIG = {
       ORG_ANALYTICS: (orgId: string) => `/api/v1/budget-guide/analytics/org/${orgId}`,
     },
   },
-  TIMEOUT: 30000,
+  TIMEOUT: API_DEFAULTS.TIMEOUT,
 };
 
 export default API_CONFIG;

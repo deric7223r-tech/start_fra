@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { hasDatabase, requireAuth } from '../helpers.js';
+import { RISK_THRESHOLDS } from '../types.js';
 import type { AssessmentStatus } from '../types.js';
 import { assessmentsById } from '../stores.js';
 import { dbListAssessmentsByOrganisation } from '../db/index.js';
@@ -91,8 +92,8 @@ analytics.get('/reports/generate', async (c) => {
   const assessmentSummaries = completedAssessments.map((a) => {
     const answerCount = Object.keys(a.answers).length;
     let riskLevel: 'low' | 'medium' | 'high' = 'low';
-    if (answerCount >= 15) riskLevel = 'high';
-    else if (answerCount >= 5) riskLevel = 'medium';
+    if (answerCount >= RISK_THRESHOLDS.HIGH_ANSWER_COUNT) riskLevel = 'high';
+    else if (answerCount >= RISK_THRESHOLDS.MEDIUM_ANSWER_COUNT) riskLevel = 'medium';
 
     return {
       id: a.id,

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import bcrypt from 'bcryptjs';
 import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
-import { keypassGenerateSchema, keypassValidateSchema, keypassUseSchema } from '../types.js';
+import { keypassGenerateSchema, keypassValidateSchema, keypassUseSchema, RATE_LIMITS } from '../types.js';
 import type { User, Keypass } from '../types.js';
 import { usersByEmail, organisationsById, keypassesByCode } from '../stores.js';
 import { getClientIp, rateLimit } from '../middleware.js';
@@ -88,7 +88,7 @@ keypasses.post('/keypasses/allocate', async (c) => {
 });
 
 keypasses.post('/keypasses/use', async (c) => {
-  const limited = await rateLimit('keypass:use', { windowMs: 60 * 1000, max: 3 })(c);
+  const limited = await rateLimit('keypass:use', { windowMs: RATE_LIMITS.KEYPASS_WINDOW_MS, max: RATE_LIMITS.KEYPASS_MAX })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = keypassUseSchema.safeParse(await c.req.json().catch(() => null));
@@ -240,7 +240,7 @@ keypasses.get('/keypasses/organisation/:orgId/stats', async (c) => {
 });
 
 keypasses.post('/keypasses/validate', async (c) => {
-  const limited = await rateLimit('keypass:validate', { windowMs: 60 * 1000, max: 3 })(c);
+  const limited = await rateLimit('keypass:validate', { windowMs: RATE_LIMITS.KEYPASS_WINDOW_MS, max: RATE_LIMITS.KEYPASS_MAX })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = keypassValidateSchema.safeParse(await c.req.json().catch(() => null));

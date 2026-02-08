@@ -166,6 +166,25 @@ export const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 export const PASSWORD_RESET_PREFIX = 'pwreset:';
 export const PASSWORD_RESET_TTL_SECONDS = 3600; // 1 hour
 
+// ── Rate limit constants ────────────────────────────────────────
+
+export const RATE_LIMITS = {
+  AUTH_WINDOW_MS: 15 * 60 * 1000,  // 15 minutes
+  SIGNUP_MAX: 10,
+  LOGIN_MAX: 20,
+  FORGOT_PASSWORD_MAX: 5,
+  RESET_PASSWORD_MAX: 5,
+  KEYPASS_WINDOW_MS: 60 * 1000,    // 1 minute
+  KEYPASS_MAX: 3,
+} as const;
+
+// ── Package recommendation thresholds ──────────────────────────
+
+export const RISK_THRESHOLDS = {
+  HIGH_ANSWER_COUNT: 15,   // >= 15 answers → recommend enterprise (pkg_full)
+  MEDIUM_ANSWER_COUNT: 5,  // >= 5 answers  → recommend professional (pkg_training)
+} as const;
+
 // ── Fallback packages ───────────────────────────────────────────
 
 export const FALLBACK_PACKAGES: Package[] = [

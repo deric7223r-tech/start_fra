@@ -8,6 +8,7 @@ import {
   signupSchema, loginSchema, refreshSchema, forgotPasswordSchema, resetPasswordSchema,
   refreshSecret,
   LOCKOUT_PREFIX, LOCKOUT_MAX_ATTEMPTS, LOCKOUT_WINDOW_SECONDS,
+  RATE_LIMITS,
 } from '../types.js';
 import type { User, Organisation } from '../types.js';
 import { usersByEmail, refreshTokenAllowlist, organisationsById } from '../stores.js';
@@ -24,7 +25,7 @@ import { createLogger } from '../logger.js';
 
 const logger = createLogger('auth');
 
-const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const { AUTH_WINDOW_MS, SIGNUP_MAX, LOGIN_MAX, FORGOT_PASSWORD_MAX, RESET_PASSWORD_MAX } = RATE_LIMITS;
 
 // ── Auth helpers ────────────────────────────────────────────────
 
@@ -62,7 +63,7 @@ async function clearFailedLogins(email: string): Promise<void> {
 const auth = new Hono();
 
 auth.post('/auth/signup', async (c) => {
-  const limited = await rateLimit('auth:signup', { windowMs: AUTH_RATE_LIMIT_WINDOW_MS, max: 10 })(c);
+  const limited = await rateLimit('auth:signup', { windowMs: AUTH_WINDOW_MS, max: SIGNUP_MAX })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = signupSchema.safeParse(await c.req.json().catch(() => null));
@@ -152,7 +153,7 @@ auth.post('/auth/signup', async (c) => {
 });
 
 auth.post('/auth/login', async (c) => {
-  const limited = await rateLimit('auth:login', { windowMs: AUTH_RATE_LIMIT_WINDOW_MS, max: 20 })(c);
+  const limited = await rateLimit('auth:login', { windowMs: AUTH_WINDOW_MS, max: LOGIN_MAX })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = loginSchema.safeParse(await c.req.json().catch(() => null));
@@ -320,7 +321,7 @@ auth.post('/auth/refresh', async (c) => {
 });
 
 auth.post('/auth/forgot-password', async (c) => {
-  const limited = await rateLimit('auth:forgot', { windowMs: AUTH_RATE_LIMIT_WINDOW_MS, max: 5 })(c);
+  const limited = await rateLimit('auth:forgot', { windowMs: AUTH_WINDOW_MS, max: FORGOT_PASSWORD_MAX })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = forgotPasswordSchema.safeParse(await c.req.json().catch(() => null));
@@ -356,7 +357,7 @@ auth.post('/auth/forgot-password', async (c) => {
 });
 
 auth.post('/auth/reset-password', async (c) => {
-  const limited = await rateLimit('auth:reset', { windowMs: AUTH_RATE_LIMIT_WINDOW_MS, max: 5 })(c);
+  const limited = await rateLimit('auth:reset', { windowMs: AUTH_WINDOW_MS, max: RESET_PASSWORD_MAX })(c);
   if (limited instanceof Response) return limited;
 
   const parsed = resetPasswordSchema.safeParse(await c.req.json().catch(() => null));
