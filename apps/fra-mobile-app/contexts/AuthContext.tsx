@@ -56,7 +56,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       } else {
         logger.info('No valid session found');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to restore session:', error);
     } finally {
       setIsLoading(false);
@@ -93,7 +93,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           success: false,
           error: result.error?.message || 'Failed to create account',
         };
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Signup error:', error);
         return { success: false, error: 'Failed to create account' };
       }
@@ -122,7 +122,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           success: false,
           error: result.error?.message || 'Invalid email or password',
         };
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Sign in error:', error);
         return { success: false, error: 'Failed to sign in' };
       }
@@ -158,7 +158,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           success: false,
           error: result.error?.message || 'Invalid key-pass code',
         };
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Key-pass sign in error:', error);
         return { success: false, error: 'Failed to validate key-pass' };
       }
@@ -176,7 +176,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       setOrganisation(null);
       setKeyPasses([]);
       logger.info('User signed out');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Sign out error:', error);
     }
   }, []);
@@ -202,7 +202,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             { requiresAuth: true }
           ).catch((err: unknown) => logger.warn('Backend org sync unavailable', { error: String(err) }));
         }
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Failed to update organisation:', error);
       }
     },
@@ -241,7 +241,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
         logger.info(`Allocated ${allocation} key-passes`);
         return { success: true };
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Failed to allocate key-passes:', error);
         return { success: false, error: 'Failed to allocate access codes' };
       }

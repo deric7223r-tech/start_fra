@@ -64,7 +64,7 @@ async function refreshAccessToken(): Promise<boolean> {
 
     setTokens(json.data.accessToken, json.data.refreshToken);
     return true;
-  } catch (err) {
+  } catch (err: unknown) {
     logger.warn('Token refresh failed', err);
     clearTokens();
     return false;
@@ -153,7 +153,7 @@ export function connectSSE(path: string, handlers: SSEHandlers): () => void {
         // EventSource auto-reconnects; we just log
         logger.warn('SSE connection error, reconnecting...');
       };
-    } catch (err) {
+    } catch (err: unknown) {
       logger.warn('Failed to obtain SSE token', err);
     }
   })();

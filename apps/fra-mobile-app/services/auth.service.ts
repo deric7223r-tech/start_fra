@@ -78,7 +78,7 @@ class AuthService {
       }
 
       return { success: false, error: response.error };
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Signup error:', error);
       return {
         success: false,
@@ -108,7 +108,7 @@ class AuthService {
       }
 
       return { success: false, error: response.error };
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Login error:', error);
       return {
         success: false,
@@ -124,7 +124,7 @@ class AuthService {
     try {
       const refreshToken = apiService.getRefreshToken();
       await apiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT, { refreshToken }, { requiresAuth: true });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Logout API call failed:', error);
     } finally {
       // Always clear local data
@@ -148,7 +148,7 @@ class AuthService {
       }
 
       return { success: false, error: response.error };
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Get current user error:', error);
       return {
         success: false,
@@ -164,7 +164,7 @@ class AuthService {
     try {
       const userJson = await AsyncStorage.getItem('user');
       return userJson ? JSON.parse(userJson) : null;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to get cached user:', error);
       return null;
     }
@@ -177,7 +177,7 @@ class AuthService {
     try {
       const orgJson = await AsyncStorage.getItem('organisation');
       return orgJson ? JSON.parse(orgJson) : null;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to get cached organisation:', error);
       return null;
     }
@@ -211,7 +211,7 @@ class AuthService {
       // Session invalid, clear tokens
       await apiService.clearTokens();
       return { success: false };
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to restore session:', error);
       await apiService.clearTokens();
       return { success: false };

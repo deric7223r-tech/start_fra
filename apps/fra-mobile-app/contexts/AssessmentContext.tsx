@@ -98,7 +98,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
           logger.info(`Loaded ${queue.length} pending sync items`);
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load sync queue:', error);
     }
   };
@@ -108,7 +108,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     try {
       await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
       setSyncQueue(queue);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save sync queue:', error);
     }
   };
@@ -140,7 +140,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       try {
         await syncToBackendImmediate(item.data);
         logger.info('Successfully synced queued item:', item.id);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Failed to sync queued item:', { id: item.id, error });
 
         // Retry logic: max 3 retries
@@ -211,7 +211,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
 
       try {
         await syncToBackendImmediate(data);
-      } catch (error) {
+      } catch (error: unknown) {
         // Add to queue for retry
         await addToSyncQueue(data);
         setSyncStatus({ state: 'pending', lastSync: syncStatus.lastSync });
@@ -265,7 +265,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
           setAssessment(createEmptyAssessment());
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load draft:', error);
     } finally {
       setIsLoading(false);
@@ -278,7 +278,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       setAssessment(updated);
       logger.debug('Saved draft assessment');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save draft:', error);
     }
   }, []);
@@ -403,7 +403,7 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
       });
 
       return { success: true, transactionId };
-    } catch (error) {
+    } catch (error: unknown) {
       updateAssessment({
         payment: {
           ...assessment.payment,

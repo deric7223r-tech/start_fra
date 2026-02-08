@@ -57,7 +57,7 @@ export default function ActionPlan() {
           action_items: defaultItems,
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error fetching action plan', err);
       toast.error('Failed to load action plan');
     }
@@ -113,7 +113,7 @@ export default function ActionPlan() {
       await api.patch(`/api/v1/workshop/action-plans/${actionPlan.id}`, {
         actionItems: updatedItems,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error updating action plan', err);
       toast.error('Failed to update action item');
     }

@@ -76,7 +76,7 @@ export const [AppContext, useApp] = createContextHook(() => {
       if (contactsData) {
         setContactDetails(JSON.parse(contactsData));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load data', error);
     } finally {
       setIsLoading(false);
@@ -87,7 +87,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     setSelectedRoles(roles);
     try {
       await AsyncStorage.setItem('selectedRoles', JSON.stringify(roles));
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save roles', error);
     }
   };
@@ -101,7 +101,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     setWatchItems(newItems);
     try {
       await AsyncStorage.setItem('watchItems', JSON.stringify(newItems));
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save watch items', error);
     }
   };
@@ -118,7 +118,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     setPledge(pledgeData);
     try {
       await AsyncStorage.setItem('pledge', JSON.stringify(pledgeData));
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save pledge', error);
     }
   };
@@ -132,7 +132,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     setCompletedChannels(newChannels);
     try {
       await AsyncStorage.setItem('completedChannels', JSON.stringify(newChannels));
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save completed channels', error);
     }
   };
@@ -146,7 +146,7 @@ export const [AppContext, useApp] = createContextHook(() => {
     setContactDetails(newDetails);
     try {
       await AsyncStorage.setItem('contactDetails', JSON.stringify(newDetails));
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save contact details', error);
     }
   };

@@ -54,7 +54,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
         });
         setProgress(mapProgress(newData));
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error fetching progress', err);
       toast.error('Failed to load progress');
     }
@@ -79,7 +79,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
         currentSection: sectionId,
       });
       setProgress(prev => prev ? { ...prev, current_section: sectionId } : null);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error updating section', err);
       toast.error('Failed to update section');
     }
@@ -97,7 +97,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
         completedSections: newCompletedSections,
       });
       setProgress(prev => prev ? { ...prev, completed_sections: newCompletedSections } : null);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error completing section', err);
       toast.error('Failed to save progress');
     }
@@ -113,7 +113,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
         quizScores: newScores,
       });
       setProgress(prev => prev ? { ...prev, quiz_scores: newScores } : null);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error saving quiz score', err);
       toast.error('Failed to save quiz score');
     }
@@ -129,7 +129,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
         scenarioChoices: newChoices,
       });
       setProgress(prev => prev ? { ...prev, scenario_choices: newChoices } : null);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error saving scenario choice', err);
       toast.error('Failed to save choice');
     }
@@ -145,7 +145,7 @@ export function useWorkshopProgress(sessionId?: string | null) {
         completedAt,
       });
       setProgress(prev => prev ? { ...prev, completed_at: completedAt } : null);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error marking complete', err);
       toast.error('Failed to complete workshop');
     }

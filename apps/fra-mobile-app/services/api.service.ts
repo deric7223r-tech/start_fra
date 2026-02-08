@@ -52,7 +52,7 @@ class ApiService {
       ]);
       this.accessToken = accessToken;
       this.refreshToken = refreshToken;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load tokens:', error);
     }
   }
@@ -68,7 +68,7 @@ class ApiService {
         AsyncStorage.setItem('accessToken', accessToken),
         AsyncStorage.setItem('refreshToken', refreshToken),
       ]);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save tokens:', error);
       throw error;
     }
@@ -212,7 +212,7 @@ class ApiService {
       // Refresh failed, clear tokens
       await this.clearTokens();
       return false;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Token refresh failed:', error);
       await this.clearTokens();
       return false;

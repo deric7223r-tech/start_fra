@@ -27,7 +27,7 @@ export async function auditLog(event: {
         event.details ?? {}, event.ipAddress ?? null, event.userAgent ?? null,
       ]
     );
-  } catch (err) {
+  } catch (err: unknown) {
     // Audit log failures must not break the request, but should be logged
     logger.error('Failed to write audit log', { eventType: event.eventType, error: String(err) });
   }

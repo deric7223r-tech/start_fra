@@ -42,7 +42,7 @@ export default function ConfirmationScreen() {
         message: `Fraud Risk Assessment Version 2.0 completed for ${assessment.organisation.name}. Transaction ID: ${assessment.payment.transactionId}`,
         title: 'FRA Report',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error sharing:', error);
     }
   };

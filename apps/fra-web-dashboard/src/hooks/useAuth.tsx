@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setProfile(mapProfile(data.profile));
       setRoles((data.workshopRoles ?? []) as AppRole[]);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.warn('Failed to hydrate session, clearing tokens', err);
       clearTokens();
       setUser(null);
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoles((data.workshopRoles ?? ['participant']) as AppRole[]);
 
       return { error: null };
-    } catch (err) {
+    } catch (err: unknown) {
       return { error: err as Error };
     }
   }, []);
@@ -158,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await hydrateFromMe();
 
       return { error: null };
-    } catch (err) {
+    } catch (err: unknown) {
       return { error: err as Error };
     }
   }, []);
@@ -166,7 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       await api.post('/api/v1/auth/logout', {});
-    } catch (err) {
+    } catch (err: unknown) {
       logger.warn('Logout request failed (tokens cleared locally)', err);
     }
     clearTokens();

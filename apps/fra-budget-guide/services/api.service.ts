@@ -46,7 +46,7 @@ class ApiService {
       ]);
       this.accessToken = accessToken;
       this.refreshToken = refreshToken;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load tokens', error);
     }
   }

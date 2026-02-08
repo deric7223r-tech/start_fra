@@ -51,7 +51,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (result.success && result.data) {
         setUser(result.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to restore session', error);
     } finally {
       setIsLoading(false);
@@ -77,7 +77,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           success: false,
           error: result.error?.message || 'Invalid key-pass code',
         };
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Key-pass login failed', error);
         return { success: false, error: 'Failed to authenticate with key-pass' };
       }

@@ -36,7 +36,7 @@ export default function Certificate() {
       if (certs.length > 0) {
         setCertificate(certs[0]);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error fetching certificate', err);
       toast.error('Failed to load certificate');
     }
@@ -59,7 +59,7 @@ export default function Certificate() {
       const data = await api.post<CertificateType>('/api/v1/workshop/certificates', {});
       setCertificate(data);
       toast.success('Certificate generated!');
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('Failed to generate certificate');
       logger.error('Error generating certificate', err);
     }
@@ -107,7 +107,7 @@ export default function Certificate() {
     if (navigator.share) {
       try {
         await navigator.share(shareData);
-      } catch (err) {
+      } catch (err: unknown) {
         // User cancelled or share failed - fall back to clipboard
         if ((err as Error).name !== 'AbortError') {
           await copyToClipboard(shareData);

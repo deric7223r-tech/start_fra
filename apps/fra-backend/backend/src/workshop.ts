@@ -34,7 +34,7 @@ export function broadcastToSession(sessionId: string, event: string, data: unkno
   for (const client of clients) {
     try {
       client.write(event, data);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.warn('SSE client write failed, removing client', { sessionId, clientId: client.id, error: String(err) });
       clients.delete(client);
     }
@@ -688,7 +688,7 @@ workshop.post('/questions/:questionId/upvote', async (c) => {
     }
 
     return c.json({ success: true, data: updated.rows[0] ?? null });
-  } catch (err) {
+  } catch (err: unknown) {
     await client.query('ROLLBACK');
     throw err;
   } finally {
@@ -869,7 +869,7 @@ workshop.get('/sessions/:sessionId/events', async (c) => {
     const heartbeat = setInterval(() => {
       try {
         stream.writeSSE({ event: 'heartbeat', data: JSON.stringify({ ts: Date.now() }), id: crypto.randomUUID() });
-      } catch (err) {
+      } catch (err: unknown) {
         logger.warn('SSE heartbeat failed, closing client', { sessionId, clientId, error: String(err) });
         clearInterval(heartbeat);
         client.close();

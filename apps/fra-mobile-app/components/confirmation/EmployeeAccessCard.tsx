@@ -31,7 +31,7 @@ export default function EmployeeAccessCard({
         message: `You've been granted access to fraud risk awareness training. Visit this link to get started: ${accessLink}`,
         title: 'Fraud Risk Awareness Training Access',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       onShareError(error);
     }
   };

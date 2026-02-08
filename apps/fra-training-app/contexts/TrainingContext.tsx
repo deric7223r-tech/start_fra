@@ -36,7 +36,7 @@ export const [TrainingProvider, useTraining] = createContextHook(() => {
       if (stored) {
         setProgress(JSON.parse(stored));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load training progress', error);
     } finally {
       setIsLoading(false);
@@ -47,7 +47,7 @@ export const [TrainingProvider, useTraining] = createContextHook(() => {
     setProgress(updated);
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save training progress', error);
     }
   };

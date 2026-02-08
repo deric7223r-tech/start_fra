@@ -49,7 +49,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (result.success && result.data) {
         setUser(result.data);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to restore session', error);
     } finally {
       setIsLoading(false);
@@ -74,7 +74,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           success: false,
           error: result.error?.message || 'Invalid email or password',
         };
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Sign in failed', error);
         return { success: false, error: 'Failed to sign in' };
       }
@@ -107,7 +107,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           success: false,
           error: result.error?.message || 'Failed to create account',
         };
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Sign up failed', error);
         return { success: false, error: 'Failed to create account' };
       }

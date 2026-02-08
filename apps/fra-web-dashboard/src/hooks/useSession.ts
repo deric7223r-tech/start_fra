@@ -34,7 +34,7 @@ export function useSession(sessionCode?: string) {
         fetchQuestionsById(data.id),
         fetchParticipantCountById(data.id),
       ]);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error fetching session', err);
       toast.error('Failed to load session');
       setError((err as Error).message || 'Failed to load session');
@@ -137,7 +137,7 @@ export function useSession(sessionCode?: string) {
     try {
       await api.post(`/api/v1/workshop/sessions/${session.id}/join`, {});
       return { error: null };
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error joining session', err);
       return { error: (err as Error).message };
     }
@@ -151,7 +151,7 @@ export function useSession(sessionCode?: string) {
         selectedOption: optionIndex,
       });
       return { error: null };
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error submitting poll response', err);
       return { error: (err as Error).message };
     }
@@ -165,7 +165,7 @@ export function useSession(sessionCode?: string) {
         questionText,
       });
       return { error: null };
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error submitting question', err);
       return { error: (err as Error).message };
     }
@@ -178,7 +178,7 @@ export function useSession(sessionCode?: string) {
       await api.post(`/api/v1/workshop/questions/${questionId}/upvote`, {});
       await fetchQuestions();
       return { error: null };
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error upvoting question', err);
       return { error: (err as Error).message };
     }

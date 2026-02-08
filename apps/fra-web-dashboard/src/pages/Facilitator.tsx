@@ -103,7 +103,7 @@ export default function Facilitator() {
       setSessions(data);
       const active = data.find(s => s.is_active);
       if (active) setActiveSession(active);
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('Error fetching sessions', err);
       toast.error('Failed to load sessions');
     }
@@ -164,7 +164,7 @@ export default function Facilitator() {
       setActiveSession(data);
       setNewSessionTitle('');
       toast.success(`Session created! Code: ${data.session_code}`);
-    } catch (err) {
+    } catch (err: unknown) {
       toast.error('Failed to create session');
       logger.error('Error creating session', err);
     }

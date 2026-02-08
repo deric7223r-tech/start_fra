@@ -74,7 +74,7 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
         const queue = JSON.parse(stored) as SyncQueueItem[];
         setSyncQueue(queue);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to load sync queue', error);
     }
   };
@@ -83,7 +83,7 @@ export const [BudgetGuideProvider, useBudgetGuide] = createContextHook(() => {
     try {
       await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
       setSyncQueue(queue);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Failed to save sync queue', error);
     }
   };
