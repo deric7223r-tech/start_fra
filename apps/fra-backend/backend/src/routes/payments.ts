@@ -203,7 +203,8 @@ payments.post('/purchases/:id/confirm', async (c) => {
   const parsed = purchasesConfirmSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid purchase confirmation payload');
 
-  const purchaseId = c.req.param('id');
+  const purchaseId = requireUUIDParam(c, 'id');
+  if (purchaseId instanceof Response) return purchaseId;
 
   // Verify purchase exists and belongs to the authenticated user's organisation
   const purchase = hasDatabase()
@@ -247,7 +248,8 @@ payments.get('/purchases/:id', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
-  const purchaseId = c.req.param('id');
+  const purchaseId = requireUUIDParam(c, 'id');
+  if (purchaseId instanceof Response) return purchaseId;
 
   if (hasDatabase()) {
     const purchase = await dbGetPurchaseById(purchaseId);

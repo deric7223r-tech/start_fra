@@ -12,6 +12,8 @@ import { getDbPool } from './db.js';
 import { type AuthContext, hasDatabase, jsonError, getAuth as getAuthBase, requireAuth } from './helpers.js';
 import { createLogger } from './logger.js';
 import { getRedis } from './redis.js';
+import { rateLimit } from './middleware.js';
+import { RATE_LIMITS } from './types.js';
 
 const logger = createLogger('workshop');
 
@@ -179,7 +181,18 @@ workshop.get('/sessions', async (c) => {
 
   if (!hasDatabase()) return c.json({ success: true, data: [] });
 
+  const isActiveParam = c.req.query('isActive');
   const pool = getDbPool();
+
+  if (isActiveParam === 'true' || isActiveParam === 'false') {
+    const isActive = isActiveParam === 'true';
+    const res = await pool.query(
+      'SELECT * FROM workshop_sessions WHERE facilitator_id = $1 AND is_active = $2 ORDER BY created_at DESC',
+      [auth.userId, isActive]
+    );
+    return c.json({ success: true, data: res.rows });
+  }
+
   const res = await pool.query(
     'SELECT * FROM workshop_sessions WHERE facilitator_id = $1 ORDER BY created_at DESC',
     [auth.userId]
@@ -794,6 +807,9 @@ workshop.get('/certificates', async (c) => {
 });
 
 workshop.post('/certificates', async (c) => {
+  const limited = await rateLimit('workshop:cert', { windowMs: RATE_LIMITS.CERTIFICATE_WINDOW_MS, max: RATE_LIMITS.CERTIFICATE_MAX })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
