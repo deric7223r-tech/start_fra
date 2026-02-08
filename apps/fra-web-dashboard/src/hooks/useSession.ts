@@ -83,7 +83,10 @@ export function useSession(sessionCode?: string) {
     });
 
     return cleanup;
-  }, [sessionId, fetchQuestions, fetchParticipantCount]);
+    // fetchQuestions/fetchParticipantCount are stable ([] deps) and use sessionRef,
+    // so only sessionId needs to trigger SSE reconnection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   const fetchActivePollById = async (sessionId: string) => {
     try {
