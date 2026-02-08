@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/hooks/useAuth';
+import { ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,8 +80,10 @@ export default function Auth() {
     const { error } = await signIn(data.email, data.password);
     
     if (error) {
-      if (error.message.includes('Invalid login credentials')) {
+      if (error instanceof ApiError && error.code === 'INVALID_CREDENTIALS') {
         toast.error('Invalid email or password');
+      } else if (error instanceof ApiError && error.code === 'ACCOUNT_LOCKED') {
+        toast.error('Account temporarily locked. Please try again later.');
       } else {
         toast.error('Sign in failed. Please try again.');
       }
@@ -101,7 +104,7 @@ export default function Auth() {
     });
     
     if (error) {
-      if (error.message.includes('already registered')) {
+      if (error instanceof ApiError && error.code === 'EMAIL_EXISTS') {
         toast.error('This email is already registered. Please sign in instead.');
       } else {
         toast.error('Registration failed. Please try again.');
