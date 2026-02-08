@@ -28,9 +28,16 @@ export async function dbGetPurchaseById(id: string): Promise<Purchase | null> {
   };
 }
 
-export async function dbUpdatePurchaseStatus(id: string, status: PurchaseStatus, confirmedAt?: string): Promise<void> {
+export async function dbUpdatePurchaseStatus(id: string, status: PurchaseStatus, confirmedAt?: string, expectedCurrentStatus?: PurchaseStatus): Promise<number> {
   const pool = getDbPool();
-  await pool.query('update public.purchases set status = $1, confirmed_at = $2 where id = $3', [status, confirmedAt ?? null, id]);
+  const sql = expectedCurrentStatus
+    ? 'update public.purchases set status = $1, confirmed_at = $2 where id = $3 and status = $4'
+    : 'update public.purchases set status = $1, confirmed_at = $2 where id = $3';
+  const params = expectedCurrentStatus
+    ? [status, confirmedAt ?? null, id, expectedCurrentStatus]
+    : [status, confirmedAt ?? null, id];
+  const res = await pool.query(sql, params);
+  return res.rowCount ?? 0;
 }
 
 export async function dbListPurchasesByOrganisation(orgId: string): Promise<Purchase[]> {

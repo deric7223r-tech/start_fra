@@ -37,7 +37,7 @@ export function getAuth(c: Context): AuthContext | null {
   if (!match) return null;
 
   try {
-    const payload = jwt.verify(match[1], jwtSecret) as jwt.JwtPayload;
+    const payload = jwt.verify(match[1], jwtSecret, { algorithms: ['HS256'] }) as jwt.JwtPayload;
     if (
       typeof payload.sub !== 'string' ||
       typeof payload.email !== 'string' ||
