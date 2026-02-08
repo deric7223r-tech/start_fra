@@ -331,13 +331,15 @@ export const keypassUseSchema = z.object({
   name: z.string().min(1).optional(),
 });
 
+const packageIdSchema = z.enum(['pkg_basic', 'pkg_training', 'pkg_full']);
+
 export const paymentCreateIntentSchema = z.object({
-  packageId: z.string().min(1),
+  packageId: packageIdSchema,
   currency: z.string().min(3).max(3).default('gbp'),
 });
 
 export const purchasesCreateSchema = z.object({
-  packageId: z.string().min(1),
+  packageId: packageIdSchema,
 });
 
 export const purchasesConfirmSchema = z.object({
