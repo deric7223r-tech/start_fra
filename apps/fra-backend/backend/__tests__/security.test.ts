@@ -149,6 +149,123 @@ describe('Security hardening', () => {
     });
   });
 
+  // ── Assessment status transition validation ────────────────
+
+  describe('Assessment status transitions', () => {
+    it('allows valid transition: draft → in_progress', async () => {
+      const { accessToken } = await signup();
+
+      // Create assessment (starts as draft)
+      const createRes = await app.request('http://localhost/api/v1/assessments', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ title: 'Transition Test' }),
+      });
+      expect(createRes.status).toBe(201);
+      const { data: assessment } = (await createRes.json()) as any;
+
+      // draft → in_progress (valid)
+      const patchRes = await app.request(`http://localhost/api/v1/assessments/${assessment.id}`, {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ status: 'in_progress' }),
+      });
+      expect(patchRes.status).toBe(200);
+      const patchJson = (await patchRes.json()) as any;
+      expect(patchJson.data.status).toBe('in_progress');
+    });
+
+    it('allows valid transition: draft → submitted', async () => {
+      const { accessToken } = await signup();
+
+      const createRes = await app.request('http://localhost/api/v1/assessments', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ title: 'Skip Test' }),
+      });
+      const { data: assessment } = (await createRes.json()) as any;
+
+      // draft → submitted (valid skip)
+      const patchRes = await app.request(`http://localhost/api/v1/assessments/${assessment.id}`, {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ status: 'submitted' }),
+      });
+      expect(patchRes.status).toBe(200);
+    });
+
+    it('rejects invalid transition: draft → completed', async () => {
+      const { accessToken } = await signup();
+
+      const createRes = await app.request('http://localhost/api/v1/assessments', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ title: 'Invalid Test' }),
+      });
+      const { data: assessment } = (await createRes.json()) as any;
+
+      // draft → completed (invalid — must go through submitted first)
+      const patchRes = await app.request(`http://localhost/api/v1/assessments/${assessment.id}`, {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ status: 'completed' }),
+      });
+      expect(patchRes.status).toBe(400);
+      const json = (await patchRes.json()) as any;
+      expect(json.error.code).toBe('INVALID_STATUS_TRANSITION');
+    });
+
+    it('rejects backward transition: submitted → draft', async () => {
+      const { accessToken } = await signup();
+
+      const createRes = await app.request('http://localhost/api/v1/assessments', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ title: 'Backward Test' }),
+      });
+      const { data: assessment } = (await createRes.json()) as any;
+
+      // Move to submitted first
+      await app.request(`http://localhost/api/v1/assessments/${assessment.id}`, {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ status: 'submitted' }),
+      });
+
+      // submitted → draft (invalid backward transition)
+      const patchRes = await app.request(`http://localhost/api/v1/assessments/${assessment.id}`, {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ status: 'draft' }),
+      });
+      expect(patchRes.status).toBe(400);
+      const json = (await patchRes.json()) as any;
+      expect(json.error.code).toBe('INVALID_STATUS_TRANSITION');
+    });
+
+    it('allows PATCH without status change (title-only update)', async () => {
+      const { accessToken } = await signup();
+
+      const createRes = await app.request('http://localhost/api/v1/assessments', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ title: 'Title Only Test' }),
+      });
+      const { data: assessment } = (await createRes.json()) as any;
+
+      // PATCH title only — no status field — should succeed
+      const patchRes = await app.request(`http://localhost/api/v1/assessments/${assessment.id}`, {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ title: 'Updated Title' }),
+      });
+      expect(patchRes.status).toBe(200);
+      const json = (await patchRes.json()) as any;
+      expect(json.data.title).toBe('Updated Title');
+      expect(json.data.status).toBe('draft');
+    });
+  });
+
   // ── Auth /me rate limiting ─────────────────────────────────
 
   describe('GET /auth/me', () => {
