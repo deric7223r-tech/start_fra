@@ -48,7 +48,7 @@ describe('Auth endpoints', () => {
       });
       expect(res.status).toBe(409);
       const json = (await res.json()) as any;
-      expect(json.error.code).toBe('EMAIL_EXISTS');
+      expect(json.error.code).toBe('SIGNUP_FAILED');
     });
 
     it('rejects weak password (too short)', async () => {

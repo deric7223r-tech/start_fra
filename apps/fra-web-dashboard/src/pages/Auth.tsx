@@ -104,8 +104,8 @@ export default function Auth() {
     });
     
     if (error) {
-      if (error instanceof ApiError && error.code === 'EMAIL_EXISTS') {
-        toast.error('This email is already registered. Please sign in instead.');
+      if (error instanceof ApiError && error.code === 'SIGNUP_FAILED') {
+        toast.error(error.message);
       } else {
         toast.error('Registration failed. Please try again.');
       }

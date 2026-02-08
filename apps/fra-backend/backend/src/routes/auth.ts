@@ -103,7 +103,7 @@ auth.post('/auth/signup', async (c) => {
   const { email, password, name } = parsed.data;
   const emailLc = email.toLowerCase();
   const existing = hasDatabase() ? await dbGetUserByEmail(emailLc) : usersByEmail.get(emailLc);
-  if (existing) return jsonError(c, 409, 'EMAIL_EXISTS', 'Email already registered');
+  if (existing) return jsonError(c, 409, 'SIGNUP_FAILED', 'Unable to create account. Please try signing in or resetting your password.');
 
   const passwordHash = await bcrypt.hash(password, 12);
   const now = new Date().toISOString();
