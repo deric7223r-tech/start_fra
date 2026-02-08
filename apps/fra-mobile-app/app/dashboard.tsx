@@ -29,7 +29,6 @@ export default function DashboardScreen() {
     riskDistribution: true,
     departmentBreakdown: true,
   });
-  const [alertsCount] = useState(1);
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [showAssessmentDetails, setShowAssessmentDetails] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -52,6 +51,15 @@ export default function DashboardScreen() {
   const totalKeyPasses = organisation?.keyPassesAllocated || 0;
   const usedKeyPasses = organisation?.keyPassesUsed || 0;
   const remainingKeyPasses = totalKeyPasses - usedKeyPasses;
+
+  const alertsCount = useMemo(() => {
+    let count = 0;
+    const allCompleted = filteredEmployees.length > 0 && filteredEmployees.every(e => e.status === 'completed');
+    if (allCompleted) count += 1;
+    const highRisk = filteredEmployees.filter(e => e.overallRiskLevel === 'high').length;
+    if (highRisk > 0) count += 1;
+    return count;
+  }, [filteredEmployees]);
 
   const employeesStarted = useMemo(() => filteredEmployees.filter(e => e.status !== 'not-started').length, [filteredEmployees]);
   const employeesCompleted = useMemo(() => filteredEmployees.filter(e => e.status === 'completed').length, [filteredEmployees]);
@@ -140,13 +148,20 @@ export default function DashboardScreen() {
               accessibilityRole="button"
               accessibilityLabel={`Notifications, ${alertsCount} pending`}
               onPress={() => {
+                const actions: string[] = [];
+                const allDone = filteredEmployees.length > 0 && filteredEmployees.every(e => e.status === 'completed');
+                if (allDone) actions.push('Main Assessment Sign-Off: Requires your signature');
+                const highRisk = filteredEmployees.filter(e => e.overallRiskLevel === 'high').length;
+                if (highRisk > 0) actions.push(`${highRisk} high-risk employee${highRisk !== 1 ? 's' : ''} require${highRisk === 1 ? 's' : ''} attention`);
+                const message = actions.length > 0
+                  ? `You have ${actions.length} pending action${actions.length !== 1 ? 's' : ''}:\n\n${actions.map(a => `• ${a}`).join('\n')}`
+                  : 'No pending actions at this time.';
                 Alert.alert(
                   'Pending Actions',
-                  `You have ${alertsCount} pending action:\n\n• Main Assessment Sign-Off: Requires your signature`,
-                  [
-                    { text: 'View Later' },
-                    { text: 'Sign Now', onPress: () => router.push('/signature') }
-                  ]
+                  message,
+                  actions.length > 0 && allDone
+                    ? [{ text: 'View Later' }, { text: 'Sign Now', onPress: () => router.push('/signature') }]
+                    : [{ text: 'OK' }]
                 );
               }}
               activeOpacity={0.7}

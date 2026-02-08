@@ -4,12 +4,15 @@ import { hasDatabase, hasPackageEntitlement, jsonError, requireAuth } from '../h
 import { RISK_THRESHOLDS, RATE_LIMITS, parsePagination, paginate, requireUUIDParam } from '../types.js';
 import type { AssessmentStatus, EmployeeDashboardRow } from '../types.js';
 import { assessmentsById, purchasesById, keypassesByCode, usersByEmail } from '../stores.js';
-import { dbListAssessmentsByOrganisation, dbListPurchasesByOrganisation, dbListKeypassesByOrganisation, dbGetEmployeeDashboardData, dbGetUserById, auditLog } from '../db/index.js';
+import { dbListAssessmentsByOrganisation, dbListPurchasesByOrganisation, dbListKeypassesByOrganisation, dbListKeypassesByUser, dbGetEmployeeDashboardData, dbGetUserById, auditLog } from '../db/index.js';
 import { rateLimit, getClientIp } from '../middleware.js';
 
 const analytics = new Hono();
 
 analytics.get('/analytics/overview', async (c) => {
+  const limited = await rateLimit('analytics:overview', { windowMs: 60_000, max: 30 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -44,6 +47,9 @@ analytics.get('/analytics/overview', async (c) => {
 });
 
 analytics.get('/analytics/assessments', async (c) => {
+  const limited = await rateLimit('analytics:assessments', { windowMs: 60_000, max: 30 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -189,6 +195,9 @@ analytics.get('/reports/generate', async (c) => {
 });
 
 analytics.get('/analytics/dashboard', async (c) => {
+  const limited = await rateLimit('analytics:dashboard', { windowMs: 60_000, max: 20 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -346,6 +355,9 @@ analytics.get('/analytics/employees', async (c) => {
 });
 
 analytics.get('/analytics/employees/:userId', async (c) => {
+  const limited = await rateLimit('analytics:employee-detail', { windowMs: 60_000, max: 30 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -391,17 +403,17 @@ analytics.get('/analytics/employees/:userId', async (c) => {
     }));
 
   // Get keypasses used by this user
-  const orgKeypasses = hasDatabase()
-    ? await dbListKeypassesByOrganisation(auth.organisationId)
-    : Array.from(keypassesByCode.values()).filter((k) => k.organisationId === auth.organisationId);
-
-  const userKeypasses = orgKeypasses.map((k) => ({
-    code: k.code,
-    status: k.status,
-    createdAt: k.createdAt,
-    expiresAt: k.expiresAt,
-    usedAt: k.usedAt ?? null,
-  }));
+  const userKeypasses = hasDatabase()
+    ? (await dbListKeypassesByUser(userId)).map((k) => ({
+        code: k.code, status: k.status, createdAt: k.createdAt,
+        expiresAt: k.expiresAt, usedAt: k.usedAt ?? null,
+      }))
+    : Array.from(keypassesByCode.values())
+        .filter((k) => k.organisationId === auth.organisationId && k.usedAt)
+        .map((k) => ({
+          code: k.code, status: k.status, createdAt: k.createdAt,
+          expiresAt: k.expiresAt, usedAt: k.usedAt ?? null,
+        }));
 
   return c.json({
     success: true,

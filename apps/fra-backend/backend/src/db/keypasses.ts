@@ -62,6 +62,15 @@ export async function dbListKeypassesByOrganisation(orgId: string): Promise<Keyp
   return res.rows.map(rowToKeypass);
 }
 
+export async function dbListKeypassesByUser(userId: string): Promise<Keypass[]> {
+  const pool = getDbPool();
+  const res = await pool.query<DbKeypassRow>(
+    'select code, organisation_id, status, created_at, expires_at, used_at, used_by_user_id from public.keypasses where used_by_user_id = $1 order by created_at desc',
+    [userId]
+  );
+  return res.rows.map(rowToKeypass);
+}
+
 export async function dbGetKeypassStatsByOrganisation(orgId: string): Promise<{ total: number; byStatus: Record<KeypassStatus, number> }> {
   const pool = getDbPool();
   const res = await pool.query<{ status: string; count: string }>(
