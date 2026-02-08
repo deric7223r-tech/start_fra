@@ -160,21 +160,25 @@ keypasses.post('/keypasses/use', async (c) => {
   if (!kp) return jsonError(c, 404, 'NOT_FOUND', 'Keypass not found');
 
   const now = new Date().toISOString();
-  if (kp.status !== 'available') return jsonError(c, 400, 'NOT_AVAILABLE', 'Keypass is not available');
 
+  // Check expiry before status so expired keypasses get the specific "EXPIRED" error
   const expiresAt = new Date(kp.expiresAt).getTime();
   const graceEnd = expiresAt + KEYPASS_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
   const nowMs = Date.now();
 
   if (nowMs > graceEnd) {
     // Past grace period — hard expired
-    if (hasDatabase()) {
-      await dbUpdateKeypassStatus(code, 'expired');
-    } else {
-      kp.status = 'expired';
+    if (kp.status === 'available') {
+      if (hasDatabase()) {
+        await dbUpdateKeypassStatus(code, 'expired');
+      } else {
+        kp.status = 'expired';
+      }
     }
     return jsonError(c, 400, 'EXPIRED', 'Keypass is expired');
   }
+
+  if (kp.status !== 'available') return jsonError(c, 400, 'NOT_AVAILABLE', 'Keypass is not available');
 
   if (nowMs > expiresAt) {
     // Within grace period — allow but log warning

@@ -44,7 +44,8 @@ export default function Workshop() {
 
   useEffect(() => {
     if (progress?.current_section !== undefined) {
-      setCurrentSlide(progress.current_section);
+      const maxSlide = workshopSections.length - 1;
+      setCurrentSlide(Math.max(0, Math.min(progress.current_section, maxSlide)));
     }
   }, [progress?.current_section]);
 

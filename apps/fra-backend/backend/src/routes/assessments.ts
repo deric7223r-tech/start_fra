@@ -151,6 +151,9 @@ assessments.patch('/assessments/:id', async (c) => {
     if (!assessment || assessment.organisationId !== auth.organisationId) {
       return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
     }
+    if (assessment.createdByUserId !== auth.userId && auth.role !== 'employer' && auth.role !== 'admin') {
+      return jsonError(c, 403, 'FORBIDDEN', 'Cannot modify another user\'s assessment');
+    }
 
     const newStatus = parsed.data.status ?? assessment.status;
     if (parsed.data.status && !validTransitions[assessment.status]?.includes(newStatus)) {
@@ -174,6 +177,9 @@ assessments.patch('/assessments/:id', async (c) => {
   const existing = await dbGetAssessmentById(id);
   if (!existing || existing.organisationId !== auth.organisationId) {
     return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
+  }
+  if (existing.createdByUserId !== auth.userId && auth.role !== 'employer' && auth.role !== 'admin') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Cannot modify another user\'s assessment');
   }
 
   const newStatus = parsed.data.status ?? existing.status;
