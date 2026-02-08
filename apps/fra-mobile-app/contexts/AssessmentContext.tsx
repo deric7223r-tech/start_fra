@@ -136,14 +136,15 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
 
   // Process sync queue
   const processSyncQueue = async () => {
-    if (syncQueue.length === 0 || !isOnline || !apiService.isAuthenticated()) {
+    const queue = syncQueueRef.current;
+    if (queue.length === 0 || !isOnlineRef.current || !apiService.isAuthenticated()) {
       return;
     }
 
-    logger.info(`Processing ${syncQueue.length} queued sync items`);
+    logger.info(`Processing ${queue.length} queued sync items`);
     const remainingQueue: SyncQueueItem[] = [];
 
-    for (const item of syncQueue) {
+    for (const item of queue) {
       try {
         await syncToBackendImmediate(item.data);
         logger.info('Successfully synced queued item:', item.id);

@@ -92,6 +92,9 @@ keypasses.post('/keypasses/generate', async (c) => {
 
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
+  if (auth.role !== 'employer' && auth.role !== 'admin') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Requires employer or admin role');
+  }
 
   const parsed = keypassGenerateSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid keypass generate payload');
@@ -123,6 +126,9 @@ keypasses.post('/keypasses/allocate', async (c) => {
 
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
+  if (auth.role !== 'employer' && auth.role !== 'admin') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Requires employer or admin role');
+  }
 
   const parsed = keypassGenerateSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid keypass allocate payload');
@@ -257,6 +263,9 @@ keypasses.post('/keypasses/use', async (c) => {
 keypasses.post('/keypasses/revoke', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
+  if (auth.role !== 'employer' && auth.role !== 'admin') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Requires employer or admin role');
+  }
 
   const parsed = keypassValidateSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid keypass revoke payload');
@@ -400,6 +409,9 @@ keypasses.get('/keypasses/organisation/:orgId/quota', async (c) => {
 keypasses.post('/keypasses/bulk-revoke', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
+  if (auth.role !== 'employer' && auth.role !== 'admin') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Requires employer or admin role');
+  }
 
   const parsed = keypassBulkSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid bulk revoke payload');
