@@ -7,11 +7,14 @@ import {
   dbInsertAssessment, dbGetAssessmentById, dbListAssessmentsByOrganisation, dbUpdateAssessment,
   auditLog,
 } from '../db/index.js';
-import { getClientIp } from '../middleware.js';
+import { rateLimit, getClientIp } from '../middleware.js';
 
 const assessments = new Hono();
 
 assessments.get('/assessments', async (c) => {
+  const limited = await rateLimit('assessments:list', { windowMs: 60_000, max: 30 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -40,6 +43,9 @@ assessments.get('/assessments', async (c) => {
 });
 
 assessments.get('/assessments/organisation/:orgId', async (c) => {
+  const limited = await rateLimit('assessments:org-list', { windowMs: 60_000, max: 30 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -58,6 +64,9 @@ assessments.get('/assessments/organisation/:orgId', async (c) => {
 });
 
 assessments.post('/assessments', async (c) => {
+  const limited = await rateLimit('assessments:create', { windowMs: 60_000, max: 20 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -93,6 +102,9 @@ assessments.post('/assessments', async (c) => {
 });
 
 assessments.get('/assessments/:id', async (c) => {
+  const limited = await rateLimit('assessments:get', { windowMs: 60_000, max: 60 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -115,6 +127,9 @@ assessments.get('/assessments/:id', async (c) => {
 });
 
 assessments.patch('/assessments/:id', async (c) => {
+  const limited = await rateLimit('assessments:patch', { windowMs: 60_000, max: 30 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
@@ -172,6 +187,9 @@ assessments.patch('/assessments/:id', async (c) => {
 });
 
 assessments.post('/assessments/:id/submit', async (c) => {
+  const limited = await rateLimit('assessments:submit', { windowMs: 60_000, max: 10 })(c);
+  if (limited instanceof Response) return limited;
+
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
