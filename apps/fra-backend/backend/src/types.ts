@@ -250,7 +250,7 @@ export const DEFAULT_PAGE_SIZE = 50;
 export const MAX_PAGE_SIZE = 200;
 
 export function parsePagination(query: Record<string, string | undefined>): { page: number; pageSize: number; offset: number } {
-  const page = Math.max(1, parseInt(query.page ?? '1', 10) || 1);
+  const page = Math.max(1, Math.min(10_000_000, parseInt(query.page ?? '1', 10) || 1));
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(query.pageSize ?? String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE));
   return { page, pageSize, offset: (page - 1) * pageSize };
 }

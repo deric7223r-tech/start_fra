@@ -3,13 +3,18 @@
  * Delays function execution until after a specified wait time
  */
 
+export interface DebouncedFn<T extends (...args: any[]) => any> {
+  (...args: Parameters<T>): void;
+  cancel: () => void;
+}
+
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
-): (...args: Parameters<T>) => void {
+): DebouncedFn<T> {
   let timeout: ReturnType<typeof setTimeout> | null = null;
 
-  return (...args: Parameters<T>) => {
+  const debounced = (...args: Parameters<T>) => {
     if (timeout) {
       clearTimeout(timeout);
     }
@@ -19,4 +24,13 @@ export function debounce<T extends (...args: any[]) => any>(
       timeout = null;
     }, wait);
   };
+
+  debounced.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+
+  return debounced;
 }
