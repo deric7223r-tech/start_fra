@@ -53,6 +53,18 @@ export async function dbUpdateKeypassStatus(code: string, status: KeypassStatus,
   );
 }
 
+/** Atomically claim a keypass — only updates if current status is 'available'. Returns true if claimed. */
+export async function dbClaimKeypass(code: string, usedAt: string, usedByUserId: string): Promise<boolean> {
+  const pool = getDbPool();
+  const res = await pool.query(
+    `update public.keypasses set status = 'used', used_at = $1, used_by_user_id = $2
+     where code = $3 and status = 'available'
+     returning code`,
+    [usedAt, usedByUserId, code]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
 export async function dbListKeypassesByOrganisation(orgId: string): Promise<Keypass[]> {
   const pool = getDbPool();
   const res = await pool.query<DbKeypassRow>(

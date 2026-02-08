@@ -11,7 +11,7 @@ import {
   RATE_LIMITS,
 } from '../types.js';
 import type { User } from '../types.js';
-import { usersByEmail, refreshTokenAllowlist, organisationsById } from '../stores.js';
+import { usersByEmail, refreshTokenAllowlist, organisationsById, accountLockouts } from '../stores.js';
 import { getClientIp, rateLimit } from '../middleware.js';
 import {
   dbGetUserByEmail, dbGetUserById, dbUpdateUserPasswordHash,
@@ -31,9 +31,20 @@ const { AUTH_WINDOW_MS, SIGNUP_MAX, LOGIN_MAX, FORGOT_PASSWORD_MAX, RESET_PASSWO
 
 async function checkAccountLockout(email: string): Promise<{ locked: boolean; remaining: number }> {
   const redis = getRedis();
-  if (!redis) return { locked: false, remaining: LOCKOUT_MAX_ATTEMPTS };
-
   const key = `${LOCKOUT_PREFIX}${email.toLowerCase()}`;
+
+  if (!redis) {
+    // In-memory fallback
+    const entry = accountLockouts.get(key);
+    if (!entry || entry.expiresAt < Date.now()) {
+      return { locked: false, remaining: LOCKOUT_MAX_ATTEMPTS };
+    }
+    if (entry.count >= LOCKOUT_MAX_ATTEMPTS) {
+      return { locked: true, remaining: 0 };
+    }
+    return { locked: false, remaining: LOCKOUT_MAX_ATTEMPTS - entry.count };
+  }
+
   const count = await redis.get<number>(key) ?? 0;
   if (count >= LOCKOUT_MAX_ATTEMPTS) {
     return { locked: true, remaining: 0 };
@@ -43,9 +54,20 @@ async function checkAccountLockout(email: string): Promise<{ locked: boolean; re
 
 async function recordFailedLogin(email: string): Promise<void> {
   const redis = getRedis();
-  if (!redis) return;
-
   const key = `${LOCKOUT_PREFIX}${email.toLowerCase()}`;
+
+  if (!redis) {
+    // In-memory fallback
+    const entry = accountLockouts.get(key);
+    const now = Date.now();
+    if (!entry || entry.expiresAt < now) {
+      accountLockouts.set(key, { count: 1, expiresAt: now + LOCKOUT_WINDOW_SECONDS * 1000 });
+    } else {
+      entry.count += 1;
+    }
+    return;
+  }
+
   const count = await redis.incr(key);
   if (count === 1) {
     await redis.expire(key, LOCKOUT_WINDOW_SECONDS);
@@ -54,9 +76,18 @@ async function recordFailedLogin(email: string): Promise<void> {
 
 async function clearFailedLogins(email: string): Promise<void> {
   const redis = getRedis();
-  if (!redis) return;
-  await redis.del(`${LOCKOUT_PREFIX}${email.toLowerCase()}`);
+  const key = `${LOCKOUT_PREFIX}${email.toLowerCase()}`;
+
+  if (!redis) {
+    accountLockouts.delete(key);
+    return;
+  }
+
+  await redis.del(key);
 }
+
+// Dummy hash for timing-safe comparison when user is not found
+const DUMMY_HASH = '$2a$12$000000000000000000000uGEjMjP7rqOHBwE0oFRnlJWx/.EHPqK';
 
 // ── Routes ──────────────────────────────────────────────────────
 
@@ -190,12 +221,14 @@ auth.post('/auth/login', async (c) => {
   }
 
   const user = hasDatabase() ? await dbGetUserByEmail(emailLc) : usersByEmail.get(emailLc);
+
+  // Always run bcrypt.compare to prevent timing-based email enumeration
+  const ok = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
+
   if (!user) {
     await recordFailedLogin(emailLc);
     return jsonError(c, 401, 'INVALID_CREDENTIALS', 'Invalid email or password');
   }
-
-  const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) {
     await recordFailedLogin(emailLc);
     await auditLog({
@@ -242,6 +275,9 @@ auth.post('/auth/login', async (c) => {
 });
 
 auth.get('/auth/me', async (c) => {
+  const limited = await rateLimit('auth:me', { windowMs: 60_000, max: 30 })(c);
+  if (limited instanceof Response) return limited;
+
   const authCtx = requireAuth(c);
   if (authCtx instanceof Response) return authCtx;
 

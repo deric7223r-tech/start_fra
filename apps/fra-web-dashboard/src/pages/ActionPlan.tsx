@@ -108,7 +108,8 @@ export default function ActionPlan() {
   const toggleItemComplete = async (itemId: string) => {
     if (!actionPlan) return;
 
-    const updatedItems = actionPlan.action_items.map(item =>
+    const previousItems = actionPlan.action_items;
+    const updatedItems = previousItems.map(item =>
       item.id === itemId ? { ...item, completed: !item.completed } : item
     );
 
@@ -120,6 +121,8 @@ export default function ActionPlan() {
       });
     } catch (err: unknown) {
       logger.error('Error updating action plan', err);
+      // Revert optimistic update on failure
+      setActionPlan(prev => prev ? { ...prev, action_items: previousItems } : null);
       toast.error('Failed to update action item');
     }
   };
