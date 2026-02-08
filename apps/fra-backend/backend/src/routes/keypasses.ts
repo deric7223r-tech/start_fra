@@ -487,6 +487,9 @@ keypasses.post('/keypasses/bulk-validate', async (c) => {
 keypasses.get('/keypasses/expiring', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
+  if (auth.role !== 'employer' && auth.role !== 'admin') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Requires employer or admin role');
+  }
 
   const daysParam = c.req.query('days') ?? '7';
   const days = Math.min(90, Math.max(1, parseInt(daysParam, 10) || 7));
