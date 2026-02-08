@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import ScreenContainer from '@/components/ScreenContainer';
 import { colors, spacing, borderRadius, shadows } from '@/constants/theme';
@@ -67,6 +68,26 @@ export default function PaymentScreen() {
   };
 
   const handlePayment = () => {
+    const cleanedCard = cardNumber.replace(/\s/g, '');
+    if (!cleanedCard || !expiry || !cvc || !cardholderName.trim()) {
+      Alert.alert('Missing Information', 'Please fill in all card details before continuing.');
+      return;
+    }
+    if (cleanedCard.length < 13) {
+      Alert.alert('Invalid Card', 'Please enter a valid card number.');
+      return;
+    }
+    if (cvc.length < 3) {
+      Alert.alert('Invalid CVC', 'CVC must be 3 digits.');
+      return;
+    }
+    const [mm] = expiry.split('/');
+    const month = parseInt(mm, 10);
+    if (!month || month < 1 || month > 12) {
+      Alert.alert('Invalid Expiry', 'Please enter a valid expiry date (MM/YY).');
+      return;
+    }
+
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
@@ -101,13 +122,23 @@ export default function PaymentScreen() {
 
           <TouchableOpacity
             style={styles.backHomeButton}
+            onPress={() => router.push('/legal')}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Start your training"
+          >
+            <Text style={styles.backHomeButtonText}>Start Your Training</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
             onPress={() => router.push('/')}
             activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityLabel="Back to Home"
           >
-            <ArrowLeft size={18} color={colors.surface} />
-            <Text style={styles.backHomeButtonText}>Back to Home</Text>
+            <ArrowLeft size={18} color={colors.primary} />
+            <Text style={styles.secondaryButtonText}>Back to Home</Text>
           </TouchableOpacity>
         </View>
       </ScreenContainer>
@@ -479,5 +510,22 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     color: colors.surface,
+  },
+  secondaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    marginTop: spacing.sm,
+  },
+  secondaryButtonText: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.primary,
   },
 });
