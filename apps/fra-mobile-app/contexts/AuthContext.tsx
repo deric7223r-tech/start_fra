@@ -145,7 +145,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         );
 
         if (result.success && result.data?.accessToken && result.data?.refreshToken) {
-          await apiService.setTokens(result.data.accessToken, result.data.refreshToken);
+          try {
+            await apiService.setTokens(result.data.accessToken, result.data.refreshToken);
+          } catch (tokenErr: unknown) {
+            logger.error('Failed to persist tokens:', tokenErr);
+            return { success: false, error: 'Failed to save credentials' };
+          }
         }
 
         if (result.success && result.data?.user && result.data?.organisation) {

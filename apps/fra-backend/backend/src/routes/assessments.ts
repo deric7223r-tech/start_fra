@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
 import { requireUUIDParam, assessmentCreateSchema, assessmentPatchSchema, parsePagination, paginate } from '../types.js';
-import type { Assessment } from '../types.js';
+import type { Assessment, AssessmentStatus } from '../types.js';
 import { assessmentsById } from '../stores.js';
 import {
   dbInsertAssessment, dbGetAssessmentById, dbListAssessmentsByOrganisation, dbUpdateAssessment,
@@ -138,14 +138,26 @@ assessments.patch('/assessments/:id', async (c) => {
   const parsed = assessmentPatchSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid assessment patch payload');
 
+  // Valid status transitions — prevent arbitrary jumps (e.g. draft→completed)
+  const validTransitions: Record<AssessmentStatus, AssessmentStatus[]> = {
+    draft: ['draft', 'in_progress', 'submitted'],
+    in_progress: ['in_progress', 'submitted'],
+    submitted: ['submitted', 'completed'],
+    completed: ['completed'],
+  };
+
   if (!hasDatabase()) {
     const assessment = assessmentsById.get(id);
     if (!assessment || assessment.organisationId !== auth.organisationId) {
       return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
     }
 
-    const now = new Date().toISOString();
     const newStatus = parsed.data.status ?? assessment.status;
+    if (parsed.data.status && !validTransitions[assessment.status]?.includes(newStatus)) {
+      return jsonError(c, 400, 'INVALID_STATUS_TRANSITION', `Cannot transition from ${assessment.status} to ${newStatus}`);
+    }
+
+    const now = new Date().toISOString();
     const updated: Assessment = {
       ...assessment,
       title: parsed.data.title ?? assessment.title,
@@ -164,8 +176,12 @@ assessments.patch('/assessments/:id', async (c) => {
     return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
   }
 
-  const now = new Date().toISOString();
   const newStatus = parsed.data.status ?? existing.status;
+  if (parsed.data.status && !validTransitions[existing.status]?.includes(newStatus)) {
+    return jsonError(c, 400, 'INVALID_STATUS_TRANSITION', `Cannot transition from ${existing.status} to ${newStatus}`);
+  }
+
+  const now = new Date().toISOString();
   const updated = await dbUpdateAssessment(id, {
     title: parsed.data.title ?? existing.title,
     status: newStatus,

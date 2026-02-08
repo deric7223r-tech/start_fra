@@ -89,6 +89,9 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
   useEffect(() => {
     loadDraft();
     loadSyncQueue();
+    return () => {
+      debouncedSync.cancel();
+    };
   }, []);
 
   // Load sync queue from storage
@@ -159,9 +162,13 @@ export const [AssessmentProvider, useAssessment] = createContextHook(() => {
     await saveSyncQueue(remainingQueue);
   };
 
-  // Keep refs in sync so stable callbacks always use the latest values
-  syncQueueRef.current = syncQueue;
-  processSyncQueueRef.current = processSyncQueue;
+  // Keep refs in sync via useEffect so they update after state commits
+  useEffect(() => {
+    syncQueueRef.current = syncQueue;
+  }, [syncQueue]);
+  useEffect(() => {
+    processSyncQueueRef.current = processSyncQueue;
+  });
 
   // Sync to backend (immediate, no debounce)
   const syncToBackendImmediate = async (data: Partial<AssessmentData>) => {

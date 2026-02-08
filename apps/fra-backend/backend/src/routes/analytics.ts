@@ -413,7 +413,7 @@ analytics.get('/analytics/employees/:userId', async (c) => {
         expiresAt: k.expiresAt, usedAt: k.usedAt ?? null,
       }))
     : Array.from(keypassesByCode.values())
-        .filter((k) => k.organisationId === auth.organisationId && k.usedAt)
+        .filter((k) => k.organisationId === auth.organisationId)
         .map((k) => ({
           code: k.code, status: k.status, createdAt: k.createdAt,
           expiresAt: k.expiresAt, usedAt: k.usedAt ?? null,
