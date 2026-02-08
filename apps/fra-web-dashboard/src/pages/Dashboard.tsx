@@ -29,8 +29,9 @@ export default function Dashboard() {
   if (progressLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Setting up your dashboard…</p>
         </div>
       </Layout>
     );
@@ -181,7 +182,12 @@ export default function Dashboard() {
                     )}%
                   </div>
                 ) : (
-                  <div className="text-muted-foreground">No quizzes taken yet</div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">No quizzes taken yet</p>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/workshop">Start Workshop</Link>
+                    </Button>
+                  </div>
                 )}
               </CardContent>
             </Card>

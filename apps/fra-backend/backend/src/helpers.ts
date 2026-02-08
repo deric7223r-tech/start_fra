@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import jwt from 'jsonwebtoken';
+import type { Purchase } from './types.js';
 
 export type AuthContext = {
   userId: string;
@@ -61,4 +62,22 @@ export function requireAuth(c: Context): AuthContext | Response {
   const auth = getAuth(c);
   if (!auth) return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid access token');
   return auth;
+}
+
+// Package tier ordering for entitlement checks
+const PACKAGE_TIER: Record<string, number> = {
+  pkg_basic: 1,
+  pkg_training: 2,
+  pkg_full: 3,
+};
+
+/**
+ * Check if an org has a succeeded purchase at or above the required package tier.
+ * Pass the org's purchases list and the minimum required package ID.
+ */
+export function hasPackageEntitlement(purchases: Purchase[], requiredPackageId: string): boolean {
+  const requiredTier = PACKAGE_TIER[requiredPackageId] ?? 0;
+  return purchases.some(
+    (p) => p.status === 'succeeded' && (PACKAGE_TIER[p.packageId] ?? 0) >= requiredTier
+  );
 }

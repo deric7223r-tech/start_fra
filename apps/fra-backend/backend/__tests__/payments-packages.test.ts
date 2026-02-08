@@ -1,10 +1,10 @@
 /// <reference types="jest" />
 
-import { app, createAuthenticatedUser, authHeaders } from './helpers';
+import { app, createAuthenticatedUser, authHeaders, seedPurchase } from './helpers';
 
 async function signup() {
-  const { accessToken, email, organisationId } = await createAuthenticatedUser({ name: 'Pay User', organisationName: 'Pay Org' });
-  return { accessToken, email, organisationId };
+  const { accessToken, email, organisationId, userId } = await createAuthenticatedUser({ name: 'Pay User', organisationName: 'Pay Org' });
+  return { accessToken, email, organisationId, userId };
 }
 
 describe('Payments & Packages endpoints', () => {
@@ -281,7 +281,8 @@ describe('Payments & Packages endpoints', () => {
 
   describe('GET /reports/generate', () => {
     it('generates a report', async () => {
-      const { accessToken } = await signup();
+      const { accessToken, organisationId, userId } = await signup();
+      seedPurchase(organisationId, userId, 'pkg_training');
       const res = await app.request('http://localhost/api/v1/reports/generate', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });

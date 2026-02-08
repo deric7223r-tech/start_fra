@@ -5,7 +5,9 @@ import type { Assessment } from '../types.js';
 import { assessmentsById } from '../stores.js';
 import {
   dbInsertAssessment, dbGetAssessmentById, dbListAssessmentsByOrganisation, dbUpdateAssessment,
+  auditLog,
 } from '../db/index.js';
+import { getClientIp } from '../middleware.js';
 
 const assessments = new Hono();
 
@@ -62,6 +64,12 @@ assessments.post('/assessments', async (c) => {
   } else {
     assessmentsById.set(assessment.id, assessment);
   }
+
+  await auditLog({
+    eventType: 'assessment.created', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 'assessment', resourceId: assessment.id,
+    details: { title: assessment.title }, ipAddress: getClientIp(c),
+  });
 
   return c.json({ success: true, data: assessment }, 201);
 });
@@ -154,6 +162,14 @@ assessments.post('/assessments/:id/submit', async (c) => {
       updatedAt: now,
     };
     assessmentsById.set(id, updated);
+
+    await auditLog({
+      eventType: 'assessment.submitted', actorId: auth.userId, actorEmail: auth.email,
+      organisationId: auth.organisationId, resourceType: 'assessment', resourceId: id,
+      details: { title: updated.title, answerCount: Object.keys(updated.answers).length },
+      ipAddress: getClientIp(c),
+    });
+
     return c.json({ success: true, data: updated });
   }
 
@@ -170,6 +186,14 @@ assessments.post('/assessments/:id/submit', async (c) => {
   });
 
   if (!updated) return jsonError(c, 404, 'NOT_FOUND', 'Assessment not found');
+
+  await auditLog({
+    eventType: 'assessment.submitted', actorId: auth.userId, actorEmail: auth.email,
+    organisationId: auth.organisationId, resourceType: 'assessment', resourceId: id,
+    details: { title: updated.title, answerCount: Object.keys(updated.answers).length },
+    ipAddress: getClientIp(c),
+  });
+
   return c.json({ success: true, data: updated });
 });
 

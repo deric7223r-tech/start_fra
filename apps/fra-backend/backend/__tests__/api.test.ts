@@ -173,6 +173,9 @@ describe('Backend API', () => {
     });
     const signupJson = (await signupRes.json()) as any;
     const accessToken: string = signupJson.data.accessToken;
+    const userId: string = signupJson.data.user.userId;
+    const organisationId: string = signupJson.data.organisation.organisationId;
+    seedPurchase(organisationId, userId, 'pkg_training');
 
     const intentRes = await app.request('http://localhost/api/v1/payments/create-intent', {
       method: 'POST',

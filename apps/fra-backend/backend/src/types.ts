@@ -184,6 +184,10 @@ export const RATE_LIMITS = {
   KEYPASS_GENERATE_MAX: 10,
 } as const;
 
+// ── Keypass grace period ────────────────────────────────────────
+
+export const KEYPASS_GRACE_PERIOD_DAYS = 7;
+
 // ── Package recommendation thresholds ──────────────────────────
 
 export const RISK_THRESHOLDS = {

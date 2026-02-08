@@ -8,9 +8,10 @@ import {
   Shield,
   CreditCard,
   CheckCircle2,
-  ArrowLeft,
   Lock,
   Loader2,
+  AlertCircle,
+  ChevronRight,
 } from 'lucide-react';
 
 export default function Checkout() {
@@ -26,6 +27,8 @@ export default function Checkout() {
   const [cardholderName, setCardholderName] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   if (!packageName || !priceParam) {
     return <Navigate to="/" replace />;
@@ -34,12 +37,56 @@ export default function Checkout() {
   const vat = price * 0.20;
   const total = price * 1.20;
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    const digits = cardNumber.replace(/\s/g, '');
+    if (!digits || digits.length < 13 || digits.length > 19 || !/^\d+$/.test(digits)) {
+      errors.cardNumber = 'Enter a valid card number (13-19 digits)';
+    }
+
+    if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) {
+      errors.expiry = 'Enter a valid expiry (MM/YY)';
+    } else {
+      const [mm, yy] = expiry.split('/').map(Number);
+      if (mm < 1 || mm > 12) {
+        errors.expiry = 'Month must be 01-12';
+      } else {
+        const now = new Date();
+        const expiryDate = new Date(2000 + yy, mm);
+        if (expiryDate <= now) {
+          errors.expiry = 'Card has expired';
+        }
+      }
+    }
+
+    if (!cvc || !/^\d{3,4}$/.test(cvc)) {
+      errors.cvc = 'Enter a valid CVC (3-4 digits)';
+    }
+
+    if (!cardholderName.trim()) {
+      errors.cardholder = 'Enter the cardholder name';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPaymentError(null);
+
+    if (!validateForm()) return;
+
     setIsProcessing(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsProcessing(false);
-    setIsSuccess(true);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setIsSuccess(true);
+    } catch {
+      setPaymentError('Payment failed. Please check your card details and try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (isSuccess) {
@@ -107,14 +154,32 @@ export default function Checkout() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="mb-8"
+            className="mb-8 space-y-4"
           >
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Link>
-            </Button>
+            <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+              <ChevronRight className="h-3.5 w-3.5" />
+              <Link to="/#pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+              <ChevronRight className="h-3.5 w-3.5" />
+              <span className="text-foreground font-medium" aria-current="page">Checkout</span>
+            </nav>
+
+            <div className="flex items-center gap-2 text-sm" aria-label="Checkout steps">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                Select Package
+              </span>
+              <div className="h-px w-6 bg-border" />
+              <span className="flex items-center gap-1.5 font-medium text-primary">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">2</span>
+                Payment
+              </span>
+              <div className="h-px w-6 bg-border" />
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-muted-foreground">3</span>
+                Confirmation
+              </span>
+            </div>
           </motion.div>
 
           <div className="grid gap-8 lg:grid-cols-2">
@@ -172,7 +237,14 @@ export default function Checkout() {
                   <CardTitle className="text-xl">Payment Details</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handlePayment} className="space-y-4">
+                  <form onSubmit={handlePayment} className="space-y-4" noValidate>
+                    {paymentError && (
+                      <div role="alert" className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        {paymentError}
+                      </div>
+                    )}
+
                     <div>
                       <label htmlFor="card-number" className="block text-sm font-medium mb-1.5">
                         Card Number
@@ -182,14 +254,20 @@ export default function Checkout() {
                         <input
                           id="card-number"
                           type="text"
+                          inputMode="numeric"
                           placeholder="1234 5678 9012 3456"
                           value={cardNumber}
                           onChange={(e) => setCardNumber(e.target.value)}
                           maxLength={19}
-                          required
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          aria-required="true"
+                          aria-invalid={!!fieldErrors.cardNumber}
+                          aria-describedby={fieldErrors.cardNumber ? 'card-number-error' : undefined}
+                          className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 pl-10 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${fieldErrors.cardNumber ? 'border-destructive' : 'border-input'}`}
                         />
                       </div>
+                      {fieldErrors.cardNumber && (
+                        <p id="card-number-error" role="alert" className="mt-1 text-xs text-destructive">{fieldErrors.cardNumber}</p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -200,13 +278,19 @@ export default function Checkout() {
                         <input
                           id="expiry"
                           type="text"
+                          inputMode="numeric"
                           placeholder="MM/YY"
                           value={expiry}
                           onChange={(e) => setExpiry(e.target.value)}
                           maxLength={5}
-                          required
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          aria-required="true"
+                          aria-invalid={!!fieldErrors.expiry}
+                          aria-describedby={fieldErrors.expiry ? 'expiry-error' : undefined}
+                          className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${fieldErrors.expiry ? 'border-destructive' : 'border-input'}`}
                         />
+                        {fieldErrors.expiry && (
+                          <p id="expiry-error" role="alert" className="mt-1 text-xs text-destructive">{fieldErrors.expiry}</p>
+                        )}
                       </div>
                       <div>
                         <label htmlFor="cvc" className="block text-sm font-medium mb-1.5">
@@ -215,13 +299,19 @@ export default function Checkout() {
                         <input
                           id="cvc"
                           type="text"
+                          inputMode="numeric"
                           placeholder="123"
                           value={cvc}
                           onChange={(e) => setCvc(e.target.value)}
                           maxLength={4}
-                          required
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          aria-required="true"
+                          aria-invalid={!!fieldErrors.cvc}
+                          aria-describedby={fieldErrors.cvc ? 'cvc-error' : undefined}
+                          className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${fieldErrors.cvc ? 'border-destructive' : 'border-input'}`}
                         />
+                        {fieldErrors.cvc && (
+                          <p id="cvc-error" role="alert" className="mt-1 text-xs text-destructive">{fieldErrors.cvc}</p>
+                        )}
                       </div>
                     </div>
 
@@ -235,9 +325,14 @@ export default function Checkout() {
                         placeholder="Name on card"
                         value={cardholderName}
                         onChange={(e) => setCardholderName(e.target.value)}
-                        required
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        aria-required="true"
+                        aria-invalid={!!fieldErrors.cardholder}
+                        aria-describedby={fieldErrors.cardholder ? 'cardholder-error' : undefined}
+                        className={`flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${fieldErrors.cardholder ? 'border-destructive' : 'border-input'}`}
                       />
+                      {fieldErrors.cardholder && (
+                        <p id="cardholder-error" role="alert" className="mt-1 text-xs text-destructive">{fieldErrors.cardholder}</p>
+                      )}
                     </div>
 
                     <Button

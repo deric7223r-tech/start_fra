@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import bcrypt from 'bcryptjs';
 import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
-import { keypassGenerateSchema, keypassValidateSchema, keypassUseSchema, keypassBulkSchema, RATE_LIMITS, FALLBACK_PACKAGES, parsePagination, paginate } from '../types.js';
+import { keypassGenerateSchema, keypassValidateSchema, keypassUseSchema, keypassBulkSchema, RATE_LIMITS, FALLBACK_PACKAGES, KEYPASS_GRACE_PERIOD_DAYS, parsePagination, paginate } from '../types.js';
 import type { User, Keypass } from '../types.js';
 import { usersByEmail, organisationsById, keypassesByCode, purchasesById } from '../stores.js';
 import { getClientIp, rateLimit } from '../middleware.js';
@@ -16,6 +16,9 @@ import {
 } from '../db/index.js';
 import type { KeypassStatus } from '../types.js';
 import { issueTokens, publicUser } from '../auth-utils.js';
+import { createLogger } from '../logger.js';
+
+const logger = createLogger('keypasses');
 
 // ── Quota helper ────────────────────────────────────────────────
 
@@ -156,13 +159,24 @@ keypasses.post('/keypasses/use', async (c) => {
 
   const now = new Date().toISOString();
   if (kp.status !== 'available') return jsonError(c, 400, 'NOT_AVAILABLE', 'Keypass is not available');
-  if (new Date(kp.expiresAt).getTime() < Date.now()) {
+
+  const expiresAt = new Date(kp.expiresAt).getTime();
+  const graceEnd = expiresAt + KEYPASS_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
+
+  if (nowMs > graceEnd) {
+    // Past grace period — hard expired
     if (hasDatabase()) {
       await dbUpdateKeypassStatus(code, 'expired');
     } else {
       kp.status = 'expired';
     }
     return jsonError(c, 400, 'EXPIRED', 'Keypass is expired');
+  }
+
+  if (nowMs > expiresAt) {
+    // Within grace period — allow but log warning
+    logger.warn('Keypass used during grace period', { code, expiresAt: kp.expiresAt });
   }
 
   const email = (parsed.data.email ?? `employee+${kp.code.toLowerCase()}@example.com`).toLowerCase();
@@ -312,7 +326,10 @@ keypasses.post('/keypasses/validate', async (c) => {
   if (kp.status === 'revoked') return jsonError(c, 400, 'REVOKED', 'Keypass is revoked');
   if (kp.status === 'used') return jsonError(c, 400, 'USED', 'Keypass is already used');
 
-  if (new Date(kp.expiresAt).getTime() < Date.now()) {
+  const expiresAtMs = new Date(kp.expiresAt).getTime();
+  const graceEndMs = expiresAtMs + KEYPASS_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+
+  if (Date.now() > graceEndMs) {
     if (hasDatabase()) {
       await dbUpdateKeypassStatus(code, 'expired');
     } else {
@@ -321,7 +338,17 @@ keypasses.post('/keypasses/validate', async (c) => {
     return jsonError(c, 400, 'EXPIRED', 'Keypass is expired');
   }
 
-  return c.json({ success: true, data: { valid: true, organisationId: kp.organisationId, expiresAt: kp.expiresAt } });
+  const inGracePeriod = Date.now() > expiresAtMs;
+
+  return c.json({
+    success: true,
+    data: {
+      valid: true,
+      organisationId: kp.organisationId,
+      expiresAt: kp.expiresAt,
+      ...(inGracePeriod ? { warning: 'Keypass is in grace period and will expire soon' } : {}),
+    },
+  });
 });
 
 keypasses.get('/keypasses/organisation/:orgId/quota', async (c) => {

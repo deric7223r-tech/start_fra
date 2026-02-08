@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { Hono } from 'hono';
-import { hasDatabase, requireAuth } from '../helpers.js';
+import { hasDatabase, hasPackageEntitlement, jsonError, requireAuth } from '../helpers.js';
 import { RISK_THRESHOLDS, RATE_LIMITS, parsePagination, paginate } from '../types.js';
 import type { AssessmentStatus } from '../types.js';
 import { assessmentsById, purchasesById, keypassesByCode } from '../stores.js';
@@ -81,6 +81,15 @@ analytics.get('/reports/generate', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
+  // Require at least pkg_training to generate reports
+  const orgPurchases = hasDatabase()
+    ? await dbListPurchasesByOrganisation(auth.organisationId)
+    : Array.from(purchasesById.values()).filter((p) => p.organisationId === auth.organisationId);
+
+  if (!hasPackageEntitlement(orgPurchases, 'pkg_training')) {
+    return jsonError(c, 403, 'PACKAGE_REQUIRED', 'Report generation requires a Training or Full package');
+  }
+
   // Fetch the organisation's assessments
   const orgAssessments = hasDatabase()
     ? await dbListAssessmentsByOrganisation(auth.organisationId)
@@ -159,13 +168,18 @@ analytics.get('/analytics/dashboard', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
-  const orgAssessments = hasDatabase()
-    ? await dbListAssessmentsByOrganisation(auth.organisationId)
-    : Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
-
+  // Require pkg_full for the aggregated dashboard
   const orgPurchases = hasDatabase()
     ? await dbListPurchasesByOrganisation(auth.organisationId)
     : Array.from(purchasesById.values()).filter((p) => p.organisationId === auth.organisationId);
+
+  if (!hasPackageEntitlement(orgPurchases, 'pkg_full')) {
+    return jsonError(c, 403, 'PACKAGE_REQUIRED', 'Dashboard requires the Full package');
+  }
+
+  const orgAssessments = hasDatabase()
+    ? await dbListAssessmentsByOrganisation(auth.organisationId)
+    : Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
 
   const orgKeypasses = hasDatabase()
     ? await dbListKeypassesByOrganisation(auth.organisationId)
