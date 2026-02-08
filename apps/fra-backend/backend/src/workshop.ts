@@ -13,7 +13,15 @@ import { type AuthContext, hasDatabase, jsonError, getAuth as getAuthBase, requi
 import { createLogger } from './logger.js';
 import { getRedis } from './redis.js';
 import { rateLimit } from './middleware.js';
-import { RATE_LIMITS } from './types.js';
+import { RATE_LIMITS, isValidUUID } from './types.js';
+
+function requireUUID(c: Context, name: string): string | Response {
+  const value = c.req.param(name);
+  if (!isValidUUID(value)) {
+    return jsonError(c, 400, 'INVALID_PARAM', `Invalid ${name} format`);
+  }
+  return value;
+}
 
 const logger = createLogger('workshop');
 
@@ -227,10 +235,13 @@ workshop.get('/sessions/:id', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
+  const id = requireUUID(c, 'id');
+  if (id instanceof Response) return id;
+
   if (!hasDatabase()) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
 
   const pool = getDbPool();
-  const res = await pool.query('SELECT * FROM workshop_sessions WHERE id = $1 LIMIT 1', [c.req.param('id')]);
+  const res = await pool.query('SELECT * FROM workshop_sessions WHERE id = $1 LIMIT 1', [id]);
 
   if (!res.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
   return c.json({ success: true, data: res.rows[0] });
@@ -267,7 +278,8 @@ workshop.patch('/sessions/:id', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const sessionId = c.req.param('id');
+  const sessionId = requireUUID(c, 'id');
+  if (sessionId instanceof Response) return sessionId;
 
   // Verify ownership
   const check = await pool.query('SELECT facilitator_id FROM workshop_sessions WHERE id = $1', [sessionId]);
@@ -303,7 +315,8 @@ workshop.post('/sessions/:id/end', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const sessionId = c.req.param('id');
+  const sessionId = requireUUID(c, 'id');
+  if (sessionId instanceof Response) return sessionId;
 
   const check = await pool.query('SELECT facilitator_id FROM workshop_sessions WHERE id = $1', [sessionId]);
   if (!check.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Session not found');
@@ -326,7 +339,8 @@ workshop.post('/sessions/:id/join', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const sessionId = c.req.param('id');
+  const sessionId = requireUUID(c, 'id');
+  if (sessionId instanceof Response) return sessionId;
 
   // Verify session exists and is active
   const check = await pool.query('SELECT id, is_active FROM workshop_sessions WHERE id = $1', [sessionId]);
@@ -353,12 +367,15 @@ workshop.get('/sessions/:id/participants', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
+  const id = requireUUID(c, 'id');
+  if (id instanceof Response) return id;
+
   if (!hasDatabase()) return c.json({ success: true, data: { count: 0 } });
 
   const pool = getDbPool();
   const res = await pool.query(
     'SELECT COUNT(*)::int AS count FROM session_participants WHERE session_id = $1',
-    [c.req.param('id')]
+    [id]
   );
 
   return c.json({ success: true, data: { count: res.rows[0]?.count ?? 0 } });
@@ -438,7 +455,8 @@ workshop.patch('/progress/:id', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const progressId = c.req.param('id');
+  const progressId = requireUUID(c, 'id');
+  if (progressId instanceof Response) return progressId;
 
   // Verify ownership
   const check = await pool.query('SELECT user_id FROM workshop_progress WHERE id = $1', [progressId]);
@@ -470,12 +488,15 @@ workshop.get('/sessions/:sessionId/polls', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
+  const sid = requireUUID(c, 'sessionId');
+  if (sid instanceof Response) return sid;
+
   if (!hasDatabase()) return c.json({ success: true, data: [] });
 
   const pool = getDbPool();
   const res = await pool.query(
     'SELECT * FROM polls WHERE session_id = $1 ORDER BY created_at DESC',
-    [c.req.param('sessionId')]
+    [sid]
   );
 
   return c.json({ success: true, data: res.rows });
@@ -485,12 +506,15 @@ workshop.get('/sessions/:sessionId/polls/active', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
+  const sid = requireUUID(c, 'sessionId');
+  if (sid instanceof Response) return sid;
+
   if (!hasDatabase()) return c.json({ success: true, data: null });
 
   const pool = getDbPool();
   const res = await pool.query(
     'SELECT * FROM polls WHERE session_id = $1 AND is_active = true LIMIT 1',
-    [c.req.param('sessionId')]
+    [sid]
   );
 
   return c.json({ success: true, data: res.rows[0] ?? null });
@@ -510,7 +534,8 @@ workshop.post('/sessions/:sessionId/polls', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const sessionId = c.req.param('sessionId');
+  const sessionId = requireUUID(c, 'sessionId');
+  if (sessionId instanceof Response) return sessionId;
 
   // Verify facilitator
   const check = await pool.query('SELECT facilitator_id FROM workshop_sessions WHERE id = $1', [sessionId]);
@@ -538,7 +563,8 @@ workshop.patch('/polls/:pollId', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const pollId = c.req.param('pollId');
+  const pollId = requireUUID(c, 'pollId');
+  if (pollId instanceof Response) return pollId;
 
   // Get poll + verify facilitator
   const pollCheck = await pool.query(
@@ -572,7 +598,8 @@ workshop.post('/polls/:pollId/respond', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const pollId = c.req.param('pollId');
+  const pollId = requireUUID(c, 'pollId');
+  if (pollId instanceof Response) return pollId;
 
   // Verify poll exists and is active
   const pollCheck = await pool.query('SELECT is_active FROM polls WHERE id = $1', [pollId]);
@@ -595,12 +622,15 @@ workshop.get('/sessions/:sessionId/questions', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
+  const sid = requireUUID(c, 'sessionId');
+  if (sid instanceof Response) return sid;
+
   if (!hasDatabase()) return c.json({ success: true, data: [] });
 
   const pool = getDbPool();
   const res = await pool.query(
     'SELECT * FROM questions WHERE session_id = $1 ORDER BY upvotes DESC, created_at DESC',
-    [c.req.param('sessionId')]
+    [sid]
   );
 
   return c.json({ success: true, data: res.rows });
@@ -617,7 +647,8 @@ workshop.post('/sessions/:sessionId/questions', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const sessionId = c.req.param('sessionId');
+  const sessionId = requireUUID(c, 'sessionId');
+  if (sessionId instanceof Response) return sessionId;
   const res = await pool.query(
     'INSERT INTO questions (session_id, user_id, question_text) VALUES ($1, $2, $3) RETURNING *',
     [sessionId, auth.userId, parsed.data.questionText]
@@ -639,7 +670,8 @@ workshop.patch('/questions/:questionId', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const questionId = c.req.param('questionId');
+  const questionId = requireUUID(c, 'questionId');
+  if (questionId instanceof Response) return questionId;
 
   // Get question + verify facilitator
   const qCheck = await pool.query(
@@ -666,7 +698,8 @@ workshop.post('/questions/:questionId/upvote', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const questionId = c.req.param('questionId');
+  const questionId = requireUUID(c, 'questionId');
+  if (questionId instanceof Response) return questionId;
   const client = await pool.connect();
 
   try {
@@ -764,7 +797,8 @@ workshop.patch('/action-plans/:id', async (c) => {
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DATABASE', 'Database not configured');
 
   const pool = getDbPool();
-  const planId = c.req.param('id');
+  const planId = requireUUID(c, 'id');
+  if (planId instanceof Response) return planId;
 
   // Verify ownership
   const check = await pool.query('SELECT user_id FROM action_plans WHERE id = $1', [planId]);
@@ -854,7 +888,8 @@ workshop.get('/sessions/:sessionId/events', async (c) => {
   const auth = await getAuthWithSseToken(c);
   if (!auth) return jsonError(c, 401, 'UNAUTHORIZED', 'Missing or invalid access token');
 
-  const sessionId = c.req.param('sessionId');
+  const sessionId = requireUUID(c, 'sessionId');
+  if (sessionId instanceof Response) return sessionId;
 
   return streamSSE(c, async (stream) => {
     const clientId = crypto.randomUUID();

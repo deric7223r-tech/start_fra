@@ -172,7 +172,7 @@ describe('Workshop endpoints', () => {
 
   describe('GET /workshop/sessions/:id', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id');
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001');
       expect(res.status).toBe(401);
     });
 
@@ -210,7 +210,7 @@ describe('Workshop endpoints', () => {
 
   describe('PATCH /workshop/sessions/:id', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: 'Updated' }),
@@ -220,7 +220,7 @@ describe('Workshop endpoints', () => {
 
     it('rejects invalid update data', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ currentSlide: 'not-a-number' }),
@@ -232,7 +232,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ title: 'Updated Title' }),
@@ -247,7 +247,7 @@ describe('Workshop endpoints', () => {
 
   describe('POST /workshop/sessions/:id/end', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/end', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/end', {
         method: 'POST',
       });
       expect(res.status).toBe(401);
@@ -255,7 +255,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/end', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/end', {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -269,7 +269,7 @@ describe('Workshop endpoints', () => {
 
   describe('POST /workshop/sessions/:id/join', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/join', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/join', {
         method: 'POST',
       });
       expect(res.status).toBe(401);
@@ -277,7 +277,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/join', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/join', {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -291,13 +291,13 @@ describe('Workshop endpoints', () => {
 
   describe('GET /workshop/sessions/:id/participants', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/participants');
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/participants');
       expect(res.status).toBe(401);
     });
 
     it('returns count 0 when no database', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/participants', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/participants', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       expect(res.status).toBe(200);
@@ -356,7 +356,7 @@ describe('Workshop endpoints', () => {
 
   describe('PATCH /workshop/progress/:id', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/progress/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/progress/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentSection: 1 }),
@@ -366,7 +366,7 @@ describe('Workshop endpoints', () => {
 
     it('rejects invalid data', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/progress/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/progress/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ currentSection: 'not-a-number' }),
@@ -378,7 +378,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/progress/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/progress/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ currentSection: 2 }),
@@ -394,7 +394,7 @@ describe('Workshop endpoints', () => {
   describe('GET /workshop/sessions/:sessionId/polls', () => {
     it('returns empty array when no database', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/polls', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/polls', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       expect(res.status).toBe(200);
@@ -404,7 +404,7 @@ describe('Workshop endpoints', () => {
     });
 
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/polls');
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/polls');
       expect(res.status).toBe(401);
     });
   });
@@ -414,7 +414,7 @@ describe('Workshop endpoints', () => {
   describe('GET /workshop/sessions/:sessionId/polls/active', () => {
     it('returns null when no database', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/polls/active', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/polls/active', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       expect(res.status).toBe(200);
@@ -428,7 +428,7 @@ describe('Workshop endpoints', () => {
 
   describe('POST /workshop/sessions/:sessionId/polls', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/polls', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/polls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: 'Test?', options: ['A', 'B'] }),
@@ -438,7 +438,7 @@ describe('Workshop endpoints', () => {
 
     it('rejects invalid poll data (missing options)', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/polls', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/polls', {
         method: 'POST',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ question: 'Test?' }),
@@ -450,7 +450,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/polls', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/polls', {
         method: 'POST',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ question: 'Test?', options: ['A', 'B'] }),
@@ -465,7 +465,7 @@ describe('Workshop endpoints', () => {
 
   describe('PATCH /workshop/polls/:pollId', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/polls/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/polls/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: false }),
@@ -475,7 +475,7 @@ describe('Workshop endpoints', () => {
 
     it('rejects invalid data', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/polls/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/polls/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ isActive: 'not-boolean' }),
@@ -485,7 +485,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/polls/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/polls/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ isActive: false }),
@@ -500,7 +500,7 @@ describe('Workshop endpoints', () => {
 
   describe('POST /workshop/polls/:pollId/respond', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/polls/some-id/respond', {
+      const res = await app.request('http://localhost/api/v1/workshop/polls/00000000-0000-0000-0000-000000000001/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ selectedOption: 0 }),
@@ -510,7 +510,7 @@ describe('Workshop endpoints', () => {
 
     it('rejects invalid data', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/polls/some-id/respond', {
+      const res = await app.request('http://localhost/api/v1/workshop/polls/00000000-0000-0000-0000-000000000001/respond', {
         method: 'POST',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ selectedOption: 'not-number' }),
@@ -520,7 +520,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/polls/some-id/respond', {
+      const res = await app.request('http://localhost/api/v1/workshop/polls/00000000-0000-0000-0000-000000000001/respond', {
         method: 'POST',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ selectedOption: 0 }),
@@ -536,7 +536,7 @@ describe('Workshop endpoints', () => {
   describe('GET /workshop/sessions/:sessionId/questions', () => {
     it('returns empty array when no database', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/questions', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/questions', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       expect(res.status).toBe(200);
@@ -546,7 +546,7 @@ describe('Workshop endpoints', () => {
     });
 
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/questions');
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/questions');
       expect(res.status).toBe(401);
     });
   });
@@ -555,7 +555,7 @@ describe('Workshop endpoints', () => {
 
   describe('POST /workshop/sessions/:sessionId/questions', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/questions', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ questionText: 'How?' }),
@@ -565,7 +565,7 @@ describe('Workshop endpoints', () => {
 
     it('rejects missing questionText', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/questions', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/questions', {
         method: 'POST',
         headers: authHeaders(accessToken),
         body: JSON.stringify({}),
@@ -575,7 +575,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/questions', {
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/questions', {
         method: 'POST',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ questionText: 'How does fraud work?' }),
@@ -590,7 +590,7 @@ describe('Workshop endpoints', () => {
 
   describe('PATCH /workshop/questions/:questionId', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/questions/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/questions/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isAnswered: true }),
@@ -600,7 +600,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/questions/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/questions/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ isAnswered: true }),
@@ -615,7 +615,7 @@ describe('Workshop endpoints', () => {
 
   describe('POST /workshop/questions/:questionId/upvote', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/questions/some-id/upvote', {
+      const res = await app.request('http://localhost/api/v1/workshop/questions/00000000-0000-0000-0000-000000000001/upvote', {
         method: 'POST',
       });
       expect(res.status).toBe(401);
@@ -623,7 +623,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/questions/some-id/upvote', {
+      const res = await app.request('http://localhost/api/v1/workshop/questions/00000000-0000-0000-0000-000000000001/upvote', {
         method: 'POST',
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -682,7 +682,7 @@ describe('Workshop endpoints', () => {
 
   describe('PATCH /workshop/action-plans/:id', () => {
     it('rejects request without auth', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/action-plans/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/action-plans/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actionItems: [] }),
@@ -692,7 +692,7 @@ describe('Workshop endpoints', () => {
 
     it('returns 503 when DB not configured', async () => {
       const { accessToken } = await createAuthenticatedUser();
-      const res = await app.request('http://localhost/api/v1/workshop/action-plans/some-id', {
+      const res = await app.request('http://localhost/api/v1/workshop/action-plans/00000000-0000-0000-0000-000000000001', {
         method: 'PATCH',
         headers: authHeaders(accessToken),
         body: JSON.stringify({ actionItems: [] }),
@@ -752,7 +752,7 @@ describe('Workshop endpoints', () => {
 
   describe('GET /workshop/sessions/:sessionId/events', () => {
     it('rejects request without auth token', async () => {
-      const res = await app.request('http://localhost/api/v1/workshop/sessions/some-id/events');
+      const res = await app.request('http://localhost/api/v1/workshop/sessions/00000000-0000-0000-0000-000000000001/events');
       expect(res.status).toBe(401);
       const json = (await res.json()) as any;
       expect(json.error.code).toBe('UNAUTHORIZED');

@@ -51,7 +51,25 @@ analytics.get('/analytics/assessments', async (c) => {
     ? await dbListAssessmentsByOrganisation(auth.organisationId)
     : Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
 
-  const timeline = orgAssessments
+  const from = c.req.query('from');
+  const to = c.req.query('to');
+
+  let filtered = orgAssessments;
+  if (from) {
+    const fromDate = new Date(from);
+    if (!isNaN(fromDate.getTime())) {
+      filtered = filtered.filter((a) => new Date(a.createdAt) >= fromDate);
+    }
+  }
+  if (to) {
+    const toDate = new Date(to);
+    if (!isNaN(toDate.getTime())) {
+      toDate.setDate(toDate.getDate() + 1); // inclusive end date
+      filtered = filtered.filter((a) => new Date(a.createdAt) < toDate);
+    }
+  }
+
+  const timeline = filtered
     .slice()
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     .map((a) => ({
