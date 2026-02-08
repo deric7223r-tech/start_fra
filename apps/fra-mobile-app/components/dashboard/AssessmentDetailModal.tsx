@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, ActivityIndicator, Share } from 'react-native';
 import { X, FileText, CheckCircle, AlertCircle, Download } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { apiService } from '@/services/api.service';
@@ -51,6 +51,71 @@ export default function AssessmentDetailModal({
 
   const assessment = fetchedAssessment;
   const employee = employeeData;
+
+  const handleExport = useCallback(async () => {
+    if (!employee || !assessment) return;
+
+    const formatLabel = (key: string): string =>
+      key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+    const lines: string[] = [
+      'FRAUD RISK ASSESSMENT REPORT',
+      '============================',
+      '',
+      `Employee: ${employee.userName}`,
+      `Email: ${employee.email}`,
+      `Department: ${employee.department}`,
+      employee.overallRiskLevel ? `Risk Level: ${employee.overallRiskLevel.charAt(0).toUpperCase() + employee.overallRiskLevel.slice(1)}` : '',
+      employee.completedAt ? `Completed: ${new Date(employee.completedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` : '',
+      '',
+    ];
+
+    if (assessment.organisation) {
+      lines.push('ORGANISATION INFORMATION', '------------------------');
+      if (assessment.organisation.name) lines.push(`Name: ${assessment.organisation.name}`);
+      if (assessment.organisation.type) lines.push(`Type: ${formatLabel(assessment.organisation.type)}`);
+      if (assessment.organisation.employeeCount) lines.push(`Employee Count: ${assessment.organisation.employeeCount}`);
+      if (assessment.organisation.region) lines.push(`Region: ${assessment.organisation.region}`);
+      if (assessment.organisation.activities) lines.push(`Activities: ${assessment.organisation.activities}`);
+      lines.push('');
+    }
+
+    if (assessment.riskAppetite) {
+      lines.push('RISK APPETITE', '-------------');
+      if (assessment.riskAppetite.tolerance) lines.push(`Tolerance: ${formatLabel(assessment.riskAppetite.tolerance)}`);
+      if (assessment.riskAppetite.fraudSeriousness) lines.push(`Fraud Seriousness: ${formatLabel(assessment.riskAppetite.fraudSeriousness)}`);
+      if (assessment.riskAppetite.reputationImportance) lines.push(`Reputation Importance: ${formatLabel(assessment.riskAppetite.reputationImportance)}`);
+      lines.push('');
+    }
+
+    if (assessment.riskRegister && assessment.riskRegister.length > 0) {
+      lines.push('RISK REGISTER', '-------------');
+      lines.push(`Total Risks: ${assessment.riskRegister.length}`);
+      lines.push(`High Priority: ${assessment.riskRegister.filter(r => r.priority === 'high').length}`);
+      lines.push(`Medium Priority: ${assessment.riskRegister.filter(r => r.priority === 'medium').length}`);
+      lines.push(`Low Priority: ${assessment.riskRegister.filter(r => r.priority === 'low').length}`);
+      lines.push('');
+      assessment.riskRegister.forEach((risk, i) => {
+        lines.push(`Risk ${i + 1}: ${risk.title || 'Unnamed'}`);
+        if (risk.area) lines.push(`  Area: ${formatLabel(risk.area)}`);
+        if (risk.priority) lines.push(`  Priority: ${formatLabel(risk.priority)}`);
+        lines.push(`  Inherent Score: ${risk.inherentScore}, Residual Score: ${risk.residualScore}`);
+        if (risk.description) lines.push(`  Description: ${risk.description}`);
+        lines.push('');
+      });
+    }
+
+    const reportText = lines.filter(l => l !== undefined).join('\n');
+
+    try {
+      await Share.share({
+        message: reportText,
+        title: `Assessment Report - ${employee.userName}`,
+      });
+    } catch {
+      Alert.alert('Export Failed', 'Could not share the assessment report. Please try again.');
+    }
+  }, [employee, assessment]);
 
   return (
     <Modal
@@ -784,7 +849,7 @@ export default function AssessmentDetailModal({
                     <View style={styles.detailFooter}>
                       <TouchableOpacity
                         style={styles.exportDetailButton}
-                        onPress={() => Alert.alert('Export', 'Assessment details would be exported as PDF')}
+                        onPress={handleExport}
                         activeOpacity={0.8}
                         accessibilityRole="button"
                         accessibilityLabel="Export assessment as PDF"
