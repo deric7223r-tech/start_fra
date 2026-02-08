@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, ActivityIndicator } from 'react-native';
 import { X, FileText, CheckCircle, AlertCircle, Download } from 'lucide-react-native';
 import colors from '@/constants/colors';
-import { mockAssessmentDetails } from './mockData';
 import { apiService } from '@/services/api.service';
 import type { AssessmentData } from '@/types/assessment';
 import type { EmployeeData } from './types';
@@ -50,9 +49,7 @@ export default function AssessmentDetailModal({
     }
   }, [visible, selectedEmployee]);
 
-  const mockFallback = selectedEmployee ? mockAssessmentDetails[selectedEmployee] : undefined;
-  const assessment = fetchedAssessment ?? mockFallback;
-  const usingMockData = !fetchedAssessment && !!mockFallback;
+  const assessment = fetchedAssessment;
   const employee = employeeData;
 
   return (
@@ -78,11 +75,11 @@ export default function AssessmentDetailModal({
             </View>
           ) : selectedEmployee && assessment ? (
             <ScrollView style={styles.assessmentDetailsScroll} showsVerticalScrollIndicator={true}>
-              {fetchError && usingMockData && (
+              {fetchError && (
                 <View style={styles.warningBanner}>
                   <AlertCircle size={16} color={colors.riskMedium} />
                   <Text style={styles.warningBannerText}>
-                    Could not load live data. Showing cached assessment details.
+                    {fetchError}
                   </Text>
                 </View>
               )}
