@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -98,6 +98,7 @@ export default function EmployerDashboard() {
   const [employeeDetail, setEmployeeDetail] = useState<EmployeeDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const expandedUserRef = useRef<string | null>(null);
 
   const isEmployerOrAdmin = user?.role === 'employer' || user?.role === 'admin';
 
@@ -176,22 +177,27 @@ export default function EmployerDashboard() {
     setDetailError(null);
     try {
       const detail = await api.get<EmployeeDetail>(`/api/v1/analytics/employees/${userId}`);
+      // Guard: only update if this user is still the expanded one
+      if (expandedUserRef.current !== userId) return;
       setEmployeeDetail(detail);
     } catch (err) {
+      if (expandedUserRef.current !== userId) return;
       logger.error('Failed to fetch employee detail', err);
       setEmployeeDetail(null);
       setDetailError('Failed to load employee details. Please try again.');
     }
-    setDetailLoading(false);
+    if (expandedUserRef.current === userId) setDetailLoading(false);
   };
 
   const toggleEmployeeDetail = async (userId: string) => {
     if (expandedUserId === userId) {
+      expandedUserRef.current = null;
       setExpandedUserId(null);
       setEmployeeDetail(null);
       setDetailError(null);
       return;
     }
+    expandedUserRef.current = userId;
     setExpandedUserId(userId);
     await fetchEmployeeDetail(userId);
   };

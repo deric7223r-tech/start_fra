@@ -18,6 +18,15 @@ type ApiResponse<T> = {
   error: { code: string; message: string };
 };
 
+export class ApiError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+  }
+}
+
 let refreshPromise: Promise<boolean> | null = null;
 
 function getAccessToken(): string | null {
@@ -105,7 +114,7 @@ async function request<T>(method: string, path: string, body?: unknown, retry = 
 
   if (!json.success) {
     const err = json as { success: false; error: { code: string; message: string } };
-    throw new Error(err.error.message);
+    throw new ApiError(err.error.code, err.error.message);
   }
 
   return json.data;

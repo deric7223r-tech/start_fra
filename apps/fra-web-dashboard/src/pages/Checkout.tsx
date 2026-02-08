@@ -74,6 +74,7 @@ export default function Checkout() {
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isProcessing) return;
     setPaymentError(null);
 
     if (!validateForm()) return;

@@ -628,9 +628,17 @@ workshop.post('/polls/:pollId/respond', async (c) => {
   if (pollId instanceof Response) return pollId;
 
   // Verify poll exists and is active
-  const pollCheck = await pool.query('SELECT is_active FROM polls WHERE id = $1', [pollId]);
+  const pollCheck = await pool.query('SELECT is_active, options FROM polls WHERE id = $1', [pollId]);
   if (!pollCheck.rows[0]) return jsonError(c, 404, 'NOT_FOUND', 'Poll not found');
   if (!pollCheck.rows[0].is_active) return jsonError(c, 400, 'POLL_CLOSED', 'Poll is no longer active');
+
+  // Validate selectedOption is within bounds of poll options
+  const options = typeof pollCheck.rows[0].options === 'string'
+    ? JSON.parse(pollCheck.rows[0].options)
+    : pollCheck.rows[0].options;
+  if (parsed.data.selectedOption >= options.length) {
+    return jsonError(c, 400, 'VALIDATION_ERROR', 'selectedOption out of range');
+  }
 
   await pool.query(
     `INSERT INTO poll_responses (poll_id, user_id, selected_option)
