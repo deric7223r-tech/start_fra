@@ -199,6 +199,27 @@ describe('Assessments endpoints', () => {
       expect(json.data.status).toBe('in_progress');
     });
 
+    it('sets submittedAt when status changes to submitted via PATCH', async () => {
+      const { accessToken } = await signup();
+      const createRes = await app.request('http://localhost/api/v1/assessments', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ title: 'PATCH Submit Test' }),
+      });
+      const created = (await createRes.json()) as any;
+      expect(created.data.submittedAt).toBeFalsy();
+
+      const res = await app.request(`http://localhost/api/v1/assessments/${created.data.id}`, {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ status: 'submitted' }),
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as any;
+      expect(json.data.status).toBe('submitted');
+      expect(json.data.submittedAt).toBeTruthy();
+    });
+
     it('returns 404 for non-existent assessment', async () => {
       const { accessToken } = await signup();
       const fakeId = '00000000-0000-0000-0000-000000000000';

@@ -92,7 +92,7 @@ export default function DashboardScreen() {
             </Text>
             <TouchableOpacity
               style={styles.upgradeButton}
-              onPress={() => Alert.alert('Upgrade', 'Contact support to upgrade your package')}
+              onPress={() => router.push('/packages')}
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="Upgrade Package"
