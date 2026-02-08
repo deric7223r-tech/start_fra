@@ -38,7 +38,7 @@ budgetGuide.post('/progress', async (c) => {
 
   const body = await c.req.json().catch(() => null);
   const schema = z.object({
-    selectedRoles: z.array(z.string()).optional(),
+    selectedRoles: z.array(z.string().max(200)).max(50).optional(),
   });
   const parsed = schema.safeParse(body);
   if (!parsed.success) return jsonError(c, 400, 'VALIDATION', 'Invalid request body');
