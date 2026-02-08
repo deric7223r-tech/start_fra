@@ -221,11 +221,14 @@ budgetGuide.get('/analytics/org/:orgId', async (c) => {
   if (auth instanceof Response) return auth;
   if (!hasDatabase()) return jsonError(c, 503, 'NO_DB', 'Database not configured');
 
-  // Only admins or users in the same org can view org analytics
+  // Only admins or employers in the same org can view org analytics
   const orgId = requireUUIDParam(c, 'orgId');
   if (orgId instanceof Response) return orgId;
+  if (auth.role !== 'admin' && auth.role !== 'employer') {
+    return jsonError(c, 403, 'FORBIDDEN', 'Requires employer or admin role');
+  }
   if (auth.role !== 'admin' && auth.organisationId !== orgId) {
-    return jsonError(c, 403, 'FORBIDDEN', 'Not authorized to view this organisation');
+    return jsonError(c, 403, 'FORBIDDEN', 'Not authorised to view this organisation');
   }
 
   const pool = getDbPool();

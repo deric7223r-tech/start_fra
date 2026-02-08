@@ -274,14 +274,16 @@ payments.get('/purchases/:id', async (c) => {
     if (!purchase || purchase.organisationId !== auth.organisationId) {
       return jsonError(c, 404, 'NOT_FOUND', 'Purchase not found');
     }
-    return c.json({ success: true, data: purchase });
+    const { clientSecret: _cs, ...safePurchase } = purchase;
+    return c.json({ success: true, data: safePurchase });
   }
 
   const purchase = purchasesById.get(purchaseId);
   if (!purchase || purchase.organisationId !== auth.organisationId) {
     return jsonError(c, 404, 'NOT_FOUND', 'Purchase not found');
   }
-  return c.json({ success: true, data: purchase });
+  const { clientSecret: _cs, ...safePurchase } = purchase;
+  return c.json({ success: true, data: safePurchase });
 });
 
 payments.get('/purchases/organisation/:orgId', async (c) => {
@@ -308,8 +310,9 @@ payments.get('/purchases/organisation/:orgId', async (c) => {
 
   const { page, pageSize } = parsePagination(c.req.query());
   const result = paginate(allPurchases, page, pageSize);
+  const safeItems = result.items.map(({ clientSecret: _cs, ...rest }) => rest);
 
-  return c.json({ success: true, data: result.items, pagination: { page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages } });
+  return c.json({ success: true, data: safeItems, pagination: { page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages } });
 });
 
 function verifyStripeSignature(payload: string, sigHeader: string, secret: string): boolean {
@@ -332,7 +335,10 @@ function verifyStripeSignature(payload: string, sigHeader: string, secret: strin
   const signedPayload = `${timestamp}.${payload}`;
   const expectedSig = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
 
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSig));
+  const sigBuf = Buffer.from(signature);
+  const expectedBuf = Buffer.from(expectedSig);
+  if (sigBuf.length !== expectedBuf.length) return false;
+  return crypto.timingSafeEqual(sigBuf, expectedBuf);
 }
 
 payments.post('/webhooks/stripe', async (c) => {
