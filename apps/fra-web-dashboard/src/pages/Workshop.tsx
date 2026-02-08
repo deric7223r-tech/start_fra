@@ -360,8 +360,8 @@ export default function Workshop() {
                         <div>
                           <h4 className="font-medium mb-3">Discussion Questions:</h4>
                           <ul className="space-y-2">
-                            {sectorCaseStudy.questions.map((q, i) => (
-                              <li key={i} className="flex items-start gap-2">
+                            {sectorCaseStudy.questions.map((q) => (
+                              <li key={q} className="flex items-start gap-2">
                                 <span className="font-medium text-primary">{i + 1}.</span>
                                 <span>{q}</span>
                               </li>
@@ -372,8 +372,8 @@ export default function Workshop() {
                         <div>
                           <h4 className="font-medium mb-3">Key Learning Points:</h4>
                           <ul className="space-y-2">
-                            {sectorCaseStudy.learningPoints.map((point, i) => (
-                              <li key={i} className="flex items-start gap-2">
+                            {sectorCaseStudy.learningPoints.map((point) => (
+                              <li key={point} className="flex items-start gap-2">
                                 <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-1" />
                                 <span>{point}</span>
                               </li>

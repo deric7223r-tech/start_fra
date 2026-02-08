@@ -273,8 +273,8 @@ export default function Index() {
                       'Comprehensive PDF report',
                       'ECCTA compliance snapshot',
                       '1 key-pass included',
-                    ].map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-2">
                         <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                         <span className="text-sm">{item}</span>
                       </li>
@@ -330,8 +330,8 @@ export default function Index() {
                       '50 key-passes included',
                       'Quarterly reassessment',
                       'Email support',
-                    ].map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-2">
                         <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                         <span className="text-sm">{item}</span>
                       </li>
@@ -382,8 +382,8 @@ export default function Index() {
                       'Organisation risk register',
                       'API access',
                       'Priority support',
-                    ].map((item, idx) => (
-                      <li key={idx} className="flex items-start gap-2">
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-2">
                         <CheckCircle2 className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                         <span className="text-sm">{item}</span>
                       </li>

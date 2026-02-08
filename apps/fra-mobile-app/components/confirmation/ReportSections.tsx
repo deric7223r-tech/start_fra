@@ -240,8 +240,8 @@ export default function ReportSections({
         </View>
         <View style={styles.subsection}>
           <Text style={styles.subsectionTitle}>Disciplinary Measures</Text>
-          {fraudResponsePlan.disciplinaryMeasures.map((measure, idx) => (
-            <Text key={idx} style={styles.bodyText}>{'\u2022'} {measure}</Text>
+          {fraudResponsePlan.disciplinaryMeasures.map((measure) => (
+            <Text key={measure} style={styles.bodyText}>{'\u2022'} {measure}</Text>
           ))}
         </View>
       </ExpandableReportSection>

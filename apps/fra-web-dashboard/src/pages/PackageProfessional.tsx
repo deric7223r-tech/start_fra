@@ -106,16 +106,16 @@ export default function PackageProfessional() {
                   <CardTitle className="text-xl">What's Included</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {starterFeatures.map((f, i) => (
-                    <div key={i} className="flex items-start gap-3">
+                  {starterFeatures.map((f) => (
+                    <div key={f.text} className="flex items-start gap-3">
                       <f.icon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                       <span className="text-sm">{f.text}</span>
                     </div>
                   ))}
                   <div className="border-t pt-3 mt-3">
                     <p className="text-xs font-semibold text-accent uppercase tracking-wide mb-3">+ Professional Features</p>
-                    {professionalFeatures.map((f, i) => (
-                      <div key={i} className="flex items-start gap-3 mb-2">
+                    {professionalFeatures.map((f) => (
+                      <div key={f.title} className="flex items-start gap-3 mb-2">
                         <f.icon className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                         <span className="text-sm font-medium">{f.title}</span>
                       </div>
