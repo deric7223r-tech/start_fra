@@ -107,11 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (hasStoredTokens()) {
       await hydrateFromMe();
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (hasStoredTokens()) {
