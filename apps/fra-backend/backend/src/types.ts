@@ -291,14 +291,22 @@ export const resetPasswordSchema = z.object({
   newPassword: passwordSchema,
 });
 
+const answersSchema = z.record(
+  z.string().max(200),
+  z.unknown(),
+).optional().refine(
+  (val) => !val || Object.keys(val).length <= 500,
+  { message: 'Answers object exceeds 500 key limit' },
+);
+
 export const assessmentCreateSchema = z.object({
-  title: z.string().min(1).default('Fraud Risk Assessment'),
-  answers: z.record(z.string(), z.unknown()).optional(),
+  title: z.string().min(1).max(200).default('Fraud Risk Assessment'),
+  answers: answersSchema,
 });
 
 export const assessmentPatchSchema = z.object({
-  title: z.string().min(1).optional(),
-  answers: z.record(z.string(), z.unknown()).optional(),
+  title: z.string().min(1).max(200).optional(),
+  answers: answersSchema,
   status: z.enum(['draft', 'in_progress', 'submitted', 'completed']).optional(),
 });
 
@@ -307,16 +315,18 @@ export const keypassGenerateSchema = z.object({
   expiresInDays: z.number().int().min(1).max(365).default(30),
 });
 
+const keypassCodeSchema = z.string().min(6).max(64).regex(/^[A-Z0-9]+$/, 'Code must be uppercase alphanumeric');
+
 export const keypassValidateSchema = z.object({
-  code: z.string().min(6).max(64),
+  code: keypassCodeSchema,
 });
 
 export const keypassBulkSchema = z.object({
-  codes: z.array(z.string().min(6).max(64)).min(1).max(100),
+  codes: z.array(keypassCodeSchema).min(1).max(100),
 });
 
 export const keypassUseSchema = z.object({
-  code: z.string().min(6).max(64),
+  code: keypassCodeSchema,
   email: z.string().email().optional(),
   name: z.string().min(1).optional(),
 });
