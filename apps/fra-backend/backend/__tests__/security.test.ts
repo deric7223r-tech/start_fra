@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 
 import { app, createAuthenticatedUser, authHeaders, seedPurchase } from './helpers';
-import { accountLockouts } from '../src/stores';
+import { accountLockouts, keypassesByCode } from '../src/stores';
 
 async function signup() {
   return createAuthenticatedUser({ organisationName: 'Security Test Org' });
@@ -263,6 +263,147 @@ describe('Security hardening', () => {
       const json = (await patchRes.json()) as any;
       expect(json.data.title).toBe('Updated Title');
       expect(json.data.status).toBe('draft');
+    });
+  });
+
+  // ── Assessment ownership check ──────────────────────────────
+
+  describe('Assessment ownership', () => {
+    it('rejects employee modifying another user\'s assessment', async () => {
+      // User A (employer) creates an org and a keypass
+      const userA = await signup();
+      seedPurchase(userA.organisationId, userA.userId);
+
+      // Generate keypass for the org
+      const genRes = await app.request('http://localhost/api/v1/keypasses/generate', {
+        method: 'POST',
+        headers: authHeaders(userA.accessToken),
+        body: JSON.stringify({ quantity: 1, expiresInDays: 30 }),
+      });
+      const genJson = (await genRes.json()) as any;
+      const code = genJson.data.codes[0];
+
+      // User B joins via keypass (becomes employee in same org)
+      const useRes = await app.request('http://localhost/api/v1/keypasses/use', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, email: `employee-${crypto.randomUUID()}@example.com` }),
+      });
+      const useJson = (await useRes.json()) as any;
+      const userBToken = useJson.data.accessToken;
+
+      // User A creates an assessment
+      const createRes = await app.request('http://localhost/api/v1/assessments', {
+        method: 'POST',
+        headers: authHeaders(userA.accessToken),
+        body: JSON.stringify({ title: 'Ownership Test' }),
+      });
+      const { data: assessment } = (await createRes.json()) as any;
+
+      // User B (employee) tries to PATCH User A's assessment — should be rejected
+      const patchRes = await app.request(`http://localhost/api/v1/assessments/${assessment.id}`, {
+        method: 'PATCH',
+        headers: authHeaders(userBToken),
+        body: JSON.stringify({ title: 'Hijacked' }),
+      });
+      expect(patchRes.status).toBe(403);
+      const patchJson = (await patchRes.json()) as any;
+      expect(patchJson.error.code).toBe('FORBIDDEN');
+    });
+  });
+
+  // ── Keypass expiry error codes ────────────────────────────────
+
+  describe('Keypass expiry error codes', () => {
+    it('returns EXPIRED for past-grace-period keypasses', async () => {
+      const { accessToken, organisationId, userId } = await signup();
+      seedPurchase(organisationId, userId);
+
+      // Generate a keypass
+      const genRes = await app.request('http://localhost/api/v1/keypasses/generate', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ quantity: 1, expiresInDays: 1 }),
+      });
+      const genJson = (await genRes.json()) as any;
+      const code = genJson.data.codes[0];
+
+      // Manually set expiry to 10 days ago (past 7-day grace period)
+      const kp = keypassesByCode.get(code)!;
+      kp.expiresAt = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+
+      // Attempt to use — should get EXPIRED, not NOT_AVAILABLE
+      const useRes = await app.request('http://localhost/api/v1/keypasses/use', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      expect(useRes.status).toBe(400);
+      const useJson = (await useRes.json()) as any;
+      expect(useJson.error.code).toBe('EXPIRED');
+    });
+
+    it('returns NOT_AVAILABLE for already-used keypasses (not EXPIRED)', async () => {
+      const { accessToken, organisationId, userId } = await signup();
+      seedPurchase(organisationId, userId);
+
+      // Generate and use a keypass
+      const genRes = await app.request('http://localhost/api/v1/keypasses/generate', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ quantity: 1, expiresInDays: 30 }),
+      });
+      const genJson = (await genRes.json()) as any;
+      const code = genJson.data.codes[0];
+
+      await app.request('http://localhost/api/v1/keypasses/use', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+
+      // Second attempt — should get NOT_AVAILABLE
+      const useRes = await app.request('http://localhost/api/v1/keypasses/use', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      expect(useRes.status).toBe(400);
+      const useJson = (await useRes.json()) as any;
+      expect(useJson.error.code).toBe('NOT_AVAILABLE');
+    });
+  });
+
+  // ── Webhook idempotency ──────────────────────────────────────
+
+  describe('Webhook idempotency', () => {
+    it('ignores duplicate webhook events', async () => {
+      const eventId = `evt_${crypto.randomUUID()}`;
+      const webhookPayload = {
+        id: eventId,
+        type: 'checkout.session.completed',
+        data: { object: { payment_intent: 'pi_test', metadata: {} } },
+      };
+
+      // First call
+      const res1 = await app.request('http://localhost/api/v1/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookPayload),
+      });
+      expect(res1.status).toBe(200);
+      const json1 = (await res1.json()) as any;
+      expect(json1.data.duplicate).toBeUndefined();
+
+      // Duplicate call — should be flagged
+      const res2 = await app.request('http://localhost/api/v1/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookPayload),
+      });
+      expect(res2.status).toBe(200);
+      const json2 = (await res2.json()) as any;
+      expect(json2.data.duplicate).toBe(true);
     });
   });
 

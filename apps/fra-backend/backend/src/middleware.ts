@@ -71,6 +71,8 @@ export function rateLimit(keyPrefix: string, cfg: RateLimitConfig) {
       }
 
       if (count > cfg.max) {
+        const ttl = await redis.pttl(key);
+        c.header('Retry-After', String(Math.ceil(Math.max(ttl, 1000) / 1000)));
         return jsonError(c, 429, 'RATE_LIMITED', 'Too many requests');
       }
 
@@ -85,6 +87,7 @@ export function rateLimit(keyPrefix: string, cfg: RateLimitConfig) {
     }
 
     if (existing.count >= cfg.max) {
+      c.header('Retry-After', String(Math.ceil(Math.max(existing.resetAt - now, 1000) / 1000)));
       return jsonError(c, 429, 'RATE_LIMITED', 'Too many requests');
     }
 
