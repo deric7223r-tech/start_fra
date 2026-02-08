@@ -44,3 +44,19 @@ export async function dbListKeypassesByOrganisation(orgId: string): Promise<Keyp
   );
   return res.rows.map(rowToKeypass);
 }
+
+export async function dbGetKeypassStatsByOrganisation(orgId: string): Promise<{ total: number; byStatus: Record<KeypassStatus, number> }> {
+  const pool = getDbPool();
+  const res = await pool.query<{ status: string; count: string }>(
+    'select status, count(*)::text as count from public.keypasses where organisation_id = $1 group by status',
+    [orgId]
+  );
+  const byStatus: Record<KeypassStatus, number> = { available: 0, used: 0, revoked: 0, expired: 0 };
+  let total = 0;
+  for (const row of res.rows) {
+    const count = parseInt(row.count, 10);
+    byStatus[row.status as KeypassStatus] = count;
+    total += count;
+  }
+  return { total, byStatus };
+}

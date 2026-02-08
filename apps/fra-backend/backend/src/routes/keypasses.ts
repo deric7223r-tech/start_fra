@@ -8,7 +8,7 @@ import { getClientIp, rateLimit } from '../middleware.js';
 import { generateKeypassCode } from '../s3.js';
 import {
   dbGetUserByEmail, dbInsertUser,
-  dbInsertKeypass, dbGetKeypassByCode, dbUpdateKeypassStatus, dbListKeypassesByOrganisation,
+  dbInsertKeypass, dbGetKeypassByCode, dbUpdateKeypassStatus, dbListKeypassesByOrganisation, dbGetKeypassStatsByOrganisation,
   dbGetOrganisationById, dbGetPackageById,
   dbListPurchasesByOrganisation,
   dbUpsertRefreshToken,
@@ -284,9 +284,20 @@ keypasses.get('/keypasses/organisation/:orgId', async (c) => {
   const orgId = c.req.param('orgId');
   if (orgId !== auth.organisationId) return jsonError(c, 403, 'FORBIDDEN', 'Forbidden');
 
-  const allItems = hasDatabase()
+  const statusFilter = c.req.query('status') as KeypassStatus | undefined;
+  const validStatuses = new Set<string>(['available', 'used', 'revoked', 'expired']);
+
+  if (statusFilter && !validStatuses.has(statusFilter)) {
+    return jsonError(c, 400, 'INVALID_PARAM', 'Invalid status filter');
+  }
+
+  let allItems = hasDatabase()
     ? await dbListKeypassesByOrganisation(orgId)
     : Array.from(keypassesByCode.values()).filter((k) => k.organisationId === orgId);
+
+  if (statusFilter) {
+    allItems = allItems.filter((k) => k.status === statusFilter);
+  }
 
   const { page, pageSize } = parsePagination(c.req.query());
   const result = paginate(allItems, page, pageSize);
@@ -301,10 +312,12 @@ keypasses.get('/keypasses/organisation/:orgId/stats', async (c) => {
   const orgId = c.req.param('orgId');
   if (orgId !== auth.organisationId) return jsonError(c, 403, 'FORBIDDEN', 'Forbidden');
 
-  const items = hasDatabase()
-    ? await dbListKeypassesByOrganisation(orgId)
-    : Array.from(keypassesByCode.values()).filter((k) => k.organisationId === orgId);
+  if (hasDatabase()) {
+    const { total, byStatus } = await dbGetKeypassStatsByOrganisation(orgId);
+    return c.json({ success: true, data: { organisationId: orgId, totals: total, byStatus } });
+  }
 
+  const items = Array.from(keypassesByCode.values()).filter((k) => k.organisationId === orgId);
   const stats = items.reduce<Record<KeypassStatus, number>>(
     (acc, k) => {
       acc[k.status] = (acc[k.status] ?? 0) + 1;

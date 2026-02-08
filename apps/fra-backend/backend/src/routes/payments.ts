@@ -50,6 +50,8 @@ payments.post('/payments/create-intent', async (c) => {
 });
 
 payments.get('/packages', async (c) => {
+  c.header('Cache-Control', 'public, max-age=300');
+
   if (hasDatabase()) {
     const packages = await dbListPackages();
     const data = packages.map((p) => ({

@@ -15,12 +15,24 @@ assessments.get('/assessments', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
-  if (!hasDatabase()) {
-    const items = Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
-    return c.json({ success: true, data: items });
+  const statusFilter = c.req.query('status') as Assessment['status'] | undefined;
+  const validStatuses = new Set<string>(['draft', 'in_progress', 'submitted', 'completed']);
+
+  if (statusFilter && !validStatuses.has(statusFilter)) {
+    return jsonError(c, 400, 'INVALID_PARAM', 'Invalid status filter');
   }
 
-  const items = await dbListAssessmentsByOrganisation(auth.organisationId);
+  let items: Assessment[];
+  if (!hasDatabase()) {
+    items = Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
+  } else {
+    items = await dbListAssessmentsByOrganisation(auth.organisationId);
+  }
+
+  if (statusFilter) {
+    items = items.filter((a) => a.status === statusFilter);
+  }
+
   return c.json({ success: true, data: items });
 });
 

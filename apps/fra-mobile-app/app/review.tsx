@@ -10,7 +10,18 @@ export default function ReviewScreen() {
   const { assessment, submitAssessment } = useAssessment();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
+    Alert.alert(
+      'Submit Assessment',
+      'Are you sure you want to submit your assessment? You can still edit your answers afterwards.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Submit', onPress: performSubmit },
+      ]
+    );
+  };
+
+  const performSubmit = async () => {
     setIsSubmitting(true);
     try {
       submitAssessment();

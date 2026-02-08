@@ -83,6 +83,7 @@ app.get('/health', async (c) => {
   }
 
   const status = healthy ? 'ok' : 'degraded';
+  c.header('Cache-Control', 'no-cache, max-age=0');
   return c.json({
     status, checks, uptime: Math.floor(process.uptime()),
     version: process.env.APP_VERSION ?? '2.0.0',
