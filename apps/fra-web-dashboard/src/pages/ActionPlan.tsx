@@ -175,14 +175,37 @@ export default function ActionPlan() {
     );
   }
 
+  if (!actionPlan || actionPlan.action_items.length === 0) {
+    return (
+      <Layout>
+        <div className="container py-8 lg:py-12">
+          <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Card className="max-w-md mx-auto text-center">
+            <CardContent className="pt-8 pb-6">
+              <Target className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-lg font-semibold mb-2">No action items yet</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Complete the workshop to generate your personalised action plan.
+              </p>
+              <Button onClick={() => navigate('/workshop')}>Go to Workshop</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
   const groupedItems = {
-    immediate: actionPlan?.action_items.filter(i => i.timeframe === 'Immediate') || [],
-    thirtyDays: actionPlan?.action_items.filter(i => i.timeframe === '30 Days') || [],
-    ninetyDays: actionPlan?.action_items.filter(i => i.timeframe === '90 Days') || [],
+    immediate: actionPlan.action_items.filter(i => i.timeframe === 'Immediate'),
+    thirtyDays: actionPlan.action_items.filter(i => i.timeframe === '30 Days'),
+    ninetyDays: actionPlan.action_items.filter(i => i.timeframe === '90 Days'),
   };
 
-  const totalItems = actionPlan?.action_items.length || 0;
-  const completedItems = actionPlan?.action_items.filter(i => i.completed).length || 0;
+  const totalItems = actionPlan.action_items.length;
+  const completedItems = actionPlan.action_items.filter(i => i.completed).length;
   const progressPercent = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
 
   return (
