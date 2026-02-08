@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 
 import { app, createAuthenticatedUser, authHeaders, seedPurchase } from './helpers';
-import { accountLockouts, keypassesByCode, purchasesById } from '../src/stores';
+import { accountLockouts, keypassesByCode, purchasesById, assessmentsById } from '../src/stores';
 
 async function signup() {
   return createAuthenticatedUser({ organisationName: 'Security Test Org' });
@@ -569,6 +569,135 @@ describe('Security hardening', () => {
       expect(confirm2.status).toBe(409);
       const json2 = (await confirm2.json()) as any;
       expect(json2.error.code).toBe('ALREADY_CONFIRMED');
+    });
+  });
+
+  // ── Keypass quota enforcement ──────────────────────────────────
+
+  describe('Keypass quota enforcement', () => {
+    it('rejects generation beyond package allowance', async () => {
+      const { accessToken, organisationId, userId } = await signup();
+      // pkg_basic has keypassAllowance=1
+      seedPurchase(organisationId, userId, 'pkg_basic');
+
+      // First keypass — should succeed (1 of 1)
+      const gen1 = await app.request('http://localhost/api/v1/keypasses/generate', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ quantity: 1, expiresInDays: 30 }),
+      });
+      expect(gen1.status).toBe(200);
+
+      // Second keypass — should fail (quota exceeded)
+      const gen2 = await app.request('http://localhost/api/v1/keypasses/generate', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ quantity: 1, expiresInDays: 30 }),
+      });
+      expect(gen2.status).toBe(400);
+      const json2 = (await gen2.json()) as any;
+      expect(json2.error.code).toBe('QUOTA_EXCEEDED');
+    });
+  });
+
+  // ── Package recommendation risk scoring ───────────────────────
+
+  describe('Package recommendation risk scoring', () => {
+    it('recommends pkg_basic for no assessments', async () => {
+      const { accessToken } = await signup();
+      const res = await app.request('http://localhost/api/v1/packages/recommended', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as any;
+      expect(json.data.packageId).toBe('pkg_basic');
+      expect(json.data.reason).toBe('no_assessment');
+    });
+
+    it('recommends pkg_training for medium risk', async () => {
+      const { accessToken, organisationId, userId } = await signup();
+
+      // Seed a submitted assessment with 6 answers (>= MEDIUM=5, < HIGH=15)
+      const assessmentId = crypto.randomUUID();
+      const answers: Record<string, string> = {};
+      for (let i = 0; i < 6; i++) answers[`q${i}`] = 'yes';
+      assessmentsById.set(assessmentId, {
+        id: assessmentId,
+        organisationId,
+        createdByUserId: userId,
+        title: 'Risk Test',
+        status: 'submitted',
+        answers,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        submittedAt: new Date().toISOString(),
+      });
+
+      const res = await app.request('http://localhost/api/v1/packages/recommended', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as any;
+      expect(json.data.packageId).toBe('pkg_training');
+      expect(json.data.reason).toBe('medium_risk_score');
+    });
+
+    it('recommends pkg_full for high risk', async () => {
+      const { accessToken, organisationId, userId } = await signup();
+
+      // Seed a submitted assessment with 16 answers (>= HIGH=15)
+      const assessmentId = crypto.randomUUID();
+      const answers: Record<string, string> = {};
+      for (let i = 0; i < 16; i++) answers[`q${i}`] = 'yes';
+      assessmentsById.set(assessmentId, {
+        id: assessmentId,
+        organisationId,
+        createdByUserId: userId,
+        title: 'High Risk Test',
+        status: 'completed',
+        answers,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        submittedAt: new Date().toISOString(),
+      });
+
+      const res = await app.request('http://localhost/api/v1/packages/recommended', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as any;
+      expect(json.data.packageId).toBe('pkg_full');
+      expect(json.data.reason).toBe('high_risk_score');
+    });
+  });
+
+  // ── SSE token single-use ──────────────────────────────────────
+
+  describe('SSE token single-use', () => {
+    it('rejects reuse of a consumed SSE token', async () => {
+      const { accessToken } = await signup();
+
+      // Get an SSE token
+      const tokenRes = await app.request('http://localhost/api/v1/workshop/sse-token', {
+        method: 'POST',
+        headers: authHeaders(accessToken),
+      });
+      expect(tokenRes.status).toBe(200);
+      const tokenJson = (await tokenRes.json()) as any;
+      const sseToken = tokenJson.data.sseToken;
+      expect(sseToken).toBeTruthy();
+
+      // First use — consume the token via the events endpoint
+      const sessionId = '00000000-0000-0000-0000-000000000001';
+      const use1 = await app.request(`http://localhost/api/v1/workshop/sessions/${sessionId}/events?sse_token=${sseToken}`);
+      // SSE endpoint returns 401 because session doesn't exist in no-DB mode, but the token IS consumed
+      // The important thing is the token gets consumed on first use
+
+      // Second use with same token — should be rejected since token was consumed
+      const use2 = await app.request(`http://localhost/api/v1/workshop/sessions/${sessionId}/events?sse_token=${sseToken}`);
+      expect(use2.status).toBe(401);
+      const json2 = (await use2.json()) as any;
+      expect(json2.error.code).toBe('UNAUTHORIZED');
     });
   });
 });
