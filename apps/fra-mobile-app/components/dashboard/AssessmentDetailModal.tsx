@@ -1,20 +1,53 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, ActivityIndicator } from 'react-native';
 import { X, FileText, CheckCircle, AlertCircle, Download } from 'lucide-react-native';
 import colors from '@/constants/colors';
-import { mockEmployeeData, mockAssessmentDetails } from './mockData';
+import { mockAssessmentDetails } from './mockData';
+import { apiService } from '@/services/api.service';
+import type { AssessmentData } from '@/types/assessment';
+import type { EmployeeData } from './types';
 
 interface AssessmentDetailModalProps {
   visible: boolean;
   onClose: () => void;
   selectedEmployee: string | null;
+  employeeData?: EmployeeData | null;
 }
 
 export default function AssessmentDetailModal({
   visible,
   onClose,
   selectedEmployee,
+  employeeData,
 }: AssessmentDetailModalProps) {
+  const [fetchedAssessment, setFetchedAssessment] = useState<Partial<AssessmentData> | null>(null);
+  const [isFetching, setIsFetching] = useState(false);
+
+  useEffect(() => {
+    if (visible && selectedEmployee) {
+      setIsFetching(true);
+      apiService.get<{
+        assessments: { id: string; answers: Record<string, unknown> }[];
+      }>(`/api/v1/analytics/employees/${selectedEmployee}`)
+        .then((response) => {
+          if (response.success && response.data?.assessments?.[0]?.answers) {
+            setFetchedAssessment(response.data.assessments[0].answers as Partial<AssessmentData>);
+          } else {
+            setFetchedAssessment(null);
+          }
+        })
+        .catch(() => {
+          setFetchedAssessment(null);
+        })
+        .finally(() => setIsFetching(false));
+    } else {
+      setFetchedAssessment(null);
+    }
+  }, [visible, selectedEmployee]);
+
+  const assessment = fetchedAssessment ?? (selectedEmployee ? mockAssessmentDetails[selectedEmployee] : undefined);
+  const employee = employeeData;
+
   return (
     <Modal
       visible={visible}
@@ -31,11 +64,14 @@ export default function AssessmentDetailModal({
             </TouchableOpacity>
           </View>
 
-          {selectedEmployee && mockAssessmentDetails[selectedEmployee] ? (
+          {isFetching ? (
+            <View style={styles.emptyStateContainer}>
+              <ActivityIndicator size="large" color={colors.govBlue} />
+              <Text style={styles.emptyStateText}>Loading assessment details...</Text>
+            </View>
+          ) : selectedEmployee && assessment ? (
             <ScrollView style={styles.assessmentDetailsScroll} showsVerticalScrollIndicator={true}>
               {(() => {
-                const employee = mockEmployeeData.find(e => e.userId === selectedEmployee);
-                const assessment = mockAssessmentDetails[selectedEmployee];
 
                 if (!employee || !assessment) return (
                   <View style={styles.emptyStateContainer}>

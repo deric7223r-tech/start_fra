@@ -1,0 +1,387 @@
+import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/api';
+import { createLogger } from '@/lib/logger';
+const logger = createLogger('EmployerDashboard');
+import { Layout } from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Users,
+  CheckCircle2,
+  AlertTriangle,
+  Shield,
+  Search,
+  Loader2,
+  ArrowLeft,
+  RefreshCw,
+} from 'lucide-react';
+
+interface EmployeeRow {
+  userId: string;
+  userName: string;
+  email: string;
+  role: string;
+  status: 'completed' | 'in-progress' | 'not-started';
+  startedAt: string | null;
+  completedAt: string | null;
+  assessmentCount: number;
+  latestAssessmentStatus: string | null;
+  riskLevel: 'high' | 'medium' | 'low' | null;
+}
+
+interface DashboardAggregates {
+  assessments: { total: number; byStatus: Record<string, number> };
+  keypasses: { total: number; byStatus: Record<string, number> };
+  purchases: { total: number; active: number; totalSpentCents: number };
+}
+
+export default function EmployerDashboard() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
+  const [aggregates, setAggregates] = useState<DashboardAggregates | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [riskFilter, setRiskFilter] = useState('all');
+
+  const isEmployerOrAdmin = user?.role === 'employer' || user?.role === 'admin';
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [empData, dashData] = await Promise.all([
+        api.get<EmployeeRow[]>('/api/v1/analytics/employees'),
+        api.get<DashboardAggregates>('/api/v1/analytics/dashboard'),
+      ]);
+      setEmployees(empData);
+      setAggregates(dashData);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      if (message.includes('PACKAGE_REQUIRED')) {
+        setError('The employer dashboard requires the Full package. Please upgrade to access employee analytics.');
+      } else {
+        setError(message);
+      }
+      logger.error('Failed to fetch employer dashboard data', err);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    if (isEmployerOrAdmin) {
+      fetchData();
+    }
+  }, [isEmployerOrAdmin]);
+
+  const filteredEmployees = useMemo(() => {
+    return employees.filter((e) => {
+      if (statusFilter !== 'all' && e.status !== statusFilter) return false;
+      if (riskFilter !== 'all' && e.riskLevel !== riskFilter) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return e.userName.toLowerCase().includes(q) || e.email.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [employees, statusFilter, riskFilter, searchQuery]);
+
+  const stats = useMemo(() => {
+    const total = employees.length;
+    const completed = employees.filter(e => e.status === 'completed').length;
+    const inProgress = employees.filter(e => e.status === 'in-progress').length;
+    const highRisk = employees.filter(e => e.riskLevel === 'high').length;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, inProgress, highRisk, completionRate };
+  }, [employees]);
+
+  if (!user) return null;
+
+  if (!isEmployerOrAdmin) {
+    return (
+      <Layout>
+        <div className="container py-8 lg:py-12">
+          <Button variant="ghost" className="mb-6" onClick={() => navigate('/dashboard')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Card className="max-w-2xl mx-auto">
+            <CardContent className="pt-6 text-center">
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <Shield className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Access Restricted</h2>
+              <p className="text-muted-foreground mb-6">
+                The employer dashboard is only available for employer and admin accounts.
+              </p>
+              <Button onClick={() => navigate('/dashboard')}>
+                Go to Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="container py-8 lg:py-12">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-1">Organisation Dashboard</h1>
+            <p className="text-muted-foreground">Employee fraud risk awareness overview</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
+
+        {error && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6">
+            <Card className="border-destructive/50 bg-destructive/5">
+              <CardContent className="pt-6 text-center">
+                <AlertTriangle className="h-8 w-8 text-destructive mx-auto mb-2" />
+                <p className="text-destructive font-medium mb-4">{error}</p>
+                <Button variant="outline" size="sm" onClick={fetchData}>
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {isLoading ? (
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i}>
+                  <CardHeader className="pb-2"><Skeleton className="h-4 w-24" /></CardHeader>
+                  <CardContent><Skeleton className="h-8 w-16" /></CardContent>
+                </Card>
+              ))}
+            </div>
+            <Card>
+              <CardContent className="pt-6">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full mb-2" />
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        ) : !error && (
+          <>
+            {/* Summary Cards */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8"
+            >
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Employees</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.total}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Completion Rate</CardTitle>
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.completionRate}%</div>
+                  <p className="text-xs text-muted-foreground">{stats.completed} of {stats.total} completed</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
+                  <Loader2 className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.inProgress}</div>
+                  <p className="text-xs text-muted-foreground">Currently training</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">High Risk</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.highRisk}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {aggregates ? `${aggregates.keypasses.byStatus.available ?? 0} key-passes available` : ''}
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Filters */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mb-6"
+            >
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name or email..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="not-started">Not Started</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={riskFilter} onValueChange={setRiskFilter}>
+                      <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Filter by risk" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Risk Levels</SelectItem>
+                        <SelectItem value="high">High Risk</SelectItem>
+                        <SelectItem value="medium">Medium Risk</SelectItem>
+                        <SelectItem value="low">Low Risk</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Employee Table */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Employees ({filteredEmployees.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {filteredEmployees.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Users className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">
+                        {employees.length === 0
+                          ? 'No employees found. Distribute key-passes to get started.'
+                          : 'No employees match your filters.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Risk Level</TableHead>
+                            <TableHead>Assessments</TableHead>
+                            <TableHead>Completed</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredEmployees.map((employee) => (
+                            <TableRow key={employee.userId}>
+                              <TableCell className="font-medium">{employee.userName}</TableCell>
+                              <TableCell className="text-muted-foreground">{employee.email}</TableCell>
+                              <TableCell>
+                                <StatusBadge status={employee.status} />
+                              </TableCell>
+                              <TableCell>
+                                <RiskBadge riskLevel={employee.riskLevel} />
+                              </TableCell>
+                              <TableCell>{employee.assessmentCount}</TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {employee.completedAt
+                                  ? new Date(employee.completedAt).toLocaleDateString('en-GB', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })
+                                  : '—'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </>
+        )}
+      </div>
+    </Layout>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case 'completed':
+      return <Badge className="bg-success/10 text-success border-success/20">Completed</Badge>;
+    case 'in-progress':
+      return <Badge className="bg-primary/10 text-primary border-primary/20">In Progress</Badge>;
+    case 'not-started':
+      return <Badge variant="secondary">Not Started</Badge>;
+    default:
+      return <Badge variant="secondary">{status}</Badge>;
+  }
+}
+
+function RiskBadge({ riskLevel }: { riskLevel: string | null }) {
+  if (!riskLevel) return <span className="text-muted-foreground">—</span>;
+  switch (riskLevel) {
+    case 'high':
+      return <Badge className="bg-destructive/10 text-destructive border-destructive/20">High</Badge>;
+    case 'medium':
+      return <Badge className="bg-warning/10 text-warning border-warning/20">Medium</Badge>;
+    case 'low':
+      return <Badge className="bg-success/10 text-success border-success/20">Low</Badge>;
+    default:
+      return <Badge variant="secondary">{riskLevel}</Badge>;
+  }
+}

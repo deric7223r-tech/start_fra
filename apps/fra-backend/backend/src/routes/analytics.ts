@@ -1,10 +1,10 @@
 import crypto from 'node:crypto';
 import { Hono } from 'hono';
 import { hasDatabase, hasPackageEntitlement, jsonError, requireAuth } from '../helpers.js';
-import { RISK_THRESHOLDS, RATE_LIMITS, parsePagination, paginate } from '../types.js';
-import type { AssessmentStatus } from '../types.js';
-import { assessmentsById, purchasesById, keypassesByCode } from '../stores.js';
-import { dbListAssessmentsByOrganisation, dbListPurchasesByOrganisation, dbListKeypassesByOrganisation, auditLog } from '../db/index.js';
+import { RISK_THRESHOLDS, RATE_LIMITS, parsePagination, paginate, requireUUIDParam } from '../types.js';
+import type { AssessmentStatus, EmployeeDashboardRow } from '../types.js';
+import { assessmentsById, purchasesById, keypassesByCode, usersByEmail } from '../stores.js';
+import { dbListAssessmentsByOrganisation, dbListPurchasesByOrganisation, dbListKeypassesByOrganisation, dbGetEmployeeDashboardData, dbGetUserById, auditLog } from '../db/index.js';
 import { rateLimit, getClientIp } from '../middleware.js';
 
 const analytics = new Hono();
@@ -239,6 +239,180 @@ analytics.get('/analytics/dashboard', async (c) => {
         active: activePurchases.length,
         totalSpentCents: totalSpent,
       },
+    },
+  });
+});
+
+// ── Employee dashboard endpoints ────────────────────────────────
+
+analytics.get('/analytics/employees', async (c) => {
+  const limited = await rateLimit('analytics:employees', { windowMs: 60_000, max: 30 })(c);
+  if (limited instanceof Response) return limited;
+
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  // Require pkg_full for employee analytics
+  const orgPurchases = hasDatabase()
+    ? await dbListPurchasesByOrganisation(auth.organisationId)
+    : Array.from(purchasesById.values()).filter((p) => p.organisationId === auth.organisationId);
+
+  if (!hasPackageEntitlement(orgPurchases, 'pkg_full')) {
+    return jsonError(c, 403, 'PACKAGE_REQUIRED', 'Employee analytics requires the Full package');
+  }
+
+  // Fetch employee data with assessment progress
+  let rows: EmployeeDashboardRow[];
+  if (hasDatabase()) {
+    rows = await dbGetEmployeeDashboardData(auth.organisationId);
+  } else {
+    // In-memory fallback: join users + assessments manually
+    const orgUsers = Array.from(usersByEmail.values()).filter((u) => u.organisationId === auth.organisationId);
+    const orgAssessments = Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
+    rows = [];
+    for (const u of orgUsers) {
+      const userAssessments = orgAssessments.filter((a) => a.createdByUserId === u.id);
+      if (userAssessments.length === 0) {
+        rows.push({ id: u.id, email: u.email, name: u.name, role: u.role, createdAt: u.createdAt, assessmentId: null, assessmentStatus: null, assessmentStarted: null, assessmentCompleted: null, answerCount: 0 });
+      } else {
+        for (const a of userAssessments) {
+          rows.push({ id: u.id, email: u.email, name: u.name, role: u.role, createdAt: u.createdAt, assessmentId: a.id, assessmentStatus: a.status, assessmentStarted: a.createdAt, assessmentCompleted: a.submittedAt ?? null, answerCount: Object.keys(a.answers).length });
+        }
+      }
+    }
+  }
+
+  // Group rows by user to produce one record per employee
+  const userMap = new Map<string, {
+    userId: string; userName: string; email: string; role: string;
+    status: 'completed' | 'in-progress' | 'not-started';
+    startedAt: string | null; completedAt: string | null;
+    assessmentCount: number; latestAssessmentStatus: string | null;
+    riskLevel: 'high' | 'medium' | 'low' | null;
+  }>();
+
+  for (const row of rows) {
+    const existing = userMap.get(row.id);
+    if (!existing) {
+      let status: 'completed' | 'in-progress' | 'not-started' = 'not-started';
+      let riskLevel: 'high' | 'medium' | 'low' | null = null;
+      if (row.assessmentStatus === 'completed' || row.assessmentStatus === 'submitted') {
+        status = 'completed';
+        if (row.answerCount >= RISK_THRESHOLDS.HIGH_ANSWER_COUNT) riskLevel = 'high';
+        else if (row.answerCount >= RISK_THRESHOLDS.MEDIUM_ANSWER_COUNT) riskLevel = 'medium';
+        else riskLevel = 'low';
+      } else if (row.assessmentStatus === 'draft' || row.assessmentStatus === 'in_progress') {
+        status = 'in-progress';
+      }
+
+      userMap.set(row.id, {
+        userId: row.id,
+        userName: row.name,
+        email: row.email,
+        role: row.role,
+        status,
+        startedAt: row.assessmentStarted,
+        completedAt: row.assessmentCompleted,
+        assessmentCount: row.assessmentId ? 1 : 0,
+        latestAssessmentStatus: row.assessmentStatus,
+        riskLevel,
+      });
+    } else {
+      // Multiple assessments: update with latest
+      existing.assessmentCount += row.assessmentId ? 1 : 0;
+      if (row.assessmentStatus === 'completed' || row.assessmentStatus === 'submitted') {
+        existing.status = 'completed';
+        existing.completedAt = row.assessmentCompleted ?? existing.completedAt;
+        if (row.answerCount >= RISK_THRESHOLDS.HIGH_ANSWER_COUNT) existing.riskLevel = 'high';
+        else if (row.answerCount >= RISK_THRESHOLDS.MEDIUM_ANSWER_COUNT) existing.riskLevel = existing.riskLevel === 'high' ? 'high' : 'medium';
+        else if (!existing.riskLevel) existing.riskLevel = 'low';
+      } else if (row.assessmentStatus && existing.status === 'not-started') {
+        existing.status = 'in-progress';
+        existing.startedAt = row.assessmentStarted ?? existing.startedAt;
+      }
+      existing.latestAssessmentStatus = row.assessmentStatus ?? existing.latestAssessmentStatus;
+    }
+  }
+
+  const employees = Array.from(userMap.values());
+  const { page, pageSize } = parsePagination(c.req.query());
+  const result = paginate(employees, page, pageSize);
+
+  return c.json({
+    success: true,
+    data: result.items,
+    pagination: { page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages },
+  });
+});
+
+analytics.get('/analytics/employees/:userId', async (c) => {
+  const auth = requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  const userId = requireUUIDParam(c, 'userId');
+  if (userId instanceof Response) return userId;
+
+  // Require pkg_full
+  const orgPurchases = hasDatabase()
+    ? await dbListPurchasesByOrganisation(auth.organisationId)
+    : Array.from(purchasesById.values()).filter((p) => p.organisationId === auth.organisationId);
+
+  if (!hasPackageEntitlement(orgPurchases, 'pkg_full')) {
+    return jsonError(c, 403, 'PACKAGE_REQUIRED', 'Employee detail requires the Full package');
+  }
+
+  // Verify user belongs to same org
+  let targetUser;
+  if (hasDatabase()) {
+    targetUser = await dbGetUserById(userId);
+  } else {
+    targetUser = Array.from(usersByEmail.values()).find((u) => u.id === userId) ?? null;
+  }
+
+  if (!targetUser || targetUser.organisationId !== auth.organisationId) {
+    return jsonError(c, 404, 'NOT_FOUND', 'Employee not found');
+  }
+
+  // Get assessments for this user
+  const orgAssessments = hasDatabase()
+    ? await dbListAssessmentsByOrganisation(auth.organisationId)
+    : Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
+
+  const userAssessments = orgAssessments
+    .filter((a) => a.createdByUserId === userId)
+    .map((a) => ({
+      id: a.id,
+      title: a.title,
+      status: a.status,
+      answers: a.answers,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      submittedAt: a.submittedAt ?? null,
+    }));
+
+  // Get keypasses used by this user
+  const orgKeypasses = hasDatabase()
+    ? await dbListKeypassesByOrganisation(auth.organisationId)
+    : Array.from(keypassesByCode.values()).filter((k) => k.organisationId === auth.organisationId);
+
+  const userKeypasses = orgKeypasses.map((k) => ({
+    code: k.code,
+    status: k.status,
+    createdAt: k.createdAt,
+    expiresAt: k.expiresAt,
+    usedAt: k.usedAt ?? null,
+  }));
+
+  return c.json({
+    success: true,
+    data: {
+      userId: targetUser.id,
+      userName: targetUser.name,
+      email: targetUser.email,
+      role: targetUser.role,
+      createdAt: targetUser.createdAt,
+      assessments: userAssessments,
+      keypasses: userKeypasses,
     },
   });
 });

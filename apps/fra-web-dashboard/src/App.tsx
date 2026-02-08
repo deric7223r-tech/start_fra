@@ -20,6 +20,7 @@ const Facilitator = lazy(() => import("./pages/Facilitator"));
 const PackageProfessional = lazy(() => import("./pages/PackageProfessional"));
 const PackageEnterprise = lazy(() => import("./pages/PackageEnterprise"));
 const Checkout = lazy(() => import("./pages/Checkout"));
+const EmployerDashboard = lazy(() => import("./pages/EmployerDashboard"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -61,6 +62,7 @@ const App = () => (
                 <Route path="/package/enterprise" element={<PackageEnterprise />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/facilitator" element={<ProtectedRoute requiredRole="facilitator"><Facilitator /></ProtectedRoute>} />
+                <Route path="/employer" element={<ProtectedRoute><EmployerDashboard /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

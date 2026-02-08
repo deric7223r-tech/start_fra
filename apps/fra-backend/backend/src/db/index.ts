@@ -1,4 +1,4 @@
-export { dbGetUserByEmail, dbGetUserById, dbInsertUser, dbUpdateUserPasswordHash } from './users.js';
+export { dbGetUserByEmail, dbGetUserById, dbInsertUser, dbUpdateUserPasswordHash, dbListUsersByOrganisation, dbGetEmployeeDashboardData } from './users.js';
 export { dbInsertAssessment, dbGetAssessmentById, dbListAssessmentsByOrganisation, dbUpdateAssessment } from './assessments.js';
 export { dbUpsertRefreshToken, dbHasRefreshToken, dbDeleteRefreshToken, dbDeleteAllRefreshTokensForUser } from './tokens.js';
 export { dbInsertOrganisation, dbGetOrganisationById } from './organisations.js';

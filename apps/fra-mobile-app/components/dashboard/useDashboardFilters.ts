@@ -1,8 +1,25 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { FilterStatus, SortOption, ViewMode, EmployeeData } from './types';
 import { mockEmployeeData } from './mockData';
+import { apiService } from '@/services/api.service';
+
+interface EmployeeApiRow {
+  userId: string;
+  userName: string;
+  email: string;
+  role: string;
+  status: 'completed' | 'in-progress' | 'not-started';
+  startedAt: string | null;
+  completedAt: string | null;
+  assessmentCount: number;
+  latestAssessmentStatus: string | null;
+  riskLevel: 'high' | 'medium' | 'low' | null;
+}
 
 export function useDashboardFilters() {
+  const [employees, setEmployees] = useState<EmployeeData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('name');
@@ -10,8 +27,41 @@ export function useDashboardFilters() {
   const [filterDepartment, setFilterDepartment] = useState<string>('all');
   const [filterRisk, setFilterRisk] = useState<string>('all');
 
+  const fetchEmployees = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await apiService.get<EmployeeApiRow[]>('/api/v1/analytics/employees');
+      if (response.success && response.data) {
+        const mapped: EmployeeData[] = response.data.map((row) => ({
+          userId: row.userId,
+          userName: row.userName,
+          email: row.email,
+          department: '',
+          status: row.status,
+          startedAt: row.startedAt,
+          completedAt: row.completedAt,
+          overallRiskLevel: row.riskLevel,
+        }));
+        setEmployees(mapped);
+      } else {
+        // Fallback to mock data if API returns unsuccessful
+        setEmployees(mockEmployeeData);
+      }
+    } catch {
+      // Fallback to mock data on error (e.g. offline, no package)
+      setEmployees(mockEmployeeData);
+      setError('Unable to load employee data. Showing sample data.');
+    }
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
+
   const filteredEmployees = useMemo(() => {
-    let filtered = mockEmployeeData.filter((e: EmployeeData) => {
+    let filtered = employees.filter((e: EmployeeData) => {
       if (filterStatus !== 'all' && e.status !== filterStatus) return false;
       if (filterDepartment !== 'all' && e.department !== filterDepartment) return false;
       if (filterRisk !== 'all' && e.overallRiskLevel !== filterRisk) return false;
@@ -41,9 +91,12 @@ export function useDashboardFilters() {
     });
 
     return filtered;
-  }, [filterStatus, filterDepartment, filterRisk, searchQuery, sortBy]);
+  }, [employees, filterStatus, filterDepartment, filterRisk, searchQuery, sortBy]);
 
-  const departments = ['all', ...Array.from(new Set(mockEmployeeData.map(e => e.department)))];
+  const departments = useMemo(() => {
+    const depts = new Set(employees.map(e => e.department).filter(Boolean));
+    return ['all', ...Array.from(depts)];
+  }, [employees]);
 
   const clearAllFilters = () => {
     setSearchQuery('');
@@ -68,5 +121,8 @@ export function useDashboardFilters() {
     filteredEmployees,
     departments,
     clearAllFilters,
+    isLoading,
+    error,
+    refetch: fetchEmployees,
   };
 }

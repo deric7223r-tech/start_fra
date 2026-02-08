@@ -118,6 +118,33 @@ export type DbKeypassRow = {
   used_by_user_id: string | null;
 };
 
+export type DbEmployeeDashboardRow = {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+  organisation_id: string;
+  created_at: string;
+  assessment_id: string | null;
+  assessment_status: AssessmentStatus | null;
+  assessment_started: string | null;
+  assessment_completed: string | null;
+  answer_count: number;
+};
+
+export interface EmployeeDashboardRow {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+  createdAt: string;
+  assessmentId: string | null;
+  assessmentStatus: AssessmentStatus | null;
+  assessmentStarted: string | null;
+  assessmentCompleted: string | null;
+  answerCount: number;
+}
+
 // ── JWT config ──────────────────────────────────────────────────
 
 export const DEV_REFRESH_SECRET = 'dev_refresh_secret_change_me';

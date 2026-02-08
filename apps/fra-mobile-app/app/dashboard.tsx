@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshControl, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { LayoutDashboard, Users, Key, FileText, HelpCircle, Bell } from 'lucide-react-native';
@@ -44,6 +44,9 @@ export default function DashboardScreen() {
     filteredEmployees,
     departments,
     clearAllFilters,
+    isLoading,
+    error,
+    refetch,
   } = useDashboardFilters();
 
   const totalKeyPasses = organisation?.keyPassesAllocated || 0;
@@ -65,10 +68,9 @@ export default function DashboardScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Simulate data refresh — in a real implementation this would re-fetch from API
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await refetch();
     setRefreshing(false);
-  }, []);
+  }, [refetch]);
 
   if (!organisation || organisation.packageType !== 'with-dashboard') {
     return (
@@ -91,6 +93,17 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
+      </View>
+    );
+  }
+
+  if (isLoading && filteredEmployees.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.govBlue} />
+          <Text style={styles.loadingText}>Loading dashboard data...</Text>
+        </View>
       </View>
     );
   }
@@ -147,6 +160,12 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {error && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorBannerText}>{error}</Text>
+          </View>
+        )}
 
         <View style={styles.tabBar}>
           <TouchableOpacity
@@ -263,6 +282,7 @@ export default function DashboardScreen() {
         visible={showAssessmentDetails}
         onClose={() => setShowAssessmentDetails(false)}
         selectedEmployee={selectedEmployee}
+        employeeData={filteredEmployees.find(e => e.userId === selectedEmployee) ?? null}
       />
 
       <HelpModal
@@ -415,5 +435,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: colors.white,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 15,
+    color: colors.govGrey2,
+  },
+  errorBanner: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  errorBannerText: {
+    fontSize: 13,
+    color: '#92400E',
+    lineHeight: 18,
   },
 });

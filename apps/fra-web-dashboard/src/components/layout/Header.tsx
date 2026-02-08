@@ -44,6 +44,11 @@ export function Header() {
         <nav className="flex items-center gap-4">
           {user ? (
             <>
+              {(user.role === 'employer' || user.role === 'admin') && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/employer">Organisation</Link>
+                </Button>
+              )}
               {(hasRole('facilitator') || hasRole('admin')) && (
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/facilitator">Facilitator Dashboard</Link>
@@ -71,6 +76,11 @@ export function Header() {
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
+                  {(user.role === 'employer' || user.role === 'admin') && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/employer">Organisation</Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link to="/resources">Resources</Link>
                   </DropdownMenuItem>
