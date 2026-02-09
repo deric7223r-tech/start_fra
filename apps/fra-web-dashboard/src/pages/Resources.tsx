@@ -30,8 +30,8 @@ export default function Resources() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex items-center justify-center min-h-[60vh]" role="status" aria-label="Loading resources">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
         </div>
       </Layout>
     );
@@ -67,7 +67,7 @@ export default function Resources() {
     <Layout>
       <div className="container py-8 lg:py-12">
         <Button variant="ghost" className="mb-6" onClick={() => navigate(-1)}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
           Back
         </Button>
 
@@ -81,7 +81,7 @@ export default function Resources() {
           </p>
 
           {/* Downloadable Resources */}
-          <section className="mb-12">
+          <section className="mb-12" aria-label="Core workshop materials">
             <h2 className="text-xl font-semibold mb-4">Core Workshop Materials</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {downloadableResources.map((resource, index) => {
@@ -97,14 +97,14 @@ export default function Resources() {
                     <Card className="h-full hover:shadow-lg transition-shadow">
                       <CardHeader>
                         <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                          <IconComponent className="h-6 w-6 text-primary" />
+                          <IconComponent className="h-6 w-6 text-primary" aria-hidden="true" />
                         </div>
                         <CardTitle className="text-lg">{resource.title}</CardTitle>
                         <CardDescription>{resource.description}</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <Button variant="outline" className="w-full" onClick={() => handleDownload(resource.title)}>
-                          <Download className="mr-2 h-4 w-4" />
+                        <Button variant="outline" className="w-full" onClick={() => handleDownload(resource.title)} aria-label={`Download ${resource.title} PDF`}>
+                          <Download className="mr-2 h-4 w-4" aria-hidden="true" />
                           Download PDF
                         </Button>
                       </CardContent>
@@ -116,7 +116,7 @@ export default function Resources() {
           </section>
 
           {/* Pre-Workshop Reading */}
-          <section className="mb-12">
+          <section className="mb-12" aria-label="Pre-workshop reading">
             <h2 className="text-xl font-semibold mb-4">Pre-Workshop Reading</h2>
             <Card>
               <CardContent className="pt-6">
@@ -128,15 +128,15 @@ export default function Resources() {
                     >
                       <div className="flex items-center gap-4">
                         <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                          <BookOpen className="h-5 w-5 text-accent" />
+                          <BookOpen className="h-5 w-5 text-accent" aria-hidden="true" />
                         </div>
                         <div>
                           <div className="font-medium">{resource.title}</div>
                           <div className="text-sm text-muted-foreground">{resource.description}</div>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <ExternalLink className="h-4 w-4" />
+                      <Button variant="ghost" size="sm" aria-label={`Read ${resource.title}`}>
+                        <ExternalLink className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </div>
                   ))}
@@ -146,7 +146,7 @@ export default function Resources() {
           </section>
 
           {/* Additional Resources */}
-          <section>
+          <section aria-label="External resources">
             <h2 className="text-xl font-semibold mb-4">External Resources</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
@@ -158,9 +158,9 @@ export default function Resources() {
                 </CardHeader>
                 <CardContent>
                   <Button variant="outline" className="w-full" asChild>
-                    <a href="https://www.gov.uk" target="_blank" rel="noopener noreferrer">
+                    <a href="https://www.gov.uk" target="_blank" rel="noopener noreferrer" aria-label="Visit GOV.UK (opens in new window)">
                       Visit GOV.UK
-                      <ExternalLink className="ml-2 h-4 w-4" />
+                      <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" />
                     </a>
                   </Button>
                 </CardContent>
@@ -175,9 +175,9 @@ export default function Resources() {
                 </CardHeader>
                 <CardContent>
                   <Button variant="outline" className="w-full" asChild>
-                    <a href="https://www.acfe.com" target="_blank" rel="noopener noreferrer">
+                    <a href="https://www.acfe.com" target="_blank" rel="noopener noreferrer" aria-label="Visit ACFE (opens in new window)">
                       Visit ACFE
-                      <ExternalLink className="ml-2 h-4 w-4" />
+                      <ExternalLink className="ml-2 h-4 w-4" aria-hidden="true" />
                     </a>
                   </Button>
                 </CardContent>
