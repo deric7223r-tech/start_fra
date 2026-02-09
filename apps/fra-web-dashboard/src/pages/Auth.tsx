@@ -196,15 +196,15 @@ export default function Auth() {
             className="text-primary-foreground hover:bg-white/10"
             onClick={() => navigate('/')}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
             Back to Home
           </Button>
         </div>
-        
+
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent">
-              <Shield className="h-7 w-7 text-accent-foreground" />
+              <Shield className="h-7 w-7 text-accent-foreground" aria-hidden="true" />
             </div>
             <h1 className="text-3xl font-bold text-primary-foreground">
               Fraud Risk Awareness
@@ -217,29 +217,29 @@ export default function Auth() {
 
         <div className="space-y-4">
           <div className="flex items-center gap-3 text-primary-foreground/80">
-            <div className="h-2 w-2 rounded-full bg-accent" />
+            <div className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
             <span>Interactive learning modules</span>
           </div>
           <div className="flex items-center gap-3 text-primary-foreground/80">
-            <div className="h-2 w-2 rounded-full bg-accent" />
+            <div className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
             <span>Real-time collaboration</span>
           </div>
           <div className="flex items-center gap-3 text-primary-foreground/80">
-            <div className="h-2 w-2 rounded-full bg-accent" />
+            <div className="h-2 w-2 rounded-full bg-accent" aria-hidden="true" />
             <span>Personalised action plans</span>
           </div>
         </div>
       </div>
 
       {/* Right side - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-background">
+      <main className="flex-1 flex items-center justify-center p-6 bg-background">
         <div className="w-full max-w-md">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="mb-6 lg:hidden"
             onClick={() => navigate('/')}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />
             Back
           </Button>
 
@@ -296,14 +296,15 @@ export default function Auth() {
                             </FormItem>
                           )}
                         />
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
+                          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                           Sign In
                         </Button>
                       </form>
                     </Form>
                     <div className="mt-4 text-center text-sm">
                       <button
+                        type="button"
                         onClick={() => setMode('forgot')}
                         className="text-muted-foreground hover:text-primary hover:underline"
                       >
@@ -313,6 +314,7 @@ export default function Auth() {
                     <div className="mt-3 text-center text-sm">
                       Don't have an account?{' '}
                       <button
+                        type="button"
                         onClick={() => setMode('signup')}
                         className="text-primary font-medium hover:underline"
                       >
@@ -339,8 +341,8 @@ export default function Auth() {
                   </CardHeader>
                   <CardContent>
                     {forgotSent ? (
-                      <div className="text-center space-y-4 py-4">
-                        <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
+                      <div className="text-center space-y-4 py-4" role="status" aria-label="Reset link sent">
+                        <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" aria-hidden="true" />
                         <p className="text-sm text-muted-foreground">
                           If an account with that email exists, a password reset link has been sent. Please check your inbox.
                         </p>
@@ -372,8 +374,8 @@ export default function Auth() {
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                             Send Reset Link
                           </Button>
                         </form>
@@ -383,6 +385,7 @@ export default function Auth() {
                       <div className="mt-6 text-center text-sm">
                         Remember your password?{' '}
                         <button
+                          type="button"
                           onClick={() => setMode('signin')}
                           className="text-primary font-medium hover:underline"
                         >
@@ -410,8 +413,8 @@ export default function Auth() {
                   </CardHeader>
                   <CardContent>
                     {resetSuccess ? (
-                      <div className="text-center space-y-4 py-4">
-                        <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
+                      <div className="text-center space-y-4 py-4" role="status" aria-label="Password reset successful">
+                        <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" aria-hidden="true" />
                         <p className="text-sm text-muted-foreground">
                           Your password has been reset successfully. You can now sign in with your new password.
                         </p>
@@ -464,8 +467,8 @@ export default function Auth() {
                               </FormItem>
                             )}
                           />
-                          <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                             Reset Password
                           </Button>
                         </form>
@@ -474,6 +477,7 @@ export default function Auth() {
                     {!resetSuccess && (
                       <div className="mt-6 text-center text-sm">
                         <button
+                          type="button"
                           onClick={() => setMode('forgot')}
                           className="text-primary font-medium hover:underline"
                         >
@@ -606,8 +610,8 @@ export default function Auth() {
                             )}
                           />
                         </div>
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Button type="submit" className="w-full" disabled={isLoading} aria-busy={isLoading}>
+                          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                           Create Account
                         </Button>
                       </form>
@@ -615,6 +619,7 @@ export default function Auth() {
                     <div className="mt-6 text-center text-sm">
                       Already have an account?{' '}
                       <button
+                        type="button"
                         onClick={() => setMode('signin')}
                         className="text-primary font-medium hover:underline"
                       >
@@ -627,7 +632,7 @@ export default function Auth() {
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
