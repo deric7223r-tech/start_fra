@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Shield, FileText, BookOpen, LayoutDashboard, ArrowRight, CheckCircle } from 'lucide-react-native';
+import { Shield, FileText, BookOpen, LayoutDashboard, ArrowRight, CheckCircle, User } from 'lucide-react-native';
 import { useAssessment } from '@/contexts/AssessmentContext';
+import { useAuth } from '@/contexts/AuthContext';
 import colors from '@/constants/colors';
 
 const GOLD_ACCENT = '#b38b2e';
@@ -13,6 +14,7 @@ const PRO_CARD_BG = '#f0f5ff';
 export default function HomeScreen() {
   const router = useRouter();
   const { startNewAssessment, selectPackage } = useAssessment();
+  const { isAuthenticated } = useAuth();
 
   const handlePackage1 = () => {
     startNewAssessment();
@@ -31,6 +33,17 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => router.push(isAuthenticated ? '/profile' : '/auth/login')}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={isAuthenticated ? 'View profile' : 'Sign in'}
+        >
+          <User size={20} color={colors.govBlue} />
+          <Text style={styles.profileButtonText}>{isAuthenticated ? 'Profile' : 'Sign In'}</Text>
+        </TouchableOpacity>
+
         <View style={styles.header}>
           <View
             style={styles.compliancePill}
@@ -199,8 +212,24 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: 48,
+  },
+  profileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: '#e8f0fe',
+    marginBottom: 20,
+  },
+  profileButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.govBlue,
   },
 
   /* ---- Header ---- */

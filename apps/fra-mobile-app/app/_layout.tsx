@@ -188,6 +188,14 @@ function RootLayoutNav() {
         name="auth/keypass"
         options={{ title: "Company Access Code" }}
       />
+      <Stack.Screen
+        name="auth/forgot-password"
+        options={{ title: "Reset Password" }}
+      />
+      <Stack.Screen
+        name="profile"
+        options={{ title: "Profile" }}
+      />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
