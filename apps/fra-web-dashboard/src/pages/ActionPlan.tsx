@@ -148,8 +148,8 @@ export default function ActionPlan() {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex items-center justify-center min-h-[60vh]" role="status" aria-label="Loading action plan">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
         </div>
       </Layout>
     );
@@ -161,9 +161,9 @@ export default function ActionPlan() {
     return (
       <Layout>
         <div className="container py-8 lg:py-12">
-          <Card className="max-w-md mx-auto text-center">
+          <Card className="max-w-md mx-auto text-center" role="alert">
             <CardContent className="pt-8 pb-6">
-              <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-4" />
+              <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-4" aria-hidden="true" />
               <h2 className="text-lg font-semibold mb-2">Failed to load action plan</h2>
               <p className="text-sm text-muted-foreground mb-6">
                 Please check your connection and try again.
@@ -188,7 +188,7 @@ export default function ActionPlan() {
           </Button>
           <Card className="max-w-md mx-auto text-center">
             <CardContent className="pt-8 pb-6">
-              <Target className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+              <Target className="h-10 w-10 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
               <h2 className="text-lg font-semibold mb-2">No action items yet</h2>
               <p className="text-sm text-muted-foreground mb-6">
                 Complete the workshop to generate your personalised action plan.
@@ -234,10 +234,17 @@ export default function ActionPlan() {
             <Card className="lg:w-64">
               <CardContent className="pt-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold mb-1">{completedItems}/{totalItems}</div>
-                  <div className="text-sm text-muted-foreground mb-3">Actions Completed</div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
+                  <div className="text-3xl font-bold mb-1" aria-hidden="true">{completedItems}/{totalItems}</div>
+                  <div className="text-sm text-muted-foreground mb-3" id="progress-label">Actions Completed</div>
+                  <div
+                    className="w-full bg-muted rounded-full h-2"
+                    role="progressbar"
+                    aria-valuenow={completedItems}
+                    aria-valuemin={0}
+                    aria-valuemax={totalItems}
+                    aria-labelledby="progress-label"
+                  >
+                    <div
                       className="bg-success h-2 rounded-full transition-all"
                       style={{ width: `${progressPercent}%` }}
                     />
@@ -253,7 +260,7 @@ export default function ActionPlan() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center">
-                    <Clock className="h-4 w-4 text-destructive" />
+                    <Clock className="h-4 w-4 text-destructive" aria-hidden="true" />
                   </div>
                   <div>
                     <CardTitle className="text-lg">Immediate</CardTitle>
@@ -262,9 +269,9 @@ export default function ActionPlan() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <ul className="space-y-3 list-none p-0 m-0" aria-label="Immediate action items">
                   {groupedItems.immediate.map(item => (
-                    <div
+                    <li
                       key={item.id}
                       className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
                         item.completed ? 'bg-success/5 border-success/30' : 'hover:bg-muted'
@@ -274,13 +281,14 @@ export default function ActionPlan() {
                         checked={item.completed}
                         onCheckedChange={() => toggleItemComplete(item.id)}
                         className="mt-0.5"
+                        aria-label={`${item.title} (${item.completed ? 'completed' : 'not completed'})`}
                       />
                       <span className={item.completed ? 'line-through text-muted-foreground' : ''}>
                         {item.title}
                       </span>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </CardContent>
             </Card>
 
@@ -289,7 +297,7 @@ export default function ActionPlan() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-warning/10 flex items-center justify-center">
-                    <Calendar className="h-4 w-4 text-warning" />
+                    <Calendar className="h-4 w-4 text-warning" aria-hidden="true" />
                   </div>
                   <div>
                     <CardTitle className="text-lg">30 Days</CardTitle>
@@ -298,9 +306,9 @@ export default function ActionPlan() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <ul className="space-y-3 list-none p-0 m-0" aria-label="30-day action items">
                   {groupedItems.thirtyDays.map(item => (
-                    <div
+                    <li
                       key={item.id}
                       className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
                         item.completed ? 'bg-success/5 border-success/30' : 'hover:bg-muted'
@@ -310,13 +318,14 @@ export default function ActionPlan() {
                         checked={item.completed}
                         onCheckedChange={() => toggleItemComplete(item.id)}
                         className="mt-0.5"
+                        aria-label={`${item.title} (${item.completed ? 'completed' : 'not completed'})`}
                       />
                       <span className={item.completed ? 'line-through text-muted-foreground' : ''}>
                         {item.title}
                       </span>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </CardContent>
             </Card>
 
@@ -325,7 +334,7 @@ export default function ActionPlan() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-success/10 flex items-center justify-center">
-                    <Target className="h-4 w-4 text-success" />
+                    <Target className="h-4 w-4 text-success" aria-hidden="true" />
                   </div>
                   <div>
                     <CardTitle className="text-lg">90 Days</CardTitle>
@@ -334,9 +343,9 @@ export default function ActionPlan() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <ul className="space-y-3 list-none p-0 m-0" aria-label="90-day action items">
                   {groupedItems.ninetyDays.map(item => (
-                    <div
+                    <li
                       key={item.id}
                       className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
                         item.completed ? 'bg-success/5 border-success/30' : 'hover:bg-muted'
@@ -346,13 +355,14 @@ export default function ActionPlan() {
                         checked={item.completed}
                         onCheckedChange={() => toggleItemComplete(item.id)}
                         className="mt-0.5"
+                        aria-label={`${item.title} (${item.completed ? 'completed' : 'not completed'})`}
                       />
                       <span className={item.completed ? 'line-through text-muted-foreground' : ''}>
                         {item.title}
                       </span>
-                    </div>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </CardContent>
             </Card>
           </div>
@@ -372,12 +382,13 @@ export default function ActionPlan() {
                 onChange={(e) => setCustomCommitments(e.target.value)}
                 rows={4}
                 className="mb-4"
+                aria-label="Your personal commitments, one per line"
               />
-              <Button onClick={saveCommitments} disabled={isSaving}>
+              <Button onClick={saveCommitments} disabled={isSaving} aria-busy={isSaving}>
                 {isSaving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save className="mr-2 h-4 w-4" aria-hidden="true" />
                 )}
                 Save Commitments
               </Button>

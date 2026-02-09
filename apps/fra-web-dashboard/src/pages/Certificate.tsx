@@ -134,8 +134,8 @@ export default function Certificate() {
   if (isLoadingCert) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="flex items-center justify-center min-h-[60vh]" role="status" aria-label="Loading certificate">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
         </div>
       </Layout>
     );
@@ -155,7 +155,7 @@ export default function Certificate() {
           <Card className="max-w-2xl mx-auto">
             <CardContent className="pt-6 text-center">
               <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                <Award className="h-8 w-8 text-muted-foreground" />
+                <Award className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
               </div>
               <h2 className="text-xl font-semibold mb-2">Complete the Workshop First</h2>
               <p className="text-muted-foreground mb-6">
@@ -187,11 +187,11 @@ export default function Certificate() {
           {certificate ? (
             <>
               {/* Certificate Display */}
-              <Card id="certificate-printable" ref={certificateRef} className="overflow-hidden mb-6">
+              <Card id="certificate-printable" ref={certificateRef} className="overflow-hidden mb-6" role="article" aria-label="Certificate of Completion">
                 <div className="gradient-hero p-8 lg:p-12 text-center">
                   <div className="flex justify-center mb-6">
                     <div className="h-20 w-20 rounded-full bg-accent flex items-center justify-center">
-                      <Award className="h-10 w-10 text-accent-foreground" />
+                      <Award className="h-10 w-10 text-accent-foreground" aria-hidden="true" />
                     </div>
                   </div>
                   <h1 className="text-3xl lg:text-4xl font-bold text-primary-foreground mb-2">
@@ -235,19 +235,19 @@ export default function Certificate() {
 
                   <div className="mt-8 pt-8 border-t flex flex-wrap justify-center gap-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
                       <span>Regulatory Landscape</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
                       <span>Fraud Types & Risks</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
                       <span>Defence Strategies</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
                       <span>Case Studies</span>
                     </div>
                   </div>
@@ -257,11 +257,11 @@ export default function Certificate() {
               {/* Actions */}
               <div className="flex flex-wrap gap-4 justify-center">
                 <Button size="lg" onClick={handleDownloadPDF}>
-                  <Download className="mr-2 h-5 w-5" />
+                  <Download className="mr-2 h-5 w-5" aria-hidden="true" />
                   Download PDF
                 </Button>
                 <Button size="lg" variant="outline" onClick={handleShareCertificate}>
-                  <Share2 className="mr-2 h-5 w-5" />
+                  <Share2 className="mr-2 h-5 w-5" aria-hidden="true" />
                   Share Certificate
                 </Button>
               </div>
@@ -271,7 +271,7 @@ export default function Certificate() {
               <CardHeader>
                 <div className="flex justify-center mb-4">
                   <div className="h-16 w-16 rounded-full bg-success/10 flex items-center justify-center">
-                    <Award className="h-8 w-8 text-success" />
+                    <Award className="h-8 w-8 text-success" aria-hidden="true" />
                   </div>
                 </div>
                 <CardTitle className="text-2xl">Congratulations!</CardTitle>
@@ -283,11 +283,11 @@ export default function Certificate() {
                 <p className="text-muted-foreground mb-6">
                   Generate your certificate of completion to document your training.
                 </p>
-                <Button size="lg" onClick={generateCertificate} disabled={isGenerating}>
+                <Button size="lg" onClick={generateCertificate} disabled={isGenerating} aria-busy={isGenerating}>
                   {isGenerating ? (
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" aria-hidden="true" />
                   ) : (
-                    <Award className="mr-2 h-5 w-5" />
+                    <Award className="mr-2 h-5 w-5" aria-hidden="true" />
                   )}
                   Generate Certificate
                 </Button>
