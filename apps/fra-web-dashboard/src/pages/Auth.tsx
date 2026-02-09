@@ -5,13 +5,13 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/hooks/useAuth';
-import { ApiError } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Shield, ArrowLeft, Loader2 } from 'lucide-react';
+import { Shield, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const signInSchema = z.object({
@@ -36,15 +36,40 @@ const signUpSchema = z.object({
   path: ['confirmPassword'],
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Reset token is required'),
+  newPassword: z.string()
+    .min(12, 'Password must be at least 12 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  confirmNewPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmNewPassword, {
+  message: "Passwords don't match",
+  path: ['confirmNewPassword'],
+});
+
 type SignInFormData = z.infer<typeof signInSchema>;
 type SignUpFormData = z.infer<typeof signUpSchema>;
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<'signin' | 'signup'>(
-    searchParams.get('mode') === 'signup' ? 'signup' : 'signin'
-  );
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot' | 'reset'>(() => {
+    const m = searchParams.get('mode');
+    if (m === 'signup') return 'signup';
+    if (m === 'forgot') return 'forgot';
+    if (m === 'reset') return 'reset';
+    return 'signin';
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -74,6 +99,51 @@ export default function Auth() {
       job_title: '',
     },
   });
+
+  const forgotForm = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: '' },
+  });
+
+  const resetForm = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      token: searchParams.get('token') ?? '',
+      newPassword: '',
+      confirmNewPassword: '',
+    },
+  });
+
+  const handleForgotPassword = async (data: ForgotPasswordFormData) => {
+    setIsLoading(true);
+    try {
+      await api.post('/api/v1/auth/forgot-password', { email: data.email });
+      setForgotSent(true);
+    } catch (err) {
+      // Always show success to prevent email enumeration
+      setForgotSent(true);
+    }
+    setIsLoading(false);
+  };
+
+  const handleResetPassword = async (data: ResetPasswordFormData) => {
+    setIsLoading(true);
+    try {
+      await api.post('/api/v1/auth/reset-password', {
+        token: data.token,
+        newPassword: data.newPassword,
+      });
+      setResetSuccess(true);
+      toast.success('Password reset successfully');
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 'INVALID_TOKEN') {
+        toast.error('Invalid or expired reset link. Please request a new one.');
+      } else {
+        toast.error('Password reset failed. Please try again.');
+      }
+    }
+    setIsLoading(false);
+  };
 
   const handleSignIn = async (data: SignInFormData) => {
     setIsLoading(true);
@@ -232,7 +302,15 @@ export default function Auth() {
                         </Button>
                       </form>
                     </Form>
-                    <div className="mt-6 text-center text-sm">
+                    <div className="mt-4 text-center text-sm">
+                      <button
+                        onClick={() => setMode('forgot')}
+                        className="text-muted-foreground hover:text-primary hover:underline"
+                      >
+                        Forgot your password?
+                      </button>
+                    </div>
+                    <div className="mt-3 text-center text-sm">
                       Don't have an account?{' '}
                       <button
                         onClick={() => setMode('signup')}
@@ -241,6 +319,168 @@ export default function Auth() {
                         Create one
                       </button>
                     </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : mode === 'forgot' ? (
+              <motion.div
+                key="forgot"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="border-0 shadow-xl">
+                  <CardHeader className="space-y-1">
+                    <CardTitle className="text-2xl">Reset your password</CardTitle>
+                    <CardDescription>
+                      Enter your email address and we'll send you a reset link
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {forgotSent ? (
+                      <div className="text-center space-y-4 py-4">
+                        <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
+                        <p className="text-sm text-muted-foreground">
+                          If an account with that email exists, a password reset link has been sent. Please check your inbox.
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => { setMode('signin'); setForgotSent(false); }}
+                        >
+                          Back to Sign In
+                        </Button>
+                      </div>
+                    ) : (
+                      <Form {...forgotForm}>
+                        <form onSubmit={forgotForm.handleSubmit(handleForgotPassword)} className="space-y-4">
+                          <FormField
+                            control={forgotForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="email"
+                                    placeholder="you@organisation.com"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="submit" className="w-full" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Send Reset Link
+                          </Button>
+                        </form>
+                      </Form>
+                    )}
+                    {!forgotSent && (
+                      <div className="mt-6 text-center text-sm">
+                        Remember your password?{' '}
+                        <button
+                          onClick={() => setMode('signin')}
+                          className="text-primary font-medium hover:underline"
+                        >
+                          Sign in
+                        </button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : mode === 'reset' ? (
+              <motion.div
+                key="reset"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Card className="border-0 shadow-xl">
+                  <CardHeader className="space-y-1">
+                    <CardTitle className="text-2xl">Set a new password</CardTitle>
+                    <CardDescription>
+                      Enter your reset token and choose a new password
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {resetSuccess ? (
+                      <div className="text-center space-y-4 py-4">
+                        <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto" />
+                        <p className="text-sm text-muted-foreground">
+                          Your password has been reset successfully. You can now sign in with your new password.
+                        </p>
+                        <Button
+                          className="w-full"
+                          onClick={() => { setMode('signin'); setResetSuccess(false); }}
+                        >
+                          Sign In
+                        </Button>
+                      </div>
+                    ) : (
+                      <Form {...resetForm}>
+                        <form onSubmit={resetForm.handleSubmit(handleResetPassword)} className="space-y-4">
+                          <FormField
+                            control={resetForm.control}
+                            name="token"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Reset Token</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Paste your reset token" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={resetForm.control}
+                            name="newPassword"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>New Password</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="••••••••" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={resetForm.control}
+                            name="confirmNewPassword"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Confirm New Password</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="••••••••" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="submit" className="w-full" disabled={isLoading}>
+                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Reset Password
+                          </Button>
+                        </form>
+                      </Form>
+                    )}
+                    {!resetSuccess && (
+                      <div className="mt-6 text-center text-sm">
+                        <button
+                          onClick={() => setMode('forgot')}
+                          className="text-primary font-medium hover:underline"
+                        >
+                          Request a new reset link
+                        </button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </motion.div>

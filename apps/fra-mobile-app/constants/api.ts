@@ -29,6 +29,7 @@ export const API_CONFIG = {
       LOGOUT: '/api/v1/auth/logout',
       REFRESH: '/api/v1/auth/refresh',
       ME: '/api/v1/auth/me',
+      FORGOT_PASSWORD: '/api/v1/auth/forgot-password',
     },
     // Assessments
     ASSESSMENTS: {

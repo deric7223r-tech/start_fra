@@ -97,7 +97,7 @@ export default function LoginScreen() {
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Forgot password"
-            onPress={() => Alert.alert('Reset Password', 'Please contact your organisation administrator or email support@stopfra.com to reset your password.')}
+            onPress={() => router.push('/auth/forgot-password')}
           >
             <Text style={styles.forgotPasswordText}>Forgot password?</Text>
           </TouchableOpacity>
