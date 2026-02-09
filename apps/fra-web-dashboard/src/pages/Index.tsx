@@ -62,8 +62,8 @@ export default function Index() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden gradient-hero py-20 lg:py-32">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptMCAwdi02aDZ2Nmgtengvex0WC8rMC8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
+      <section className="relative overflow-hidden gradient-hero py-20 lg:py-32" aria-label="Hero">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptMCAwdi02aDZ2Nmgtengvex0WC8rMC8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" aria-hidden="true" />
         
         <div className="container relative">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
@@ -74,7 +74,7 @@ export default function Index() {
               className="text-center lg:text-left"
             >
               <div className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-4 py-1.5 text-sm font-medium text-accent mb-4">
-                <Shield className="h-4 w-4" />
+                <Shield className="h-4 w-4" aria-hidden="true" />
                 <span>Professional Fraud Risk Training</span>
               </div>
 
@@ -85,7 +85,7 @@ export default function Index() {
               </h1>
 
               <div className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/5 px-4 py-1.5 text-xs font-semibold text-primary-foreground/90 mb-6 backdrop-blur">
-                <BadgeCheck className="h-4 w-4 text-accent" />
+                <BadgeCheck className="h-4 w-4 text-accent" aria-hidden="true" />
                 <span>GovS-013 & ECCTA 2023 Compliant</span>
               </div>
 
@@ -98,7 +98,7 @@ export default function Index() {
                 {user ? (
                   <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
                     <Link to="/dashboard">
-                      <Play className="mr-2 h-5 w-5" />
+                      <Play className="mr-2 h-5 w-5" aria-hidden="true" />
                       Go to Dashboard
                     </Link>
                   </Button>
@@ -106,13 +106,13 @@ export default function Index() {
                   <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
                     <Link to="/auth?mode=signup">
                       Get Started
-                      <ArrowRight className="ml-2 h-5 w-5" />
+                      <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                     </Link>
                   </Button>
                 )}
                 <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" asChild>
                   <Link to="/resources">
-                    <BookOpen className="mr-2 h-5 w-5" />
+                    <BookOpen className="mr-2 h-5 w-5" aria-hidden="true" />
                     View Resources
                   </Link>
                 </Button>
@@ -188,7 +188,7 @@ export default function Index() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 lg:py-32">
+      <section className="py-20 lg:py-32" aria-label="Features">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
@@ -212,7 +212,7 @@ export default function Index() {
                 <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                      <feature.icon className="h-6 w-6 text-primary" />
+                      <feature.icon className="h-6 w-6 text-primary" aria-hidden="true" />
                     </div>
                     <CardTitle className="text-lg">{feature.title}</CardTitle>
                   </CardHeader>
@@ -227,7 +227,7 @@ export default function Index() {
       </section>
 
       {/* Packages / Pricing Section */}
-      <section className="py-20 lg:py-32 bg-muted/50">
+      <section className="py-20 lg:py-32 bg-muted/50" aria-label="Packages">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
@@ -275,7 +275,7 @@ export default function Index() {
                       '1 key-pass included',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
                         <span className="text-sm">{item}</span>
                       </li>
                     ))}
@@ -283,7 +283,7 @@ export default function Index() {
                   <Button variant="outline" className="w-full" asChild>
                     <Link to="/auth?mode=signup">
                       Start Assessment
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Link>
                   </Button>
                 </CardContent>
@@ -301,7 +301,7 @@ export default function Index() {
               <Card className="h-full flex flex-col ring-2 ring-primary shadow-2xl relative bg-card">
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-5 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-lg">
-                    <Award className="h-3.5 w-3.5" />
+                    <Award className="h-3.5 w-3.5" aria-hidden="true" />
                     Most Popular
                   </span>
                 </div>
@@ -332,7 +332,7 @@ export default function Index() {
                       'Email support',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                        <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" />
                         <span className="text-sm">{item}</span>
                       </li>
                     ))}
@@ -340,7 +340,7 @@ export default function Index() {
                   <Button className="w-full" size="lg" asChild>
                     <Link to={user ? '/checkout?package=Professional&price=1995' : '/auth?mode=signup'}>
                       Choose Professional
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Link>
                   </Button>
                 </CardContent>
@@ -358,7 +358,7 @@ export default function Index() {
                 <CardHeader className="pb-4">
                   <div className="mb-3">
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
-                      <Shield className="h-3 w-3" />
+                      <Shield className="h-3 w-3" aria-hidden="true" />
                       Package 3
                     </span>
                   </div>
@@ -384,7 +384,7 @@ export default function Index() {
                       'Priority support',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
                         <span className="text-sm">{item}</span>
                       </li>
                     ))}
@@ -392,7 +392,7 @@ export default function Index() {
                   <Button className="w-full bg-amber-500 text-white hover:bg-amber-600 shadow-md" asChild>
                     <Link to={user ? '/checkout?package=Enterprise&price=4995' : '/auth?mode=signup'}>
                       Choose Enterprise
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                     </Link>
                   </Button>
                 </CardContent>
@@ -403,7 +403,7 @@ export default function Index() {
       </section>
 
       {/* Workshop Overview Section */}
-      <section className="py-20 lg:py-32">
+      <section className="py-20 lg:py-32" aria-label="Workshop overview">
         <div className="container">
           <div className="grid gap-12 lg:grid-cols-2 items-center">
             <div>
@@ -433,7 +433,7 @@ export default function Index() {
                     className="flex items-start gap-4"
                   >
                     <div className="flex items-center gap-2 text-sm font-medium text-primary min-w-[60px]">
-                      <Clock className="h-4 w-4" />
+                      <Clock className="h-4 w-4" aria-hidden="true" />
                       {item.time}
                     </div>
                     <div>
@@ -455,7 +455,7 @@ export default function Index() {
               <Card className="border-0 shadow-xl">
                 <CardHeader className="gradient-hero text-primary-foreground rounded-t-lg">
                   <CardTitle className="flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5" />
+                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
                     What You'll Learn
                   </CardTitle>
                 </CardHeader>
@@ -470,7 +470,7 @@ export default function Index() {
                       'Access downloadable resources and tools',
                     ].map((item) => (
                       <li key={item} className="flex items-start gap-3">
-                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" aria-hidden="true" />
                         <span className="text-sm">{item}</span>
                       </li>
                     ))}
@@ -483,7 +483,7 @@ export default function Index() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 lg:py-32">
+      <section className="py-20 lg:py-32" aria-label="Call to action">
         <div className="container">
           <Card className="border-0 gradient-hero overflow-hidden">
             <CardContent className="p-12 lg:p-16 text-center">
@@ -498,7 +498,7 @@ export default function Index() {
                 <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
                   <Link to={user ? '/workshop' : '/auth?mode=signup'}>
                     Start Workshop Now
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" asChild>
@@ -513,12 +513,12 @@ export default function Index() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12 bg-muted/30">
+      <footer className="border-t py-12 bg-muted/30" aria-label="Site footer">
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                <Shield className="h-4 w-4 text-primary-foreground" />
+                <Shield className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
               </div>
               <span className="font-semibold">Fraud Risk Co UK</span>
             </div>
