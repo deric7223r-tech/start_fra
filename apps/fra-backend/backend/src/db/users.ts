@@ -81,6 +81,18 @@ export async function dbListUsersByOrganisation(organisationId: string): Promise
   }));
 }
 
+export async function dbUpdateUserProfile(userId: string, fields: { name?: string; department?: string }): Promise<void> {
+  const pool = getDbPool();
+  const sets: string[] = [];
+  const vals: unknown[] = [];
+  let idx = 1;
+  if (fields.name !== undefined) { sets.push(`name = $${idx++}`); vals.push(fields.name); }
+  if (fields.department !== undefined) { sets.push(`department = $${idx++}`); vals.push(fields.department || null); }
+  if (sets.length === 0) return;
+  vals.push(userId);
+  await pool.query(`update public.users set ${sets.join(', ')} where id = $${idx}`, vals);
+}
+
 export async function dbGetEmployeeDashboardData(organisationId: string): Promise<EmployeeDashboardRow[]> {
   const pool = getDbPool();
   const res = await pool.query<DbEmployeeDashboardRow>(

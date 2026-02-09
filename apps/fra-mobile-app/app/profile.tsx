@@ -1,13 +1,19 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { User, Building2, Mail, Shield, LogOut, ChevronRight, Key } from 'lucide-react-native';
+import { User, Building2, Mail, Shield, LogOut, ChevronRight, Key, Pencil } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiService } from '@/services/api.service';
+import { API_CONFIG } from '@/constants/api';
 import colors from '@/constants/colors';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, organisation, signOut } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDepartment, setEditDepartment] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSignOut = () => {
     Alert.alert(
@@ -25,6 +31,41 @@ export default function ProfileScreen() {
         },
       ]
     );
+  };
+
+  const handleEditStart = () => {
+    if (!user) return;
+    setEditName(user.name);
+    setEditDepartment(user.department ?? '');
+    setIsEditing(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!user) return;
+    const updates: Record<string, string> = {};
+    if (editName.trim() && editName.trim() !== user.name) updates.name = editName.trim();
+    if (editDepartment !== (user.department ?? '')) updates.department = editDepartment;
+
+    if (Object.keys(updates).length === 0) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const result = await apiService.patch(API_CONFIG.ENDPOINTS.AUTH.UPDATE_PROFILE, updates);
+      if (result.success && result.data) {
+        // Update local user state
+        if (updates.name) user.name = updates.name;
+        if (updates.department !== undefined) user.department = updates.department || undefined;
+      } else {
+        Alert.alert('Error', result.error?.message || 'Failed to update profile');
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    }
+    setIsSaving(false);
+    setIsEditing(false);
   };
 
   if (!user) {
@@ -118,37 +159,105 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Actions</Text>
-        {user.role === 'employer' && (
+      {isEditing ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Edit Profile</Text>
+          <View style={styles.card}>
+            <View style={styles.editField}>
+              <Text style={styles.editLabel}>Name</Text>
+              <TextInput
+                style={styles.editInput}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Your name"
+                placeholderTextColor={colors.govGrey3}
+                autoCapitalize="words"
+                accessibilityLabel="Name"
+              />
+            </View>
+            <View style={styles.separator} />
+            <View style={styles.editField}>
+              <Text style={styles.editLabel}>Department</Text>
+              <TextInput
+                style={styles.editInput}
+                value={editDepartment}
+                onChangeText={setEditDepartment}
+                placeholder="e.g. Finance, HR, IT"
+                placeholderTextColor={colors.govGrey3}
+                autoCapitalize="words"
+                accessibilityLabel="Department"
+              />
+            </View>
+            <View style={styles.editActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setIsEditing(false)}
+                disabled={isSaving}
+                accessibilityRole="button"
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
+                onPress={handleEditSave}
+                disabled={isSaving || !editName.trim()}
+                accessibilityRole="button"
+              >
+                {isSaving ? (
+                  <ActivityIndicator color={colors.white} size="small" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Actions</Text>
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => router.push('/dashboard')}
+            onPress={handleEditStart}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel="Go to employer dashboard"
+            accessibilityLabel="Edit profile"
           >
             <View style={styles.actionRow}>
-              <Building2 size={18} color={colors.govBlue} />
-              <Text style={styles.actionText}>Employer Dashboard</Text>
+              <Pencil size={18} color={colors.govBlue} />
+              <Text style={styles.actionText}>Edit Profile</Text>
               <ChevronRight size={18} color={colors.govGrey3} />
             </View>
           </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => router.push('/feedback')}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel="Send feedback"
-        >
-          <View style={styles.actionRow}>
-            <Mail size={18} color={colors.govBlue} />
-            <Text style={styles.actionText}>Send Feedback</Text>
-            <ChevronRight size={18} color={colors.govGrey3} />
-          </View>
-        </TouchableOpacity>
-      </View>
+          {user.role === 'employer' && (
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push('/dashboard')}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Go to employer dashboard"
+            >
+              <View style={styles.actionRow}>
+                <Building2 size={18} color={colors.govBlue} />
+                <Text style={styles.actionText}>Employer Dashboard</Text>
+                <ChevronRight size={18} color={colors.govGrey3} />
+              </View>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => router.push('/feedback')}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Send feedback"
+          >
+            <View style={styles.actionRow}>
+              <Mail size={18} color={colors.govBlue} />
+              <Text style={styles.actionText}>Send Feedback</Text>
+              <ChevronRight size={18} color={colors.govGrey3} />
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <TouchableOpacity
         style={styles.signOutButton}
@@ -299,6 +408,55 @@ const styles = StyleSheet.create({
   },
   signInButtonText: {
     fontSize: 16,
+    fontWeight: '600' as const,
+    color: colors.white,
+  },
+  editField: {
+    paddingVertical: 4,
+  },
+  editLabel: {
+    fontSize: 13,
+    color: colors.govGrey2,
+    marginBottom: 6,
+  },
+  editInput: {
+    borderWidth: 2,
+    borderColor: colors.govGrey1,
+    borderRadius: 4,
+    padding: 12,
+    fontSize: 16,
+    color: colors.govGrey1,
+  },
+  editActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  cancelButton: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: colors.govGrey3,
+    borderRadius: 4,
+    padding: 12,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.govGrey2,
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: colors.govBlue,
+    borderRadius: 4,
+    padding: 12,
+    alignItems: 'center',
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
+  },
+  saveButtonText: {
+    fontSize: 15,
     fontWeight: '600' as const,
     color: colors.white,
   },

@@ -1,6 +1,6 @@
 /// <reference types="jest" />
 
-import { app, createAuthenticatedUser } from './helpers';
+import { app, createAuthenticatedUser, authHeaders } from './helpers';
 
 // Helper to create a user and return tokens (keeps res/json shape for auth-specific tests)
 async function signup(overrides: Record<string, unknown> = {}) {
@@ -279,6 +279,122 @@ describe('Auth endpoints', () => {
         body: JSON.stringify({ token: 'invalid-token', newPassword: 'NewSecurePass1!' }),
       });
       expect(res.status).toBe(400);
+    });
+  });
+
+  // ── PATCH /auth/profile ──────────────────────────────────────────
+
+  describe('PATCH /auth/profile', () => {
+    it('rejects without auth', async () => {
+      const res = await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'New Name' }),
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects empty payload', async () => {
+      const { accessToken } = await createAuthenticatedUser();
+      const res = await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({}),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('updates name', async () => {
+      const { accessToken } = await createAuthenticatedUser();
+      const res = await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ name: 'Updated Name' }),
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as any;
+      expect(json.success).toBe(true);
+      expect(json.data.name).toBe('Updated Name');
+    });
+
+    it('updates department', async () => {
+      const { accessToken } = await createAuthenticatedUser();
+      const res = await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ department: 'Finance' }),
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as any;
+      expect(json.success).toBe(true);
+      expect(json.data.department).toBe('Finance');
+    });
+
+    it('updates both name and department', async () => {
+      const { accessToken } = await createAuthenticatedUser();
+      const res = await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ name: 'Jane Doe', department: 'Engineering' }),
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as any;
+      expect(json.data.name).toBe('Jane Doe');
+      expect(json.data.department).toBe('Engineering');
+    });
+
+    it('clears department with empty string', async () => {
+      const { accessToken } = await createAuthenticatedUser();
+      // Set department first
+      await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ department: 'HR' }),
+      });
+      // Clear it
+      const res = await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ department: '' }),
+      });
+      expect(res.status).toBe(200);
+      const json = (await res.json()) as any;
+      expect(json.data.department).toBeNull();
+    });
+
+    it('rejects name over 255 characters', async () => {
+      const { accessToken } = await createAuthenticatedUser();
+      const res = await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ name: 'a'.repeat(256) }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('rejects empty name', async () => {
+      const { accessToken } = await createAuthenticatedUser();
+      const res = await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ name: '' }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it('persists changes visible in /auth/me', async () => {
+      const { accessToken } = await createAuthenticatedUser();
+      await app.request('http://localhost/api/v1/auth/profile', {
+        method: 'PATCH',
+        headers: authHeaders(accessToken),
+        body: JSON.stringify({ name: 'Persisted Name' }),
+      });
+      const meRes = await app.request('http://localhost/api/v1/auth/me', {
+        headers: authHeaders(accessToken),
+      });
+      expect(meRes.status).toBe(200);
+      const meJson = (await meRes.json()) as any;
+      expect(meJson.data.name).toBe('Persisted Name');
     });
   });
 });

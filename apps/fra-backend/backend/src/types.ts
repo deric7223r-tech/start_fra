@@ -379,3 +379,10 @@ export const s3PromoteUploadSchema = z.object({
   sourceKey: z.string().min(1).max(1024),
   filename: z.string().min(1).max(255).optional(),
 });
+
+export const profileUpdateSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  department: z.string().max(255).optional(),
+}).refine((data) => data.name !== undefined || data.department !== undefined, {
+  message: 'At least one field must be provided',
+});

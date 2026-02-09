@@ -30,6 +30,7 @@ export interface User {
   name: string;
   role: 'employer' | 'employee' | 'admin';
   organisationId: string;
+  department?: string;
   createdAt: string;
 }
 

@@ -5,7 +5,7 @@ import { getDbPool } from '../db.js';
 import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
 import { getRedis } from '../redis.js';
 import {
-  signupSchema, loginSchema, refreshSchema, forgotPasswordSchema, resetPasswordSchema,
+  signupSchema, loginSchema, refreshSchema, forgotPasswordSchema, resetPasswordSchema, profileUpdateSchema,
   refreshSecret,
   LOCKOUT_PREFIX, LOCKOUT_MAX_ATTEMPTS, LOCKOUT_WINDOW_SECONDS,
   RATE_LIMITS,
@@ -14,7 +14,7 @@ import type { User } from '../types.js';
 import { usersByEmail, refreshTokenAllowlist, organisationsById, accountLockouts } from '../stores.js';
 import { getClientIp, rateLimit } from '../middleware.js';
 import {
-  dbGetUserByEmail, dbGetUserById, dbUpdateUserPasswordHash,
+  dbGetUserByEmail, dbGetUserById, dbUpdateUserPasswordHash, dbUpdateUserProfile,
   dbUpsertRefreshToken, dbHasRefreshToken, dbDeleteRefreshToken, dbDeleteAllRefreshTokensForUser,
   dbGetOrganisationById,
   auditLog,
@@ -456,6 +456,47 @@ auth.post('/auth/reset-password', async (c) => {
   });
 
   return c.json({ success: true });
+});
+
+auth.patch('/auth/profile', async (c) => {
+  const limited = await rateLimit('auth:profile', { windowMs: AUTH_WINDOW_MS, max: 20 })(c);
+  if (limited instanceof Response) return limited;
+
+  const authCtx = requireAuth(c);
+  if (authCtx instanceof Response) return authCtx;
+
+  const parsed = profileUpdateSchema.safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success) return jsonError(c, 400, 'VALIDATION_ERROR', 'Invalid profile payload');
+
+  const { name, department } = parsed.data;
+
+  if (hasDatabase()) {
+    await dbUpdateUserProfile(authCtx.userId, { name, department });
+  } else {
+    const user = Array.from(usersByEmail.values()).find((u) => u.id === authCtx.userId);
+    if (!user) return jsonError(c, 401, 'UNAUTHORIZED', 'User not found');
+    if (name !== undefined) user.name = name;
+    if (department !== undefined) user.department = department || undefined;
+  }
+
+  await auditLog({
+    eventType: 'auth.profile_update', actorId: authCtx.userId, actorEmail: authCtx.email,
+    organisationId: authCtx.organisationId, resourceType: 'user', resourceId: authCtx.userId,
+    details: { name, department }, ipAddress: getClientIp(c),
+    userAgent: c.req.header('user-agent'),
+  });
+
+  // Return updated user data
+  const updatedUser = hasDatabase()
+    ? await dbGetUserById(authCtx.userId)
+    : Array.from(usersByEmail.values()).find((u) => u.id === authCtx.userId) ?? null;
+
+  if (!updatedUser) return jsonError(c, 401, 'UNAUTHORIZED', 'User not found');
+
+  return c.json({
+    success: true,
+    data: { ...publicUser(updatedUser), department: updatedUser.department ?? null },
+  });
 });
 
 auth.get('/debug/db/ping', async (c) => {
