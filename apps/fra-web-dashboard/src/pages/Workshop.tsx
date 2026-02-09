@@ -58,8 +58,8 @@ export default function Workshop() {
   if (progressLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Loading" />
+        <div className="flex items-center justify-center min-h-[60vh]" role="status" aria-label="Loading workshop">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
         </div>
       </Layout>
     );
@@ -137,7 +137,7 @@ export default function Workshop() {
           <div className="p-4 border-b">
             <h2 className="font-semibold">Workshop Progress</h2>
             <div className="mt-2">
-              <Progress value={progressPercent} className="h-2" />
+              <Progress value={progressPercent} className="h-2" aria-label={`Workshop progress: ${currentSlide + 1} of ${totalSlides} sections`} />
               <p className="text-sm text-muted-foreground mt-1">
                 {currentSlide + 1} of {totalSlides} sections
               </p>
@@ -170,7 +170,7 @@ export default function Workshop() {
                         ? 'bg-primary-foreground text-primary'
                         : 'bg-muted-foreground/20'
                   }`}>
-                    {isComplete && !isCurrent ? <CheckCircle2 className="h-3 w-3" /> : index + 1}
+                    {isComplete && !isCurrent ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{section.title}</div>
@@ -186,7 +186,7 @@ export default function Workshop() {
           {session && (
             <div className="p-4 border-t">
               <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4" />
+                <Users className="h-4 w-4" aria-hidden="true" />
                 <span>{participantCount} participants</span>
               </div>
               <Badge variant="secondary" className="mt-2">
@@ -199,15 +199,15 @@ export default function Workshop() {
         {/* Main Content */}
         <main className="flex-1 flex flex-col">
           {/* Top Bar */}
-          <header className="border-b p-4 flex items-center justify-between bg-card">
+          <header className="border-b p-4 flex items-center justify-between bg-card" aria-label="Workshop navigation">
             <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
+              <ChevronLeft className="h-4 w-4 mr-1" aria-hidden="true" />
               Exit Workshop
             </Button>
             
             <div className="flex items-center gap-4">
               <div className="lg:hidden">
-                <Progress value={progressPercent} className="w-32 h-2" />
+                <Progress value={progressPercent} className="w-32 h-2" aria-label={`Workshop progress: ${currentSlide + 1} of ${totalSlides} sections`} />
               </div>
               <span className="text-sm text-muted-foreground">
                 {currentSlide + 1} / {totalSlides}
@@ -243,7 +243,7 @@ export default function Workshop() {
                   <Card className="mb-8">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
-                        <Lightbulb className="h-5 w-5 text-accent" />
+                        <Lightbulb className="h-5 w-5 text-accent" aria-hidden="true" />
                         Key Learning Points
                       </CardTitle>
                     </CardHeader>
@@ -257,7 +257,7 @@ export default function Workshop() {
                             transition={{ delay: index * 0.1 }}
                             className="flex items-start gap-3"
                           >
-                            <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                            <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" aria-hidden="true" />
                             <span>{point}</span>
                           </motion.li>
                         ))}
@@ -269,7 +269,7 @@ export default function Workshop() {
                   <Card className="mb-8 border-accent/50 bg-accent/5">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-lg">
-                        <MessageSquare className="h-5 w-5 text-accent" />
+                        <MessageSquare className="h-5 w-5 text-accent" aria-hidden="true" />
                         Discussion Prompt
                       </CardTitle>
                     </CardHeader>
@@ -283,7 +283,7 @@ export default function Workshop() {
                     <Card className="mb-8">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          <HelpCircle className="h-5 w-5 text-primary" />
+                          <HelpCircle className="h-5 w-5 text-primary" aria-hidden="true" />
                           Quick Quiz
                         </CardTitle>
                         <CardDescription>
@@ -335,7 +335,7 @@ export default function Workshop() {
                             Submit Answer
                           </Button>
                         ) : (
-                          <div className="mt-4 p-4 rounded-lg bg-muted">
+                          <div className="mt-4 p-4 rounded-lg bg-muted" role="status" aria-label="Quiz explanation">
                             <p className="font-medium mb-1">Explanation:</p>
                             <p className="text-muted-foreground">{currentQuiz.explanation}</p>
                           </div>
@@ -375,7 +375,7 @@ export default function Workshop() {
                           <ul className="space-y-2">
                             {sectorCaseStudy.learningPoints.map((point) => (
                               <li key={point} className="flex items-start gap-2">
-                                <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-1" />
+                                <CheckCircle2 className="h-4 w-4 text-success shrink-0 mt-1" aria-hidden="true" />
                                 <span>{point}</span>
                               </li>
                             ))}
@@ -395,6 +395,7 @@ export default function Workshop() {
                                 <div className="space-y-2">
                                   {scenarioExercise.steps[scenarioStep].options.map((option) => (
                                     <button
+                                      type="button"
                                       key={option.id}
                                       onClick={() => handleScenarioChoice(option.id)}
                                       disabled={showFeedback}
@@ -434,7 +435,7 @@ export default function Workshop() {
                                         }}
                                       >
                                         Continue Scenario
-                                        <ArrowRight className="ml-2 h-4 w-4" />
+                                        <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                                       </Button>
                                     )}
                                   </div>
@@ -447,7 +448,7 @@ export default function Workshop() {
                             <Card className="border-success bg-success/5">
                               <CardContent className="pt-6">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <CheckCircle2 className="h-5 w-5 text-success" />
+                                  <CheckCircle2 className="h-5 w-5 text-success" aria-hidden="true" />
                                   <span className="font-medium">Scenario Complete!</span>
                                 </div>
                                 <p className="text-muted-foreground">
@@ -466,14 +467,14 @@ export default function Workshop() {
           </div>
 
           {/* Navigation Footer */}
-          <footer className="border-t p-4 bg-card">
+          <footer className="border-t p-4 bg-card" aria-label="Workshop section navigation">
             <div className="container max-w-4xl flex items-center justify-between">
               <Button
                 variant="outline"
                 onClick={handlePrevious}
                 disabled={currentSlide === 0}
               >
-                <ChevronLeft className="mr-2 h-4 w-4" />
+                <ChevronLeft className="mr-2 h-4 w-4" aria-hidden="true" />
                 Previous
               </Button>
 
@@ -497,7 +498,7 @@ export default function Workshop() {
 
               <Button onClick={handleNext}>
                 {currentSlide === totalSlides - 1 ? 'Complete Workshop' : 'Next'}
-                <ChevronRight className="ml-2 h-4 w-4" />
+                <ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
           </footer>
