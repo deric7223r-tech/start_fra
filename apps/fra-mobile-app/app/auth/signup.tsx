@@ -123,7 +123,7 @@ export default function SignUpScreen() {
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Min 8 chars, uppercase, number, special char"
+                placeholder="Min 12 chars, uppercase, lowercase, number"
                 placeholderTextColor={colors.govGrey3}
                 secureTextEntry
                 accessibilityLabel="Password"
@@ -131,8 +131,8 @@ export default function SignUpScreen() {
             </View>
             {password.length > 0 && (
               <View style={styles.passwordRequirements}>
-                <Text style={[styles.requirement, password.length >= 8 && styles.requirementMet]}>
-                  ✓ At least 8 characters
+                <Text style={[styles.requirement, password.length >= 12 && styles.requirementMet]}>
+                  ✓ At least 12 characters
                 </Text>
                 <Text style={[styles.requirement, /[a-z]/.test(password) && styles.requirementMet]}>
                   ✓ One lowercase letter
@@ -142,9 +142,6 @@ export default function SignUpScreen() {
                 </Text>
                 <Text style={[styles.requirement, /[0-9]/.test(password) && styles.requirementMet]}>
                   ✓ One number
-                </Text>
-                <Text style={[styles.requirement, /[^a-zA-Z0-9]/.test(password) && styles.requirementMet]}>
-                  ✓ One special character (!@#$%^&*)
                 </Text>
               </View>
             )}
