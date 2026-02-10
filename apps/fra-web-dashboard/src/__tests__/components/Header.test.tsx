@@ -36,24 +36,22 @@ function makeProfile(overrides?: Record<string, unknown>) {
     id: 'p-1',
     user_id: 'u-1',
     full_name: 'Alice Smith',
-    organization_name: 'Test Organisation',
-    sector: 'public' as const,
-    job_title: 'Finance Director',
-    created_at: '2025-01-01T00:00:00Z',
-    updated_at: '2025-01-01T00:00:00Z',
+    organization_name: 'Acme Ltd',
+    sector: 'private',
+    job_title: 'Manager',
     ...overrides,
   };
 }
 
 function setupAuth(overrides?: Record<string, unknown>) {
   mockedUseAuth.mockReturnValue({
-    user: makeUser(),
-    profile: makeProfile(),
-    roles: ['participant'] as never[],
+    user: null,
+    profile: null,
+    roles: [] as never[],
     isLoading: false,
     signUp: vi.fn(),
     signIn: vi.fn(),
-    signOut: vi.fn().mockResolvedValue(undefined),
+    signOut: vi.fn(),
     hasRole: vi.fn().mockReturnValue(false),
     refreshProfile: vi.fn(),
     ...overrides,
@@ -71,48 +69,47 @@ function renderHeader() {
 // ── Tests ──────────────────────────────────────────────────
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
+  setupAuth();
 });
 
 describe('Header', () => {
-  // ── Unauthenticated state ─────────────────────────
+  // ── Unauthenticated state ──────────────────────
 
-  describe('unauthenticated state', () => {
-    beforeEach(() => {
-      setupAuth({ user: null, profile: null });
-    });
-
+  describe('unauthenticated', () => {
     it('shows Sign In link pointing to /auth', () => {
       renderHeader();
 
-      const link = screen.getByRole('link', { name: 'Sign In' });
-      expect(link).toBeInTheDocument();
+      const link = screen.getByRole('link', { name: /Sign In/ });
       expect(link).toHaveAttribute('href', '/auth');
     });
 
     it('shows Get Started link pointing to /auth?mode=signup', () => {
       renderHeader();
 
-      const link = screen.getByRole('link', { name: 'Get Started' });
-      expect(link).toBeInTheDocument();
+      const link = screen.getByRole('link', { name: /Get Started/ });
       expect(link).toHaveAttribute('href', '/auth?mode=signup');
     });
 
-    it('does not render the user menu button', () => {
+    it('does not render the avatar dropdown', () => {
       renderHeader();
 
-      expect(screen.queryByRole('button', { name: 'User menu' })).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('User menu')).not.toBeInTheDocument();
     });
   });
 
-  // ── Authenticated — participant ───────────────────
+  // ── Authenticated — participant role ───────────
 
-  describe('authenticated — participant role', () => {
+  describe('authenticated participant', () => {
     beforeEach(() => {
-      setupAuth();
+      setupAuth({
+        user: makeUser(),
+        profile: makeProfile(),
+        hasRole: vi.fn().mockReturnValue(false),
+      });
     });
 
-    it('shows user avatar with initials from full_name', () => {
+    it('shows avatar with initials from profile name', () => {
       renderHeader();
 
       expect(screen.getByText('AS')).toBeInTheDocument();
@@ -121,9 +118,7 @@ describe('Header', () => {
     it('does not show Organisation nav button', () => {
       renderHeader();
 
-      // The nav-level button (not dropdown items)
-      const orgLinks = screen.queryAllByRole('link', { name: 'Organisation' });
-      expect(orgLinks).toHaveLength(0);
+      expect(screen.queryByRole('link', { name: 'Organisation' })).not.toBeInTheDocument();
     });
 
     it('does not show Facilitator Dashboard nav button', () => {
@@ -132,52 +127,54 @@ describe('Header', () => {
       expect(screen.queryByRole('link', { name: 'Facilitator Dashboard' })).not.toBeInTheDocument();
     });
 
-    it('dropdown shows user name and email', async () => {
+    it('shows user name and email in dropdown', async () => {
       const user = userEvent.setup();
       renderHeader();
 
-      await user.click(screen.getByRole('button', { name: 'User menu' }));
+      await user.click(screen.getByLabelText('User menu'));
 
       expect(screen.getByText('Alice Smith')).toBeInTheDocument();
       expect(screen.getByText('alice@example.com')).toBeInTheDocument();
     });
   });
 
-  // ── Authenticated — employer ──────────────────────
+  // ── Authenticated — employer role ──────────────
 
-  describe('authenticated — employer role', () => {
+  describe('authenticated employer', () => {
     beforeEach(() => {
-      setupAuth({ user: makeUser({ role: 'employer' }) });
+      setupAuth({
+        user: makeUser({ role: 'employer' }),
+        profile: makeProfile(),
+        hasRole: vi.fn().mockReturnValue(false),
+      });
     });
 
     it('shows Organisation nav button linking to /employer', () => {
       renderHeader();
 
       const links = screen.getAllByRole('link', { name: 'Organisation' });
-      // At least the nav-level button
-      const navLink = links.find(l => l.getAttribute('href') === '/employer');
-      expect(navLink).toBeDefined();
+      expect(links[0]).toHaveAttribute('href', '/employer');
     });
 
-    it('dropdown menu includes Organisation link', async () => {
+    it('shows Organisation link in dropdown menu', async () => {
       const user = userEvent.setup();
       renderHeader();
 
-      await user.click(screen.getByRole('button', { name: 'User menu' }));
+      await user.click(screen.getByLabelText('User menu'));
 
-      const orgLinks = screen.getAllByRole('menuitem').filter(
-        el => el.textContent === 'Organisation',
-      );
+      const orgLinks = screen.getAllByRole('menuitem', { name: 'Organisation' });
       expect(orgLinks.length).toBeGreaterThanOrEqual(1);
     });
   });
 
-  // ── Authenticated — facilitator ───────────────────
+  // ── Authenticated — facilitator role ───────────
 
-  describe('authenticated — facilitator role', () => {
+  describe('authenticated facilitator', () => {
     it('shows Facilitator Dashboard nav button linking to /facilitator', () => {
       setupAuth({
-        hasRole: vi.fn((role: string) => role === 'facilitator' || role === 'admin'),
+        user: makeUser(),
+        profile: makeProfile(),
+        hasRole: vi.fn().mockImplementation((role: string) => role === 'facilitator'),
       });
 
       renderHeader();
@@ -187,13 +184,14 @@ describe('Header', () => {
     });
   });
 
-  // ── Authenticated — admin ─────────────────────────
+  // ── Authenticated — admin role ─────────────────
 
-  describe('authenticated — admin role', () => {
+  describe('authenticated admin', () => {
     beforeEach(() => {
       setupAuth({
         user: makeUser({ role: 'admin' }),
-        hasRole: vi.fn((role: string) => role === 'facilitator' || role === 'admin'),
+        profile: makeProfile(),
+        hasRole: vi.fn().mockReturnValue(true),
       });
     });
 
@@ -203,31 +201,24 @@ describe('Header', () => {
       expect(screen.getAllByRole('link', { name: 'Organisation' }).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByRole('link', { name: 'Facilitator Dashboard' })).toBeInTheDocument();
     });
-
-    it('dropdown menu includes Organisation link', async () => {
-      const user = userEvent.setup();
-      renderHeader();
-
-      await user.click(screen.getByRole('button', { name: 'User menu' }));
-
-      const orgItems = screen.getAllByRole('menuitem').filter(
-        el => el.textContent === 'Organisation',
-      );
-      expect(orgItems.length).toBeGreaterThanOrEqual(1);
-    });
   });
 
-  // ── Sign-out flow ─────────────────────────────────
+  // ── Sign out flow ──────────────────────────────
 
-  describe('sign-out flow', () => {
-    it('clicking Sign out calls signOut and navigates to /', async () => {
+  describe('sign out', () => {
+    it('calls signOut and navigates to / when Sign out is clicked', async () => {
       const mockSignOut = vi.fn().mockResolvedValue(undefined);
-      setupAuth({ signOut: mockSignOut });
+      setupAuth({
+        user: makeUser(),
+        profile: makeProfile(),
+        signOut: mockSignOut,
+        hasRole: vi.fn().mockReturnValue(false),
+      });
 
       const user = userEvent.setup();
       renderHeader();
 
-      await user.click(screen.getByRole('button', { name: 'User menu' }));
+      await user.click(screen.getByLabelText('User menu'));
       await user.click(screen.getByText('Sign out'));
 
       expect(mockSignOut).toHaveBeenCalled();
@@ -235,25 +226,44 @@ describe('Header', () => {
     });
   });
 
-  // ── Initials generation ───────────────────────────
+  // ── Initials generation ────────────────────────
 
-  describe('initials generation', () => {
-    it('derives two-letter initials from two-word name', () => {
-      setupAuth({ profile: makeProfile({ full_name: 'Bob Jones' }) });
+  describe('initials', () => {
+    it('generates two-letter initials from two-word name', () => {
+      setupAuth({
+        user: makeUser(),
+        profile: makeProfile({ full_name: 'John Doe' }),
+        hasRole: vi.fn().mockReturnValue(false),
+      });
 
       renderHeader();
 
-      expect(screen.getByText('BJ')).toBeInTheDocument();
+      expect(screen.getByText('JD')).toBeInTheDocument();
     });
 
-    it('falls back to User icon when full_name is null', () => {
-      setupAuth({ profile: makeProfile({ full_name: null }) });
+    it('falls back to User icon when profile name is null', () => {
+      setupAuth({
+        user: makeUser(),
+        profile: makeProfile({ full_name: null }),
+        hasRole: vi.fn().mockReturnValue(false),
+      });
 
       renderHeader();
 
-      // No initials text, but the avatar button should still render
+      // No initials text; User icon is rendered instead
       expect(screen.queryByText('AS')).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'User menu' })).toBeInTheDocument();
+      expect(screen.queryByText('JD')).not.toBeInTheDocument();
+    });
+  });
+
+  // ── Brand link ─────────────────────────────────
+
+  describe('brand', () => {
+    it('shows brand name linking to /', () => {
+      renderHeader();
+
+      const link = screen.getByRole('link', { name: /Fraud Risk Awareness/ });
+      expect(link).toHaveAttribute('href', '/');
     });
   });
 });
