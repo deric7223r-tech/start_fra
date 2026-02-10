@@ -3,7 +3,7 @@ module.exports = {
     '^.+\\.(js|jsx|ts|tsx)$': '<rootDir>/jest-transformer.js',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|@react-native-community|expo|@expo|lucide-react-native|@nkzw)/)',
+    'node_modules/(?!(\\.pnpm|react-native|@react-native|@react-native-community|expo|@expo|lucide-react-native|@nkzw)/)',
   ],
   collectCoverageFrom: [
     '**/*.{js,jsx,ts,tsx}',
