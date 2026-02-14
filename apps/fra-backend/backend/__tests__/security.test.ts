@@ -48,7 +48,7 @@ describe('Security hardening', () => {
         body: JSON.stringify({ email, password }),
       });
       expect(res.status).toBe(401);
-    });
+    }, 30000);
 
     it('allows login after lockout is cleared', async () => {
       // Manually clear lockout

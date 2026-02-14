@@ -119,7 +119,7 @@ export default function Auth() {
     try {
       await api.post('/api/v1/auth/forgot-password', { email: data.email });
       setForgotSent(true);
-    } catch (err) {
+    } catch (_err) {
       // Always show success to prevent email enumeration
       setForgotSent(true);
     }

@@ -277,7 +277,7 @@ payments.get('/purchases/:id', async (c) => {
     if (!purchase || purchase.organisationId !== auth.organisationId) {
       return jsonError(c, 404, 'NOT_FOUND', 'Purchase not found');
     }
-    const { clientSecret: _cs, ...safePurchase } = purchase;
+    const { clientSecret: _, ...safePurchase } = purchase;
     return c.json({ success: true, data: safePurchase });
   }
 
@@ -285,7 +285,7 @@ payments.get('/purchases/:id', async (c) => {
   if (!purchase || purchase.organisationId !== auth.organisationId) {
     return jsonError(c, 404, 'NOT_FOUND', 'Purchase not found');
   }
-  const { clientSecret: _cs, ...safePurchase } = purchase;
+  const { clientSecret: _, ...safePurchase } = purchase;
   return c.json({ success: true, data: safePurchase });
 });
 
@@ -313,7 +313,7 @@ payments.get('/purchases/organisation/:orgId', async (c) => {
 
   const { page, pageSize } = parsePagination(c.req.query());
   const result = paginate(allPurchases, page, pageSize);
-  const safeItems = result.items.map(({ clientSecret: _cs, ...rest }) => rest);
+  const safeItems = result.items.map(({ clientSecret: _, ...rest }) => rest);
 
   return c.json({ success: true, data: safeItems, pagination: { page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages } });
 });
