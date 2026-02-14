@@ -79,7 +79,7 @@ export default function Index() {
               </div>
 
               <h1 className="text-4xl font-bold tracking-tight text-primary-foreground sm:text-5xl lg:text-6xl mb-4">
-                Fraud Risk CO UK
+                FRAUD-RISK.CO.UK
                 <br />
                 <span className="text-accent">Protect Your Organisation</span>
               </h1>
@@ -492,7 +492,7 @@ export default function Index() {
               </h2>
               <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
                 Join thousands of professionals who have enhanced their fraud awareness
-                through Fraud Risk Co UK's interactive workshop platform.
+                through FRAUD-RISK.CO.UK's interactive workshop platform.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
@@ -520,10 +520,10 @@ export default function Index() {
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <Shield className="h-4 w-4 text-primary-foreground" aria-hidden="true" />
               </div>
-              <span className="font-semibold">Fraud Risk Co UK</span>
+              <span className="font-semibold">FRAUD-RISK.CO.UK</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Fraud Risk Co UK. All rights reserved.
+              © {new Date().getFullYear()} FRAUD-RISK.CO.UK. All rights reserved.
             </p>
           </div>
         </div>

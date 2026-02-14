@@ -120,7 +120,7 @@ export default function PackageSelectionScreen() {
           style={styles.title}
           accessibilityRole="header"
         >
-          Fraud Risk Co UK
+          FRAUD-RISK.CO.UK
         </Text>
         <Text style={styles.tagline}>
           Staff Fraud Awareness Training
@@ -280,7 +280,7 @@ export default function PackageSelectionScreen() {
         All packages include ECCTA-aligned fraud controls. Prices exclude VAT.
       </Text>
       <Text style={styles.footerCopyright}>
-        {'\u00A9'} 2026 Fraud Risk Co UK
+        {'\u00A9'} 2026 FRAUD-RISK.CO.UK
       </Text>
     </ScreenContainer>
   );

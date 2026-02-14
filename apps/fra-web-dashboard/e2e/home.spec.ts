@@ -7,7 +7,7 @@ test.describe('Home page', () => {
 
   test('displays the main heading', async ({ page }) => {
     const heading = page.locator('h1');
-    await expect(heading).toContainText('Fraud Risk CO UK');
+    await expect(heading).toContainText('FRAUD-RISK.CO.UK');
   });
 
   test('shows all three package cards', async ({ page }) => {
@@ -34,7 +34,7 @@ test.describe('Home page', () => {
   test('footer is present with copyright text', async ({ page }) => {
     const footer = page.locator('footer');
     await expect(footer).toBeVisible();
-    await expect(footer).toContainText('Fraud Risk Co UK');
+    await expect(footer).toContainText('FRAUD-RISK.CO.UK');
     await expect(footer).toContainText('All rights reserved');
   });
 });

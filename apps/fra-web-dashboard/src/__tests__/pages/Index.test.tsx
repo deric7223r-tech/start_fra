@@ -77,7 +77,7 @@ describe('Index', () => {
     it('shows main heading', () => {
       renderIndex();
 
-      expect(screen.getByText('Fraud Risk CO UK')).toBeInTheDocument();
+      expect(screen.getAllByText('FRAUD-RISK.CO.UK').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('Protect Your Organisation')).toBeInTheDocument();
     });
 
@@ -320,7 +320,7 @@ describe('Index', () => {
       renderIndex();
 
       expect(screen.getByLabelText('Site footer')).toBeInTheDocument();
-      expect(screen.getAllByText('Fraud Risk Co UK').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('FRAUD-RISK.CO.UK').length).toBeGreaterThanOrEqual(1);
     });
 
     it('shows copyright with current year', () => {

@@ -54,7 +54,7 @@ export default function HomeScreen() {
           </View>
           <Shield size={32} color={colors.govBlue} />
           <Text style={styles.welcome} accessibilityRole="header">WELCOME</Text>
-          <Text style={styles.brand} accessibilityRole="header">FRAUD RISK CO UK</Text>
+          <Text style={styles.brand} accessibilityRole="header">FRAUD-RISK.CO.UK</Text>
           <Text style={styles.tagline}>Protect your organisation from fraud</Text>
         </View>
 
@@ -179,7 +179,7 @@ export default function HomeScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerCopyright}>{'\u00A9'} 2026 Fraud Risk Co UK</Text>
+          <Text style={styles.footerCopyright}>{'\u00A9'} 2026 FRAUD-RISK.CO.UK</Text>
           <TouchableOpacity
             onPress={() => router.push('/feedback')}
             activeOpacity={0.7}

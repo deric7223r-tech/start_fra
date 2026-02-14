@@ -1,6 +1,6 @@
-# Marketing Agent Guide — Stop FRA / Fraud Risk Co UK
+# Marketing Agent Guide — FRAUD-RISK.CO.UK
 
-> This document provides all context required for an AI agent focused on marketing strategy, content creation, campaign planning, and growth for the Stop FRA platform.
+> This document provides all context required for an AI agent focused on marketing strategy, content creation, campaign planning, and growth for the FRAUD-RISK.CO.UK platform.
 
 ---
 
@@ -29,15 +29,22 @@
 
 | Name | Usage |
 |------|-------|
-| **Fraud Risk Co UK** | Public-facing brand, website, legal, marketing materials |
+| **FRAUD-RISK.CO.UK** | Public-facing brand, website, legal, marketing materials |
 | **Risk Aware** | Web dashboard training platform sub-brand |
-| **Stop FRA** | Technical/organisational name, npm scope (`@stopfra/*`), GitHub |
+| **Stop FRA / @stopfra** | Technical/internal name, npm scope (`@stopfra/*`), GitHub |
 
 ### Domain & URLs
 
-- **Primary domain:** stopfra.com
+- **Primary domain:** fraud-risk.co.uk
 - **API domain:** api.fraud-risk.co.uk
 - **GitHub:** github.com/deric7223r-tech/start_fra
+
+### Contact Emails
+
+| Email | Purpose |
+|-------|---------|
+| **assessment@fraud-risk.co.uk** | Assessment enquiries, sales, onboarding |
+| **help@fraud-risk.co.uk** | Support, help desk, general enquiries |
 
 ### Brand Voice & Tone
 
@@ -50,7 +57,12 @@
 
 ### Copyright
 
-> &copy; 2026 Fraud Risk Co UK. All rights reserved.
+> &copy; 2026 FRAUD-RISK.CO.UK. All rights reserved.
+
+### Official Emails
+
+- **assessment@fraud-risk.co.uk** — Assessment enquiries, sales, onboarding
+- **help@fraud-risk.co.uk** — Support, help desk, general enquiries
 
 ---
 
@@ -58,7 +70,7 @@
 
 ### What We Are
 
-**Fraud Risk Co UK** is a comprehensive SaaS platform for fraud risk assessment and compliance, purpose-built for UK organisations. It replaces expensive, one-off consultancy engagements with continuous, technology-driven fraud risk management.
+**FRAUD-RISK.CO.UK** is a comprehensive SaaS platform for fraud risk assessment and compliance, purpose-built for UK organisations. It replaces expensive, one-off consultancy engagements with continuous, technology-driven fraud risk management.
 
 ### The Problem We Solve
 
@@ -145,7 +157,7 @@ A **multi-platform ecosystem** covering:
 
 ## 4. Product Suite & Features
 
-### A. Mobile Assessment App (Stop FRA)
+### A. Mobile Assessment App (FRAUD-RISK.CO.UK)
 
 The core product — a structured 13-module fraud risk assessment.
 
@@ -281,13 +293,13 @@ Practical fraud prevention guidance for budget-holders.
 
 ### Our Advantage
 
-> "A single fraud risk assessment from a Big 4 firm: £15,000+. Stop FRA Enterprise (full year): £4,995. Save over £10,000 and get continuous compliance."
+> "A single fraud risk assessment from a Big 4 firm: £15,000+. FRAUD-RISK.CO.UK Enterprise (full year): £4,995. Save over £10,000 and get continuous compliance."
 
 ### Positioning Statement
 
 **For** UK organisations subject to ECCTA 2023 and GovS-013,
 **who** need to demonstrate reasonable fraud prevention procedures,
-**Fraud Risk Co UK** is the **only SaaS platform** that combines mobile fraud risk assessment, interactive staff training, and continuous compliance monitoring
+**FRAUD-RISK.CO.UK** is the **only SaaS platform** that combines mobile fraud risk assessment, interactive staff training, and continuous compliance monitoring
 **unlike** traditional consultancy or generic GRC tools,
 **we** deliver UK-specific, evidence-based fraud risk management at 70–80% lower cost with continuous coverage.
 
