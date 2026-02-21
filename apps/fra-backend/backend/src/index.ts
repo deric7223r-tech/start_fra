@@ -3,9 +3,9 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { getDbPool, closeDbPool } from './db.js';
 import { getRedis } from './redis.js';
-import { DEV_JWT_SECRET, jwtSecret, hasDatabase } from './helpers.js';
+import { usingDevJwtSecret, jwtSecret, hasDatabase } from './helpers.js';
 import { createLogger } from './logger.js';
-import { DEV_REFRESH_SECRET, refreshSecret } from './types.js';
+import { usingDevRefreshSecret, refreshSecret } from './types.js';
 import { applyGlobalMiddleware, applyApiMiddleware } from './middleware.js';
 
 const logger = createLogger('server');
@@ -132,7 +132,7 @@ if (!process.env.JEST_WORKER_ID && process.env.NODE_ENV !== 'test') {
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL must be set via environment variables in production');
     }
-    if (jwtSecret === DEV_JWT_SECRET || refreshSecret === DEV_REFRESH_SECRET) {
+    if (usingDevJwtSecret || usingDevRefreshSecret) {
       throw new Error('JWT secrets must be set via environment variables in production');
     }
   }

@@ -10,14 +10,15 @@ export type AuthContext = {
   organisationId: string;
 };
 
-export const DEV_JWT_SECRET = 'dev_jwt_secret_change_me';
+export let usingDevJwtSecret = false;
 
 function resolveJwtSecret(): jwt.Secret {
   if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
   if (process.env.NODE_ENV === 'production') {
     throw new Error('JWT_SECRET environment variable must be set in production');
   }
-  return DEV_JWT_SECRET;
+  usingDevJwtSecret = true;
+  return require('crypto').randomBytes(64).toString('hex');
 }
 
 export const jwtSecret: jwt.Secret = resolveJwtSecret();

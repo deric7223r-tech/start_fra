@@ -153,14 +153,15 @@ export interface EmployeeDashboardRow {
 
 // ── JWT config ──────────────────────────────────────────────────
 
-export const DEV_REFRESH_SECRET = 'dev_refresh_secret_change_me';
+export let usingDevRefreshSecret = false;
 
 function resolveRefreshSecret(): jwt.Secret {
   if (process.env.JWT_REFRESH_SECRET) return process.env.JWT_REFRESH_SECRET;
   if (process.env.NODE_ENV === 'production') {
     throw new Error('JWT_REFRESH_SECRET environment variable must be set in production');
   }
-  return DEV_REFRESH_SECRET;
+  usingDevRefreshSecret = true;
+  return require('crypto').randomBytes(64).toString('hex');
 }
 
 export const refreshSecret: jwt.Secret = resolveRefreshSecret();
