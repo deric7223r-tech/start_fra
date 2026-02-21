@@ -127,15 +127,50 @@ const port = Number(process.env.PORT ?? 3000);
 const hostname =
   process.env.HOST ?? (process.env.NODE_ENV === 'production' ? '127.0.0.1' : undefined);
 
-if (!process.env.JEST_WORKER_ID && process.env.NODE_ENV !== 'test') {
-  if (process.env.NODE_ENV === 'production') {
-    if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL must be set via environment variables in production');
-    }
-    if (usingDevJwtSecret || usingDevRefreshSecret) {
-      throw new Error('JWT secrets must be set via environment variables in production');
-    }
+function validateProductionEnv(): void {
+  if (process.env.NODE_ENV !== 'production') return;
+
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Required (fatal)
+  if (!process.env.DATABASE_URL) {
+    errors.push('DATABASE_URL must be set');
   }
+  if (usingDevJwtSecret) {
+    errors.push('JWT_SECRET must not use the development default');
+  }
+  if (usingDevRefreshSecret) {
+    errors.push('JWT_REFRESH_SECRET must not use the development default');
+  }
+  if (!process.env.CORS_ORIGINS) {
+    errors.push('CORS_ORIGINS must be set');
+  }
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    errors.push('STRIPE_WEBHOOK_SECRET must be set');
+  }
+
+  // Recommended (warn)
+  if (!process.env.UPSTASH_REDIS_REST_URL) {
+    warnings.push('UPSTASH_REDIS_REST_URL is not set — rate limiting will use in-memory fallback');
+  }
+  if (!process.env.S3_BUCKET) {
+    warnings.push('S3_BUCKET is not set — file uploads will be unavailable');
+  }
+
+  for (const w of warnings) {
+    logger.warn(`[env] ${w}`);
+  }
+
+  if (errors.length > 0) {
+    throw new Error(
+      `Production environment validation failed:\n  - ${errors.join('\n  - ')}`
+    );
+  }
+}
+
+if (!process.env.JEST_WORKER_ID && process.env.NODE_ENV !== 'test') {
+  validateProductionEnv();
   const server = serve({ fetch: app.fetch, port, hostname });
 
   const shutdown = async (signal: string) => {
