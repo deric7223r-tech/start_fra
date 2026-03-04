@@ -130,8 +130,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
 
+    // Re-fetch auth state when the tab regains focus (e.g. after payment on another tab/device)
+    const onFocus = () => {
+      if (isMountedRef.current && hasStoredTokens()) {
+        hydrateFromMe();
+      }
+    };
+    window.addEventListener('focus', onFocus);
+
     return () => {
       isMountedRef.current = false;
+      window.removeEventListener('focus', onFocus);
     };
   }, []);
 

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,9 +23,14 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, profile, activePackage } = useAuth();
+  const { user, profile, activePackage, refreshProfile } = useAuth();
   const { progress, isLoading: progressLoading } = useWorkshopProgress();
   const navigate = useNavigate();
+
+  // Re-fetch auth state each time the dashboard is visited to pick up package changes
+  useEffect(() => {
+    refreshProfile();
+  }, [refreshProfile]);
 
   const hasWorkshopAccess = activePackage === 'pkg_training' || activePackage === 'pkg_full';
 
