@@ -8,6 +8,14 @@ import colors from '@/constants/colors';
 export default function FraudResponseScreen() {
   const router = useRouter();
   const { assessment, updateAssessment } = useAssessment();
+
+  // Guard: only Package 2+ users can access comprehensive modules
+  const packageType = assessment.payment?.packageType;
+  if (packageType === 'health-check' || (!packageType && assessment.status !== 'draft')) {
+    router.replace('/review');
+    return null;
+  }
+
   const [notes, setNotes] = useState(assessment.fraudResponsePlan.notes);
 
   const handleNext = () => {

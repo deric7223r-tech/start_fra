@@ -610,7 +610,6 @@ export default function Index() {
                     </Link>
                   </li>
                 )}
-                </li>
               </ul>
             </div>
             {/* Column 2: Compliance */}

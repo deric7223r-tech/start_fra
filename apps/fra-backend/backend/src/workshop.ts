@@ -9,12 +9,13 @@ import type { Context } from 'hono';
 import crypto from 'node:crypto';
 import { z } from 'zod';
 import { getDbPool } from './db.js';
-import { type AuthContext, hasDatabase, jsonError, getAuth as getAuthBase, requireAuth } from './helpers.js';
+import { type AuthContext, hasDatabase, hasPackageEntitlement, jsonError, getAuth as getAuthBase, requireAuth } from './helpers.js';
 import { createLogger } from './logger.js';
 import { getRedis } from './redis.js';
 import { rateLimit, getClientIp } from './middleware.js';
-import { RATE_LIMITS, isValidUUID } from './types.js';
-import { auditLog } from './db/index.js';
+import { RATE_LIMITS, FALLBACK_PACKAGES, isValidUUID } from './types.js';
+import { auditLog, dbListPurchasesByOrganisation } from './db/index.js';
+import { purchasesById } from './stores.js';
 
 function requireUUID(c: Context, name: string): string | Response {
   const value = c.req.param(name);
@@ -125,6 +126,31 @@ async function getAuthWithSseToken(c: Context): Promise<AuthContext | null> {
 // ── Workshop Hono App ────────────────────────────────────────
 
 const workshop = new Hono();
+
+// ── Package entitlement middleware ───────────────────────────
+// Workshop features require pkg_training or higher
+workshop.use('*', async (c, next) => {
+  const auth = getAuthBase(c);
+  if (!auth) {
+    // Let individual routes handle auth (some use SSE tokens)
+    return next();
+  }
+
+  let orgPurchases;
+  if (hasDatabase()) {
+    orgPurchases = await dbListPurchasesByOrganisation(auth.organisationId);
+  } else {
+    orgPurchases = Array.from(purchasesById.values()).filter(
+      (p) => p.organisationId === auth.organisationId
+    );
+  }
+
+  if (!hasPackageEntitlement(orgPurchases, 'pkg_training')) {
+    return jsonError(c, 403, 'PACKAGE_REQUIRED', 'Workshop access requires Professional or Enterprise package');
+  }
+
+  return next();
+});
 
 // ── Profile endpoints ────────────────────────────────────────
 
