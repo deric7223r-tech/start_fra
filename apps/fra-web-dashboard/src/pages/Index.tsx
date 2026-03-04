@@ -603,13 +603,11 @@ export default function Index() {
                     </Link>
                   </li>
                 )}
-                {(!user || hasWorkshopAccess) && (
-                  <li>
-                    <Link to={user ? '/action-plan' : '/auth?mode=signup'} className="text-sm text-[#b1b4b6] hover:text-white no-underline">
-                      Action Plans
-                    </Link>
-                  </li>
-                )}
+                <li>
+                  <Link to={user ? '/action-plan' : '/auth?mode=signup'} className="text-sm text-[#b1b4b6] hover:text-white no-underline">
+                    Action Plans
+                  </Link>
+                </li>
               </ul>
             </div>
             {/* Column 2: Compliance */}

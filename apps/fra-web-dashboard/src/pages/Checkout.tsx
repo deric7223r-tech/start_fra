@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +34,14 @@ export default function Checkout() {
     : null;
 
   const isInvalidCheckout = !packageName || !priceParam || price <= 0;
+
+  // Map display name to backend packageId
+  const PACKAGE_ID_MAP: Record<ValidPackage, string> = {
+    'Starter': 'pkg_basic',
+    'Health-Check': 'pkg_basic',
+    'Professional': 'pkg_training',
+    'Enterprise': 'pkg_full',
+  };
 
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -107,7 +116,26 @@ export default function Checkout() {
 
     setIsProcessing(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const packageId = PACKAGE_ID_MAP[packageName!];
+
+      // 1. Create payment intent
+      const intent = await api.post<{ paymentIntentId: string; clientSecret: string }>(
+        '/api/v1/payments/create-intent',
+        { packageId }
+      );
+
+      // 2. Create purchase record
+      const purchase = await api.post<{ purchaseId: string; clientSecret: string }>(
+        '/api/v1/purchases',
+        { packageId, paymentIntentId: intent.paymentIntentId }
+      );
+
+      // 3. Confirm purchase
+      await api.post(`/api/v1/purchases/${purchase.purchaseId}/confirm`, {
+        paymentIntentId: intent.paymentIntentId,
+      });
+
+      // 4. Refresh auth state to pick up new activePackage
       await refreshProfile();
       setIsSuccess(true);
     } catch {
