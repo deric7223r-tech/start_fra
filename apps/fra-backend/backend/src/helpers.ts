@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import type { Context } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import jwt from 'jsonwebtoken';
@@ -18,7 +19,7 @@ function resolveJwtSecret(): jwt.Secret {
     throw new Error('JWT_SECRET environment variable must be set in production');
   }
   usingDevJwtSecret = true;
-  return require('crypto').randomBytes(64).toString('hex');
+  return crypto.randomBytes(64).toString('hex');
 }
 
 export const jwtSecret: jwt.Secret = resolveJwtSecret();

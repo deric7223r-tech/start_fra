@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import type { Context } from 'hono';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
@@ -161,7 +162,7 @@ function resolveRefreshSecret(): jwt.Secret {
     throw new Error('JWT_REFRESH_SECRET environment variable must be set in production');
   }
   usingDevRefreshSecret = true;
-  return require('crypto').randomBytes(64).toString('hex');
+  return crypto.randomBytes(64).toString('hex');
 }
 
 export const refreshSecret: jwt.Secret = resolveRefreshSecret();
