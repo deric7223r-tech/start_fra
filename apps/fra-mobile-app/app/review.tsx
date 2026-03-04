@@ -28,11 +28,8 @@ export default function ReviewScreen() {
     setIsSubmitting(true);
     try {
       submitAssessment();
-      if (assessment.payment?.packageType) {
-        router.push('/payment');
-      } else {
-        router.push('/packages');
-      }
+      // Package is already selected before reaching review — go to payment
+      router.push('/payment');
     } catch {
       Alert.alert(
         'Submission Failed',

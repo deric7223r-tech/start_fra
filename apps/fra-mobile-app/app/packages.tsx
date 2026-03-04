@@ -93,12 +93,15 @@ export default function PackagesScreen() {
   ], [orgSize]);
 
   const handleSelectPackage = async (pkg: PackageOption) => {
-    if (pkg.id === 'with-awareness') {
-      router.push('/package-professional');
-      return;
-    }
     selectPackage(pkg.id, pkg.price);
-    router.push('/payment');
+
+    if (pkg.id === 'health-check') {
+      // Package 1 (Starter): core assessment only — go straight to review
+      router.push('/review');
+    } else {
+      // Package 2 (Professional) / Package 3 (Enterprise): comprehensive modules first
+      router.push('/payments-module');
+    }
   };
 
   return (

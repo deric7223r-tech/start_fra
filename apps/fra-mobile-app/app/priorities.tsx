@@ -8,15 +8,9 @@ export default function PrioritiesScreen() {
   const router = useRouter();
   const { assessment, updateAssessment } = useAssessment();
 
-  const packageType = assessment.payment?.packageType;
-  const includesComprehensiveModules = packageType === 'with-awareness' || packageType === 'with-dashboard';
-
   const handleNext = () => {
-    if (includesComprehensiveModules) {
-      router.push('/payments-module');
-    } else {
-      router.push('/review');
-    }
+    // Select package before proceeding to review or comprehensive modules
+    router.push('/packages');
   };
 
   return (
