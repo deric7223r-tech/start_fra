@@ -9,13 +9,6 @@ export default function ActionPlanScreen() {
   const router = useRouter();
   const { assessment } = useAssessment();
 
-  // Guard: only Package 2+ users can access comprehensive modules
-  const packageType = assessment.payment?.packageType;
-  if (packageType === 'health-check' || (!packageType && assessment.status !== 'draft')) {
-    router.replace('/review');
-    return null;
-  }
-
   const handleNext = () => {
     router.push('/review');
   };

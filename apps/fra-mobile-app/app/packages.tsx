@@ -95,13 +95,8 @@ export default function PackagesScreen() {
   const handleSelectPackage = async (pkg: PackageOption) => {
     selectPackage(pkg.id, pkg.price);
 
-    if (pkg.id === 'health-check') {
-      // Package 1 (Starter): core assessment only — go straight to review
-      router.push('/review');
-    } else {
-      // Package 2 (Professional) / Package 3 (Enterprise): comprehensive modules first
-      router.push('/payments-module');
-    }
+    // All packages include comprehensive assessment modules — go to payments module first
+    router.push('/payments-module');
   };
 
   return (

@@ -9,13 +9,6 @@ export default function TrainingAwarenessScreen() {
   const router = useRouter();
   const { assessment, updateAssessment } = useAssessment();
 
-  // Guard: only Package 2+ users can access comprehensive modules
-  const packageType = assessment.payment?.packageType;
-  if (packageType === 'health-check' || (!packageType && assessment.status !== 'draft')) {
-    router.replace('/review');
-    return null;
-  }
-
   const [notes, setNotes] = useState(assessment.trainingAwareness.notes);
   const [completionRate, setCompletionRate] = useState(
     assessment.trainingAwareness.overallCompletionRate?.toString() || '0'

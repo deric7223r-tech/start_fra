@@ -58,7 +58,7 @@ export default function Dashboard() {
     }
   };
 
-  // Package 1 (Starter) — assessment-only view, no workshop
+  // Package 1 (Starter) — comprehensive assessment view, no workshop
   if (!hasWorkshopAccess) {
     return (
       <Layout>
@@ -92,18 +92,24 @@ export default function Dashboard() {
             <Card className="overflow-hidden">
               <div className="bg-primary p-6 lg:p-8">
                 <h2 className="text-2xl font-bold text-primary-foreground mb-2">
-                  Fraud Risk Assessment
+                  Comprehensive Fraud Risk Assessment
                 </h2>
                 <p className="text-primary-foreground/80">
-                  Your core assessment health check report — Starter package
+                  Your full assessment with health check report — Starter package
                 </p>
               </div>
               <CardContent className="p-6">
                 <p className="text-muted-foreground mb-4">
-                  Your fraud risk assessment has been submitted. You can download your PDF health check
-                  report and ECCTA compliance snapshot from the confirmation email.
+                  Access your comprehensive fraud risk assessment modules including compliance mapping,
+                  fraud response procedures, and your personalised action plan.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
+                  <Button size="lg" asChild>
+                    <Link to="/action-plan">
+                      <Target className="mr-2 h-5 w-5" />
+                      View Action Plan
+                    </Link>
+                  </Button>
                   <Button size="lg" variant="outline" asChild>
                     <Link to="/profile">
                       <FileText className="mr-2 h-5 w-5" />
@@ -115,10 +121,57 @@ export default function Dashboard() {
             </Card>
           </motion.div>
 
+          {/* Comprehensive Assessment Modules */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+            className="mt-8"
+          >
+            <h3 className="text-lg font-semibold mb-4">Assessment Modules</h3>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" role="button" tabIndex={0} onClick={() => navigate('/action-plan')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/action-plan'); } }}>
+                <CardContent className="flex items-center gap-4 p-4">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Target className="h-5 w-5 text-primary" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Action Plan</div>
+                    <div className="text-sm text-muted-foreground">Prioritised next steps</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" role="button" tabIndex={0} onClick={() => navigate('/profile')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/profile'); } }}>
+                <CardContent className="flex items-center gap-4 p-4">
+                  <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5 text-accent" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Compliance Mapping</div>
+                    <div className="text-sm text-muted-foreground">ECCTA 2023 alignment</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="hover:shadow-md transition-shadow cursor-pointer" role="button" tabIndex={0} onClick={() => navigate('/profile')} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/profile'); } }}>
+                <CardContent className="flex items-center gap-4 p-4">
+                  <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-info" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Fraud Response</div>
+                    <div className="text-sm text-muted-foreground">Response procedures</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
             className="mt-8"
           >
             <Card className="border-primary/30 bg-primary/5">

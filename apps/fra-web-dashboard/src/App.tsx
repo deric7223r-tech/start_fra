@@ -58,7 +58,7 @@ const App = () => (
                 <Route path="/workshop" element={<ProtectedRoute requiredPackage="pkg_training"><Workshop /></ProtectedRoute>} />
                 <Route path="/resources" element={<ProtectedRoute requiredPackage="pkg_training"><Resources /></ProtectedRoute>} />
                 <Route path="/certificate" element={<ProtectedRoute requiredPackage="pkg_training"><Certificate /></ProtectedRoute>} />
-                <Route path="/action-plan" element={<ProtectedRoute requiredPackage="pkg_training"><ActionPlan /></ProtectedRoute>} />
+                <Route path="/action-plan" element={<ProtectedRoute><ActionPlan /></ProtectedRoute>} />
                 <Route path="/package/professional" element={<PackageProfessional />} />
                 <Route path="/package/enterprise" element={<PackageEnterprise />} />
                 <Route path="/checkout" element={<Checkout />} />

@@ -21,7 +21,7 @@ export default function ConfirmationScreen() {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   const packageType = assessment.payment?.packageType;
-  const includesComprehensiveModules = packageType === 'with-awareness' || packageType === 'with-dashboard';
+  const includesComprehensiveModules = packageType === 'health-check' || packageType === 'with-awareness' || packageType === 'with-dashboard';
 
   const handleDownloadReport = () => {
     Alert.alert(

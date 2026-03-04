@@ -11,7 +11,7 @@ export default function ReviewScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const packageType = assessment.payment?.packageType;
-  const includesComprehensiveModules = packageType === 'with-awareness' || packageType === 'with-dashboard';
+  const includesComprehensiveModules = packageType === 'health-check' || packageType === 'with-awareness' || packageType === 'with-dashboard';
 
   const handleSubmit = () => {
     Alert.alert(

@@ -128,11 +128,20 @@ async function getAuthWithSseToken(c: Context): Promise<AuthContext | null> {
 const workshop = new Hono();
 
 // ── Package entitlement middleware ───────────────────────────
-// Workshop features require pkg_training or higher
+// Assessment endpoints (progress, action-plans, certificates) are available to ALL packages.
+// Workshop-only features (sessions, polls, Q&A, profiles, roles, SSE) require pkg_training+.
+const ASSESSMENT_PATHS = ['/progress', '/action-plans', '/certificates'];
+
 workshop.use('*', async (c, next) => {
   const auth = getAuthBase(c);
   if (!auth) {
     // Let individual routes handle auth (some use SSE tokens)
+    return next();
+  }
+
+  // Allow assessment-related endpoints for all authenticated users (including pkg_basic)
+  const path = c.req.path.replace(/^\/api\/v1\/workshop/, '');
+  if (ASSESSMENT_PATHS.some((p) => path === p || path.startsWith(`${p}/`))) {
     return next();
   }
 
