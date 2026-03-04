@@ -12,7 +12,8 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export function Header() {
-  const { user, profile, signOut, hasRole } = useAuth();
+  const { user, profile, activePackage, signOut, hasRole } = useAuth();
+  const hasWorkshopAccess = activePackage === 'pkg_training' || activePackage === 'pkg_full';
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -84,9 +85,11 @@ export function Header() {
                       <Link to="/employer">Organisation</Link>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem asChild>
-                    <Link to="/resources">Resources</Link>
-                  </DropdownMenuItem>
+                  {hasWorkshopAccess && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/resources">Resources</Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />

@@ -21,12 +21,17 @@ import {
 import { useState } from 'react';
 
 export default function Index() {
-  const { user } = useAuth();
+  const { user, activePackage } = useAuth();
   const navigate = useNavigate();
   const [sessionCode, setSessionCode] = useState('');
+  const hasWorkshopAccess = activePackage === 'pkg_training' || activePackage === 'pkg_full';
 
   const handleJoinSession = () => {
     if (sessionCode.trim()) {
+      if (user && !hasWorkshopAccess) {
+        navigate('/dashboard');
+        return;
+      }
       navigate(`/workshop?session=${sessionCode.trim().toUpperCase()}`);
     }
   };
@@ -159,13 +164,15 @@ export default function Index() {
                     <ArrowRight className="h-5 w-5" aria-hidden="true" />
                   </Link>
                 )}
-                <Link
-                  to="/resources"
-                  className="inline-flex items-center justify-center gap-2 rounded bg-white px-6 py-3 text-lg font-bold text-[#0b0c0c] shadow-[0_2px_0_#505a5f] hover:bg-[#f3f2f1] no-underline"
-                >
-                  <BookOpen className="h-5 w-5" aria-hidden="true" />
-                  View Resources
-                </Link>
+                {(!user || hasWorkshopAccess) && (
+                  <Link
+                    to="/resources"
+                    className="inline-flex items-center justify-center gap-2 rounded bg-white px-6 py-3 text-lg font-bold text-[#0b0c0c] shadow-[0_2px_0_#505a5f] hover:bg-[#f3f2f1] no-underline"
+                  >
+                    <BookOpen className="h-5 w-5" aria-hidden="true" />
+                    View Resources
+                  </Link>
+                )}
               </div>
             </motion.div>
 
@@ -175,48 +182,70 @@ export default function Index() {
               transition={{ duration: 0.4, delay: 0.15 }}
             >
               <Card className="border-2 border-white/20 shadow-xl bg-white">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-xl text-[#0b0c0c]">Join a Live Session</CardTitle>
-                  <CardDescription className="text-[#505a5f]">
-                    Enter the session code provided by your facilitator
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <form onSubmit={(e) => { e.preventDefault(); handleJoinSession(); }} className="flex gap-3">
-                    <Input
-                      placeholder="Enter session code"
-                      value={sessionCode}
-                      onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
-                      className="text-center text-lg font-mono tracking-widest uppercase border-2 border-[#0b0c0c]"
-                      maxLength={6}
-                      aria-label="Session code"
-                    />
-                    <Button
-                      type="submit"
-                      disabled={!sessionCode.trim()}
-                      className="bg-[#1d70b8] hover:bg-[#003078] text-white"
-                    >
-                      Join
-                    </Button>
-                  </form>
+                {(!user || hasWorkshopAccess) ? (
+                  <>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-xl text-[#0b0c0c]">Join a Live Session</CardTitle>
+                      <CardDescription className="text-[#505a5f]">
+                        Enter the session code provided by your facilitator
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <form onSubmit={(e) => { e.preventDefault(); handleJoinSession(); }} className="flex gap-3">
+                        <Input
+                          placeholder="Enter session code"
+                          value={sessionCode}
+                          onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
+                          className="text-center text-lg font-mono tracking-widest uppercase border-2 border-[#0b0c0c]"
+                          maxLength={6}
+                          aria-label="Session code"
+                        />
+                        <Button
+                          type="submit"
+                          disabled={!sessionCode.trim()}
+                          className="bg-[#1d70b8] hover:bg-[#003078] text-white"
+                        >
+                          Join
+                        </Button>
+                      </form>
 
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-[#b1b4b6]" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-[#505a5f]">or</span>
-                    </div>
-                  </div>
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-[#b1b4b6]" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white px-2 text-[#505a5f]">or</span>
+                        </div>
+                      </div>
 
-                  <Button
-                    variant="secondary"
-                    className="w-full border-2 border-[#0b0c0c] bg-[#f3f2f1] text-[#0b0c0c] hover:bg-[#dbdad9]"
-                    onClick={() => navigate(user ? '/workshop' : '/auth?mode=signup')}
-                  >
-                    Start Self-Paced Workshop
-                  </Button>
-                </CardContent>
+                      <Button
+                        variant="secondary"
+                        className="w-full border-2 border-[#0b0c0c] bg-[#f3f2f1] text-[#0b0c0c] hover:bg-[#dbdad9]"
+                        onClick={() => navigate(user ? '/workshop' : '/auth?mode=signup')}
+                      >
+                        Start Self-Paced Workshop
+                      </Button>
+                    </CardContent>
+                  </>
+                ) : (
+                  <>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-xl text-[#0b0c0c]">Upgrade to Access Workshop</CardTitle>
+                      <CardDescription className="text-[#505a5f]">
+                        The Fraud Risk Awareness Workshop is available with the Professional package
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        className="w-full bg-[#1d70b8] hover:bg-[#003078] text-white"
+                        onClick={() => navigate('/package/professional')}
+                      >
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                        View Professional Package
+                      </Button>
+                    </CardContent>
+                  </>
+                )}
               </Card>
 
               {/* Stats */}
@@ -516,19 +545,31 @@ export default function Index() {
               through FRAUD-RISK.CO.UK's interactive workshop platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to={user ? '/workshop' : '/auth?mode=signup'}
-                className="inline-flex items-center justify-center gap-2 rounded bg-[#00703c] px-8 py-3 text-lg font-bold text-white shadow-[0_2px_0_#002d18] hover:bg-[#005a30] no-underline"
-              >
-                Start Workshop Now
-                <ArrowRight className="h-5 w-5" aria-hidden="true" />
-              </Link>
-              <Link
-                to="/resources"
-                className="inline-flex items-center justify-center gap-2 rounded bg-white px-8 py-3 text-lg font-bold text-[#0b0c0c] shadow-[0_2px_0_#505a5f] hover:bg-[#f3f2f1] no-underline"
-              >
-                Download Resources
-              </Link>
+              {user && !hasWorkshopAccess ? (
+                <Link
+                  to="/package/professional"
+                  className="inline-flex items-center justify-center gap-2 rounded bg-[#00703c] px-8 py-3 text-lg font-bold text-white shadow-[0_2px_0_#002d18] hover:bg-[#005a30] no-underline"
+                >
+                  Upgrade to Professional
+                  <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to={user ? '/workshop' : '/auth?mode=signup'}
+                    className="inline-flex items-center justify-center gap-2 rounded bg-[#00703c] px-8 py-3 text-lg font-bold text-white shadow-[0_2px_0_#002d18] hover:bg-[#005a30] no-underline"
+                  >
+                    Start Workshop Now
+                    <ArrowRight className="h-5 w-5" aria-hidden="true" />
+                  </Link>
+                  <Link
+                    to="/resources"
+                    className="inline-flex items-center justify-center gap-2 rounded bg-white px-8 py-3 text-lg font-bold text-[#0b0c0c] shadow-[0_2px_0_#505a5f] hover:bg-[#f3f2f1] no-underline"
+                  >
+                    Download Resources
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -542,20 +583,33 @@ export default function Index() {
             <div>
               <h3 className="text-sm font-bold text-white mb-4 uppercase tracking-wider">About</h3>
               <ul className="space-y-2">
-                <li>
-                  <Link to="/resources" className="text-sm text-[#b1b4b6] hover:text-white no-underline">
-                    Resources
-                  </Link>
-                </li>
-                <li>
-                  <Link to={user ? '/workshop' : '/auth?mode=signup'} className="text-sm text-[#b1b4b6] hover:text-white no-underline">
-                    Workshop
-                  </Link>
-                </li>
-                <li>
-                  <Link to={user ? '/action-plan' : '/auth?mode=signup'} className="text-sm text-[#b1b4b6] hover:text-white no-underline">
-                    Action Plans
-                  </Link>
+                {(!user || hasWorkshopAccess) && (
+                  <li>
+                    <Link to="/resources" className="text-sm text-[#b1b4b6] hover:text-white no-underline">
+                      Resources
+                    </Link>
+                  </li>
+                )}
+                {(!user || hasWorkshopAccess) ? (
+                  <li>
+                    <Link to={user ? '/workshop' : '/auth?mode=signup'} className="text-sm text-[#b1b4b6] hover:text-white no-underline">
+                      Workshop
+                    </Link>
+                  </li>
+                ) : (
+                  <li>
+                    <Link to="/package/professional" className="text-sm text-[#b1b4b6] hover:text-white no-underline">
+                      Upgrade Package
+                    </Link>
+                  </li>
+                )}
+                {(!user || hasWorkshopAccess) && (
+                  <li>
+                    <Link to={user ? '/action-plan' : '/auth?mode=signup'} className="text-sm text-[#b1b4b6] hover:text-white no-underline">
+                      Action Plans
+                    </Link>
+                  </li>
+                )}
                 </li>
               </ul>
             </div>

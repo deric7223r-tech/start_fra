@@ -23,18 +23,20 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, profile, activePackage, refreshProfile } = useAuth();
-  const { progress, isLoading: progressLoading } = useWorkshopProgress();
+  const { user, profile, activePackage, isLoading: authLoading, refreshProfile } = useAuth();
   const navigate = useNavigate();
+
+  const hasWorkshopAccess = activePackage === 'pkg_training' || activePackage === 'pkg_full';
+
+  // Only fetch workshop progress for Package 2+ users
+  const { progress, isLoading: progressLoading } = useWorkshopProgress(null, { enabled: hasWorkshopAccess });
 
   // Re-fetch auth state each time the dashboard is visited to pick up package changes
   useEffect(() => {
     refreshProfile();
   }, [refreshProfile]);
 
-  const hasWorkshopAccess = activePackage === 'pkg_training' || activePackage === 'pkg_full';
-
-  if (progressLoading) {
+  if (authLoading || (hasWorkshopAccess && progressLoading)) {
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">

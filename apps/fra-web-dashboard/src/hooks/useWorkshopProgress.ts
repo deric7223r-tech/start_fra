@@ -34,14 +34,17 @@ function mapProgress(row: ProgressRow): WorkshopProgress {
   };
 }
 
-export function useWorkshopProgress(sessionId?: string | null) {
+export function useWorkshopProgress(sessionId?: string | null, { enabled = true }: { enabled?: boolean } = {}) {
   const { user } = useAuth();
   const [progress, setProgress] = useState<WorkshopProgress | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const fetchProgress = useCallback(async () => {
-    if (!user) return;
+    if (!user || !enabled) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const queryParam = sessionId ? `?sessionId=${encodeURIComponent(sessionId)}` : '';
@@ -64,16 +67,21 @@ export function useWorkshopProgress(sessionId?: string | null) {
     }
 
     setIsLoading(false);
-  }, [user, sessionId]);
+  }, [user, sessionId, enabled]);
 
   useEffect(() => {
+    if (!enabled) {
+      setProgress(null);
+      setIsLoading(false);
+      return;
+    }
     if (user) {
       fetchProgress();
     } else {
       setProgress(null);
       setIsLoading(false);
     }
-  }, [user, sessionId, fetchProgress]);
+  }, [user, sessionId, enabled, fetchProgress]);
 
   const updateSection = async (sectionId: number) => {
     if (!user || !progress) return;
