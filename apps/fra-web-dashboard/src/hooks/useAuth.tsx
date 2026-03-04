@@ -17,6 +17,7 @@ interface AuthContextType {
   user: AuthUser | null;
   profile: Profile | null;
   roles: AppRole[];
+  activePackage: string | null;
   isLoading: boolean;
   signUp: (email: string, password: string, metadata: SignUpMetadata) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -44,6 +45,7 @@ type MeResponse = AuthUser & {
     updated_at: string;
   } | null;
   workshopRoles: string[];
+  activePackage: string | null;
 };
 
 type AuthResponse = {
@@ -84,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
+  const [activePackage, setActivePackage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isMountedRef = useRef(true);
 
@@ -101,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setProfile(mapProfile(data.profile));
       setRoles((data.workshopRoles ?? []) as AppRole[]);
+      setActivePackage(data.activePackage ?? null);
     } catch (err: unknown) {
       if (!isMountedRef.current) return;
       logger.warn('Failed to hydrate session, clearing tokens', err);
@@ -184,6 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setProfile(null);
     setRoles([]);
+    setActivePackage(null);
   }, []);
 
   const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
@@ -192,13 +197,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     profile,
     roles,
+    activePackage,
     isLoading,
     signUp,
     signIn,
     signOut,
     hasRole,
     refreshProfile,
-  }), [user, profile, roles, isLoading, signUp, signIn, signOut, hasRole, refreshProfile]);
+  }), [user, profile, roles, activePackage, isLoading, signUp, signIn, signOut, hasRole, refreshProfile]);
 
   return (
     <AuthContext.Provider value={value}>

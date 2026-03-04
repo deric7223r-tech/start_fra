@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDbPool } from '../db.js';
-import { hasDatabase, jsonError, requireAuth } from '../helpers.js';
+import { hasDatabase, hasPackageEntitlement, jsonError, requireAuth } from '../helpers.js';
 import { getRedis } from '../redis.js';
 import {
   signupSchema, loginSchema, refreshSchema, forgotPasswordSchema, resetPasswordSchema, profileUpdateSchema,
@@ -10,13 +10,14 @@ import {
   LOCKOUT_PREFIX, LOCKOUT_MAX_ATTEMPTS, LOCKOUT_WINDOW_SECONDS,
   RATE_LIMITS,
 } from '../types.js';
-import type { User } from '../types.js';
-import { usersByEmail, refreshTokenAllowlist, organisationsById, accountLockouts } from '../stores.js';
+import type { User, Purchase } from '../types.js';
+import { usersByEmail, refreshTokenAllowlist, organisationsById, accountLockouts, purchasesById } from '../stores.js';
 import { getClientIp, rateLimit } from '../middleware.js';
 import {
   dbGetUserByEmail, dbGetUserById, dbUpdateUserPasswordHash, dbUpdateUserProfile,
   dbUpsertRefreshToken, dbHasRefreshToken, dbDeleteRefreshToken, dbDeleteAllRefreshTokensForUser,
   dbGetOrganisationById,
+  dbListPurchasesByOrganisation,
   auditLog,
   setPasswordResetToken, getPasswordResetUserId, deletePasswordResetToken,
 } from '../db/index.js';
@@ -24,6 +25,14 @@ import { issueTokens, publicUser } from '../auth-utils.js';
 import { createLogger } from '../logger.js';
 
 const logger = createLogger('auth');
+
+/** Derive the highest active package tier from an org's purchases */
+function getActivePackageTier(purchases: Purchase[]): string | null {
+  if (hasPackageEntitlement(purchases, 'pkg_full')) return 'pkg_full';
+  if (hasPackageEntitlement(purchases, 'pkg_training')) return 'pkg_training';
+  if (hasPackageEntitlement(purchases, 'pkg_basic')) return 'pkg_basic';
+  return null;
+}
 
 const { AUTH_WINDOW_MS, SIGNUP_MAX, LOGIN_MAX, FORGOT_PASSWORD_MAX, RESET_PASSWORD_MAX, REFRESH_WINDOW_MS, REFRESH_MAX } = RATE_LIMITS;
 
@@ -284,16 +293,28 @@ auth.get('/auth/me', async (c) => {
   if (!hasDatabase()) {
     const user = usersByEmail.get(authCtx.email.toLowerCase());
     if (!user) return jsonError(c, 401, 'UNAUTHORIZED', 'User not found');
-    return c.json({ success: true, data: { ...publicUser(user), profile: null, workshopRoles: [] } });
+    const orgPurchases = Array.from(purchasesById.values()).filter(
+      (p) => p.organisationId === authCtx.organisationId
+    );
+    return c.json({
+      success: true,
+      data: {
+        ...publicUser(user),
+        profile: null,
+        workshopRoles: [],
+        activePackage: getActivePackageTier(orgPurchases),
+      },
+    });
   }
 
   const user = await dbGetUserByEmail(authCtx.email.toLowerCase());
   if (!user) return jsonError(c, 401, 'UNAUTHORIZED', 'User not found');
 
   const pool = getDbPool();
-  const [profileRes, rolesRes] = await Promise.all([
+  const [profileRes, rolesRes, orgPurchases] = await Promise.all([
     pool.query('SELECT * FROM workshop_profiles WHERE user_id = $1 LIMIT 1', [user.id]),
     pool.query('SELECT role FROM workshop_roles WHERE user_id = $1', [user.id]),
+    dbListPurchasesByOrganisation(authCtx.organisationId),
   ]);
 
   return c.json({
@@ -302,6 +323,7 @@ auth.get('/auth/me', async (c) => {
       ...publicUser(user),
       profile: profileRes.rows[0] ?? null,
       workshopRoles: rolesRes.rows.map((r: { role: string }) => r.role),
+      activePackage: getActivePackageTier(orgPurchases),
     },
   });
 });

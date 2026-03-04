@@ -22,9 +22,11 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, profile } = useAuth();
+  const { user, profile, activePackage } = useAuth();
   const { progress, isLoading: progressLoading } = useWorkshopProgress();
   const navigate = useNavigate();
+
+  const hasWorkshopAccess = activePackage === 'pkg_training' || activePackage === 'pkg_full';
 
   if (progressLoading) {
     return (
@@ -39,12 +41,6 @@ export default function Dashboard() {
 
   if (!user || !profile) return null;
 
-  const completedCount = progress?.completed_sections?.length || 0;
-  const totalSections = workshopSections.length;
-  const progressPercent = (completedCount / totalSections) * 100;
-  const isCompleted = progress?.completed_at !== null;
-  const currentSection = progress?.current_section || 0;
-
   const getSectorLabel = (sector: string) => {
     switch (sector) {
       case 'public': return 'Public Sector';
@@ -53,6 +49,96 @@ export default function Dashboard() {
       default: return sector;
     }
   };
+
+  // Package 1 (Starter) — assessment-only view, no workshop
+  if (!hasWorkshopAccess) {
+    return (
+      <Layout>
+        <div className="container py-8 lg:py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8"
+          >
+            <h1 className="text-3xl font-bold tracking-tight mb-2">
+              Welcome back, {profile.full_name?.split(' ')[0] || 'there'}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+              <span>{profile.organization_name}</span>
+              <span>•</span>
+              <Badge variant="secondary">{getSectorLabel(profile.sector)}</Badge>
+              {profile.job_title && (
+                <>
+                  <span>•</span>
+                  <span>{profile.job_title}</span>
+                </>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="overflow-hidden">
+              <div className="bg-primary p-6 lg:p-8">
+                <h2 className="text-2xl font-bold text-primary-foreground mb-2">
+                  Fraud Risk Assessment
+                </h2>
+                <p className="text-primary-foreground/80">
+                  Your core assessment health check report — Starter package
+                </p>
+              </div>
+              <CardContent className="p-6">
+                <p className="text-muted-foreground mb-4">
+                  Your fraud risk assessment has been submitted. You can download your PDF health check
+                  report and ECCTA compliance snapshot from the confirmation email.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button size="lg" variant="outline" asChild>
+                    <Link to="/profile">
+                      <FileText className="mr-2 h-5 w-5" />
+                      View Profile
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-8"
+          >
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-2">Upgrade to Professional</h3>
+                <p className="text-muted-foreground mb-4">
+                  Get access to the Fraud Risk Awareness Workshop, staff training modules,
+                  quarterly reassessments, and up to 50 employee key-passes.
+                </p>
+                <Button asChild>
+                  <Link to="/package/professional">
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    Learn More
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const completedCount = progress?.completed_sections?.length || 0;
+  const totalSections = workshopSections.length;
+  const progressPercent = (completedCount / totalSections) * 100;
+  const isCompleted = progress?.completed_at !== null;
+  const currentSection = progress?.current_section || 0;
 
   return (
     <Layout>
