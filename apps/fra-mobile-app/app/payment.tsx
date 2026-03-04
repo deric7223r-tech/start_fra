@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
@@ -8,7 +8,7 @@ import colors from '@/constants/colors';
 
 export default function PaymentScreen() {
   const router = useRouter();
-  const { assessment, processPayment } = useAssessment();
+  const { assessment, isLoading, processPayment } = useAssessment();
   const { allocateKeyPasses } = useAuth();
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -17,9 +17,28 @@ export default function PaymentScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const processingRef = useRef(false);
 
-  // Guard: redirect to packages if no package selected
+  // Guard: redirect to packages if no package selected.
+  // Only redirect once the context has finished loading the draft from AsyncStorage,
+  // otherwise the empty default state (packageType=null, price=0) would incorrectly
+  // trigger this redirect and cause the screen to appear blank.
+  useEffect(() => {
+    if (!isLoading && (!assessment.payment.packageType || assessment.payment.price <= 0)) {
+      router.replace('/packages');
+    }
+  }, [isLoading, assessment.payment.packageType, assessment.payment.price]);
+
+  // Show a loading indicator while the assessment draft is being hydrated
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.govBlue} />
+        <Text style={styles.loadingText}>Loading payment details...</Text>
+      </View>
+    );
+  }
+
+  // While waiting for the useEffect redirect, render nothing to avoid a flash
   if (!assessment.payment.packageType || assessment.payment.price <= 0) {
-    router.replace('/packages');
     return null;
   }
 
@@ -232,6 +251,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 15,
+    color: colors.govGrey2,
   },
   scrollContent: {
     padding: 20,

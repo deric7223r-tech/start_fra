@@ -158,7 +158,7 @@ describe('Index', () => {
     });
 
     it('Self-paced button navigates to workshop when authenticated', async () => {
-      setupAuth({ user: makeUser() });
+      setupAuth({ user: makeUser(), activePackage: 'pkg_training' });
       const user = userEvent.setup();
       renderIndex();
 
@@ -297,7 +297,7 @@ describe('Index', () => {
     });
 
     it('Start Workshop link goes to workshop when authenticated', () => {
-      setupAuth({ user: makeUser() });
+      setupAuth({ user: makeUser(), activePackage: 'pkg_training' });
 
       renderIndex();
 

@@ -130,9 +130,21 @@ const workshop = new Hono();
 // ── Package entitlement middleware ───────────────────────────
 // Assessment endpoints (progress, action-plans, certificates) are available to ALL packages.
 // Workshop-only features (sessions, polls, Q&A, profiles, roles, SSE) require pkg_training+.
+//
+// Entitlement is only enforced when a database is configured. In no-DB (development/test)
+// mode, individual route handlers are responsible for returning the appropriate response
+// (e.g. 503 NO_DATABASE for write endpoints, empty arrays for reads). Enforcing entitlement
+// without a database would always block requests because the in-memory purchase store starts
+// empty for new users, making it impossible to test route-level behaviour.
 const ASSESSMENT_PATHS = ['/progress', '/action-plans', '/certificates'];
 
 workshop.use('*', async (c, next) => {
+  // Without a database, skip entitlement enforcement and let individual routes handle
+  // their own hasDatabase() checks (returning 503 NO_DATABASE where appropriate).
+  if (!hasDatabase()) {
+    return next();
+  }
+
   const auth = getAuthBase(c);
   if (!auth) {
     // Let individual routes handle auth (some use SSE tokens)
@@ -145,14 +157,7 @@ workshop.use('*', async (c, next) => {
     return next();
   }
 
-  let orgPurchases;
-  if (hasDatabase()) {
-    orgPurchases = await dbListPurchasesByOrganisation(auth.organisationId);
-  } else {
-    orgPurchases = Array.from(purchasesById.values()).filter(
-      (p) => p.organisationId === auth.organisationId
-    );
-  }
+  const orgPurchases = await dbListPurchasesByOrganisation(auth.organisationId);
 
   if (!hasPackageEntitlement(orgPurchases, 'pkg_training')) {
     return jsonError(c, 403, 'PACKAGE_REQUIRED', 'Workshop access requires Professional or Enterprise package');

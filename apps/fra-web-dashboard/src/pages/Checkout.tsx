@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,15 +14,23 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
+const VALID_PACKAGES = ['Professional', 'Enterprise', 'Starter', 'Health-Check'] as const;
+type ValidPackage = typeof VALID_PACKAGES[number];
+
 export default function Checkout() {
   const [searchParams] = useSearchParams();
-
-  const VALID_PACKAGES = ['Professional', 'Enterprise', 'Health-Check'] as const;
+  const navigate = useNavigate();
 
   const rawPackageName = searchParams.get('package');
   const priceParam = searchParams.get('price');
   const parsedPrice = priceParam ? parseFloat(priceParam) : 0;
   const price = Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : 0;
+
+  const packageName: ValidPackage | null = VALID_PACKAGES.includes(rawPackageName as ValidPackage)
+    ? (rawPackageName as ValidPackage)
+    : null;
+
+  const isInvalidCheckout = !packageName || !priceParam || price <= 0;
 
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
@@ -33,12 +41,21 @@ export default function Checkout() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  const packageName = VALID_PACKAGES.includes(rawPackageName as typeof VALID_PACKAGES[number])
-    ? rawPackageName!
-    : null;
+  /**
+   * Redirect to home when required checkout parameters are missing or invalid.
+   * This keeps the checkout URL surface clean and prevents users from landing
+   * on a dead-end page — they are returned to pricing where they can select a
+   * valid package.
+   */
+  useEffect(() => {
+    if (isInvalidCheckout) {
+      navigate('/', { replace: true });
+    }
+  }, [isInvalidCheckout, navigate]);
 
-  if (!packageName || !priceParam || price <= 0) {
-    return <Navigate to="/" replace />;
+  // Render nothing while redirect is in flight
+  if (isInvalidCheckout) {
+    return null;
   }
 
   const vat = price * 0.20;
@@ -207,7 +224,13 @@ export default function Checkout() {
                     <p className="text-primary-foreground/70 text-sm">
                       {packageName === 'Professional'
                         ? 'FRA + Training - Annual Subscription'
-                        : 'Full Dashboard - Annual Subscription'}
+                        : packageName === 'Enterprise'
+                        ? 'Full Dashboard - Annual Subscription'
+                        : packageName === 'Starter'
+                        ? 'Fraud Risk Assessment - One-off'
+                        : packageName === 'Health-Check'
+                        ? 'Health Check - One-off Assessment'
+                        : null}
                     </p>
                   </div>
 
