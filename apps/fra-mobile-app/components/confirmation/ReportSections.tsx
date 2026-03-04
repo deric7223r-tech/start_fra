@@ -17,12 +17,12 @@ interface ReportSectionsProps {
   expandedSections: Record<string, boolean>;
   onToggleSection: (section: string) => void;
   riskRegister: RiskRegisterItem[];
-  paymentsModule: PaymentsModule;
-  trainingAwareness: TrainingAwareness;
-  monitoringEvaluation: MonitoringEvaluation;
-  complianceMapping: ComplianceMapping;
-  fraudResponsePlan: FraudResponsePlan;
-  actionPlan: ActionPlan;
+  paymentsModule?: PaymentsModule;
+  trainingAwareness?: TrainingAwareness;
+  monitoringEvaluation?: MonitoringEvaluation;
+  complianceMapping?: ComplianceMapping;
+  fraudResponsePlan?: FraudResponsePlan;
+  actionPlan?: ActionPlan;
 }
 
 function getStatusLabel(status: string): string {
@@ -89,8 +89,8 @@ export default function ReportSections({
         ))}
       </ExpandableReportSection>
 
-      {/* PAYMENTS RISK MODULE */}
-      <ExpandableReportSection
+      {/* PAYMENTS RISK MODULE — Professional / Enterprise only */}
+      {paymentsModule && <ExpandableReportSection
         title="PAYMENTS RISK MODULE"
         icon={<DollarSign size={20} color={colors.govBlue} />}
         expanded={!!expandedSections.payments}
@@ -139,10 +139,10 @@ export default function ReportSections({
             <Text style={styles.kpiValue}>{paymentsModule.kpis.supplierVerificationRate}% (Target: 100%)</Text>
           </View>
         </View>
-      </ExpandableReportSection>
+      </ExpandableReportSection>}
 
-      {/* TRAINING & AWARENESS */}
-      <ExpandableReportSection
+      {/* TRAINING & AWARENESS — Professional / Enterprise only */}
+      {trainingAwareness && <ExpandableReportSection
         title="TRAINING & AWARENESS"
         icon={<GraduationCap size={20} color={colors.govBlue} />}
         expanded={!!expandedSections.training}
@@ -157,10 +157,10 @@ export default function ReportSections({
           <Text style={styles.highlight}>{trainingAwareness.overallCompletionRate}%</Text>
           <Text style={styles.bodyText}>Target: 95%</Text>
         </View>
-      </ExpandableReportSection>
+      </ExpandableReportSection>}
 
-      {/* MONITORING & EVALUATION */}
-      <ExpandableReportSection
+      {/* MONITORING & EVALUATION — Professional / Enterprise only */}
+      {monitoringEvaluation && <ExpandableReportSection
         title="MONITORING & EVALUATION"
         icon={<BarChart3 size={20} color={colors.govBlue} />}
         expanded={!!expandedSections.monitoring}
@@ -187,10 +187,10 @@ export default function ReportSections({
           <Text style={styles.subsectionTitle}>Review Frequency</Text>
           <Text style={styles.bodyText}>{monitoringEvaluation.reviewFrequency}</Text>
         </View>
-      </ExpandableReportSection>
+      </ExpandableReportSection>}
 
-      {/* COMPLIANCE MAPPING */}
-      <ExpandableReportSection
+      {/* COMPLIANCE MAPPING — Professional / Enterprise only */}
+      {complianceMapping && <ExpandableReportSection
         title="COMPLIANCE MAPPING"
         icon={<FileCheck size={20} color={colors.govBlue} />}
         expanded={!!expandedSections.compliance}
@@ -215,10 +215,10 @@ export default function ReportSections({
             <Text style={styles.statusText}>{getStatusLabel(complianceMapping.eccta2023.status)}</Text>
           </View>
         </View>
-      </ExpandableReportSection>
+      </ExpandableReportSection>}
 
-      {/* FRAUD RESPONSE PLAN */}
-      <ExpandableReportSection
+      {/* FRAUD RESPONSE PLAN — Professional / Enterprise only */}
+      {fraudResponsePlan && <ExpandableReportSection
         title="FRAUD RESPONSE PLAN"
         icon={<AlertOctagon size={20} color={colors.govBlue} />}
         expanded={!!expandedSections.response}
@@ -244,10 +244,10 @@ export default function ReportSections({
             <Text key={measure} style={styles.bodyText}>{'\u2022'} {measure}</Text>
           ))}
         </View>
-      </ExpandableReportSection>
+      </ExpandableReportSection>}
 
-      {/* ACTION PLAN */}
-      <ExpandableReportSection
+      {/* ACTION PLAN — Professional / Enterprise only */}
+      {actionPlan && <ExpandableReportSection
         title="ACTION PLAN"
         icon={<ListChecks size={20} color={colors.govBlue} />}
         expanded={!!expandedSections.actions}
@@ -294,7 +294,7 @@ export default function ReportSections({
             ))}
           </View>
         )}
-      </ExpandableReportSection>
+      </ExpandableReportSection>}
     </>
   );
 }

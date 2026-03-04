@@ -8,8 +8,15 @@ export default function PrioritiesScreen() {
   const router = useRouter();
   const { assessment, updateAssessment } = useAssessment();
 
+  const packageType = assessment.payment?.packageType;
+  const includesComprehensiveModules = packageType === 'with-awareness' || packageType === 'with-dashboard';
+
   const handleNext = () => {
-    router.push('/payments-module');
+    if (includesComprehensiveModules) {
+      router.push('/payments-module');
+    } else {
+      router.push('/review');
+    }
   };
 
   return (

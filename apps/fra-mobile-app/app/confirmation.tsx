@@ -20,6 +20,9 @@ export default function ConfirmationScreen() {
   const { organisation } = useAuth();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
+  const packageType = assessment.payment?.packageType;
+  const includesComprehensiveModules = packageType === 'with-awareness' || packageType === 'with-dashboard';
+
   const handleDownloadReport = () => {
     Alert.alert(
       'Report Ready',
@@ -107,12 +110,14 @@ export default function ConfirmationScreen() {
           expandedSections={expandedSections}
           onToggleSection={toggleSection}
           riskRegister={assessment.riskRegister}
-          paymentsModule={assessment.paymentsModule}
-          trainingAwareness={assessment.trainingAwareness}
-          monitoringEvaluation={assessment.monitoringEvaluation}
-          complianceMapping={assessment.complianceMapping}
-          fraudResponsePlan={assessment.fraudResponsePlan}
-          actionPlan={assessment.actionPlan}
+          {...(includesComprehensiveModules ? {
+            paymentsModule: assessment.paymentsModule,
+            trainingAwareness: assessment.trainingAwareness,
+            monitoringEvaluation: assessment.monitoringEvaluation,
+            complianceMapping: assessment.complianceMapping,
+            fraudResponsePlan: assessment.fraudResponsePlan,
+            actionPlan: assessment.actionPlan,
+          } : {})}
         />
 
         <View style={styles.actionsContainer}>

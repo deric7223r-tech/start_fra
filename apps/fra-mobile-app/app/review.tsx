@@ -10,6 +10,9 @@ export default function ReviewScreen() {
   const { assessment, submitAssessment } = useAssessment();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const packageType = assessment.payment?.packageType;
+  const includesComprehensiveModules = packageType === 'with-awareness' || packageType === 'with-dashboard';
+
   const handleSubmit = () => {
     Alert.alert(
       'Submit Assessment',
@@ -122,31 +125,35 @@ export default function ReviewScreen() {
           </View>
         )}
 
-        <Text style={styles.groupTitle}>Comprehensive FRA Modules</Text>
-        <View style={styles.sectionsContainer}>
-          {comprehensiveSections.map((section, index) => {
-            const IconComponent = section.icon;
-            return (
-              <TouchableOpacity
-                key={section.key}
-                style={styles.sectionCard}
-                onPress={() => router.push(section.route as Href)}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`${section.title}, Completed`}
-              >
-                <View style={styles.sectionIcon}>
-                  <IconComponent size={20} color={colors.govBlue} />
-                </View>
-                <View style={styles.sectionContent}>
-                  <Text style={styles.sectionTitle}>{section.title}</Text>
-                  <Text style={styles.sectionSummary}>Completed</Text>
-                </View>
-                <ChevronRight size={20} color={colors.govGrey3} />
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+        {includesComprehensiveModules && (
+          <>
+            <Text style={styles.groupTitle}>Comprehensive FRA Modules</Text>
+            <View style={styles.sectionsContainer}>
+              {comprehensiveSections.map((section) => {
+                const IconComponent = section.icon;
+                return (
+                  <TouchableOpacity
+                    key={section.key}
+                    style={styles.sectionCard}
+                    onPress={() => router.push(section.route as Href)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${section.title}, Completed`}
+                  >
+                    <View style={styles.sectionIcon}>
+                      <IconComponent size={20} color={colors.govBlue} />
+                    </View>
+                    <View style={styles.sectionContent}>
+                      <Text style={styles.sectionTitle}>{section.title}</Text>
+                      <Text style={styles.sectionSummary}>Completed</Text>
+                    </View>
+                    <ChevronRight size={20} color={colors.govGrey3} />
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
       </ScrollView>
 
       <View style={styles.footer}>
