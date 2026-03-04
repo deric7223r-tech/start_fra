@@ -9,7 +9,7 @@ import colors from '@/constants/colors';
 export default function PaymentScreen() {
   const router = useRouter();
   const { assessment, isLoading, processPayment } = useAssessment();
-  const { allocateKeyPasses } = useAuth();
+  const { allocateKeyPasses, refreshProfile } = useAuth();
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
@@ -105,6 +105,10 @@ export default function PaymentScreen() {
           return;
         }
       }
+
+      // Sync auth state with the backend so the confirmation screen reflects
+      // the newly assigned package and key-pass allocation immediately.
+      await refreshProfile();
 
       router.push('/confirmation');
     } catch (error: unknown) {

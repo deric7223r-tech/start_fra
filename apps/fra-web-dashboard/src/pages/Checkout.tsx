@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +21,7 @@ type ValidPackage = typeof VALID_PACKAGES[number];
 export default function Checkout() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
 
   const rawPackageName = searchParams.get('package');
   const priceParam = searchParams.get('price');
@@ -106,6 +108,7 @@ export default function Checkout() {
     setIsProcessing(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
+      await refreshProfile();
       setIsSuccess(true);
     } catch {
       setPaymentError('Payment failed. Please check your card details and try again.');

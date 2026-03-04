@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useWorkshopProgress } from '@/hooks/useWorkshopProgress';
@@ -25,16 +25,19 @@ import {
 export default function Dashboard() {
   const { user, profile, activePackage, isLoading: authLoading, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const hasWorkshopAccess = activePackage === 'pkg_training' || activePackage === 'pkg_full';
 
   // Only fetch workshop progress for Package 2+ users
   const { progress, isLoading: progressLoading } = useWorkshopProgress(null, { enabled: hasWorkshopAccess });
 
-  // Re-fetch auth state each time the dashboard is visited to pick up package changes
+  // Re-fetch auth state each time the dashboard is visited to pick up package changes.
+  // location.key changes on every navigation event, so this effect re-runs whenever
+  // the user arrives at this route rather than only on first mount.
   useEffect(() => {
     refreshProfile();
-  }, [refreshProfile]);
+  }, [refreshProfile, location.key]);
 
   if (authLoading || (hasWorkshopAccess && progressLoading)) {
     return (

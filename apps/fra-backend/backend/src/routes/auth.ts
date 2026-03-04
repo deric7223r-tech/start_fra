@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDbPool } from '../db.js';
-import { hasDatabase, hasPackageEntitlement, jsonError, requireAuth } from '../helpers.js';
+import { getActivePackageTier, hasDatabase, jsonError, requireAuth } from '../helpers.js';
 import { getRedis } from '../redis.js';
 import {
   signupSchema, loginSchema, refreshSchema, forgotPasswordSchema, resetPasswordSchema, profileUpdateSchema,
@@ -26,13 +26,6 @@ import { createLogger } from '../logger.js';
 
 const logger = createLogger('auth');
 
-/** Derive the highest active package tier from an org's purchases */
-function getActivePackageTier(purchases: Purchase[]): string | null {
-  if (hasPackageEntitlement(purchases, 'pkg_full')) return 'pkg_full';
-  if (hasPackageEntitlement(purchases, 'pkg_training')) return 'pkg_training';
-  if (hasPackageEntitlement(purchases, 'pkg_basic')) return 'pkg_basic';
-  return null;
-}
 
 const { AUTH_WINDOW_MS, SIGNUP_MAX, LOGIN_MAX, FORGOT_PASSWORD_MAX, RESET_PASSWORD_MAX, REFRESH_WINDOW_MS, REFRESH_MAX } = RATE_LIMITS;
 

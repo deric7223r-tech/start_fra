@@ -215,6 +215,55 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   );
 
   /**
+   * Refresh user and organisation data from the backend.
+   *
+   * Calls /auth/me for an authoritative user snapshot, then attempts to fetch
+   * the latest organisation record (including updated packageType and key-pass
+   * counts) from /organisations/:id. Both results are merged into React state
+   * so every consumer immediately sees post-payment values without a full
+   * sign-out / sign-in cycle.
+   *
+   * Failures are treated as non-fatal: the existing in-memory state is
+   * preserved and a warning is logged so the caller can decide how to proceed.
+   */
+  const refreshProfile = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      if (!apiService.isAuthenticated()) {
+        return { success: false, error: 'Not authenticated' };
+      }
+
+      // Fetch authoritative user record
+      const userResult = await authService.getCurrentUser();
+      if (userResult.success && userResult.data) {
+        setUser(userResult.data);
+      } else {
+        logger.warn('refreshProfile: could not refresh user', { error: userResult.error });
+      }
+
+      // Fetch authoritative organisation record – endpoint may not be available
+      // on all backend versions, so failures are silently tolerated.
+      const orgId = userResult.data?.organisationId ?? organisation?.organisationId;
+      if (orgId) {
+        const orgResult = await apiService.get<OrganisationData>(
+          `/api/v1/organisations/${orgId}`,
+          { requiresAuth: true }
+        );
+        if (orgResult.success && orgResult.data) {
+          setOrganisation(orgResult.data);
+          logger.info('refreshProfile: organisation refreshed');
+        } else {
+          logger.warn('refreshProfile: org endpoint unavailable, keeping cached data');
+        }
+      }
+
+      return { success: true };
+    } catch (error: unknown) {
+      logger.error('refreshProfile failed:', error);
+      return { success: false, error: 'Failed to refresh profile' };
+    }
+  }, [organisation]);
+
+  /**
    * Allocate key-passes (after package purchase)
    */
   const allocateKeyPasses = useCallback(
@@ -275,5 +324,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     signOut,
     updateOrganisation,
     allocateKeyPasses,
+    refreshProfile,
   };
 });

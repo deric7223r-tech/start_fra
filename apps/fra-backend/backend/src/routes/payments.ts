@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { Hono } from 'hono';
-import { getAuth, hasDatabase, jsonError, requireAuth } from '../helpers.js';
+import { getActivePackageTier, getAuth, hasDatabase, jsonError, requireAuth } from '../helpers.js';
 import { createLogger } from '../logger.js';
 import {
   paymentCreateIntentSchema, purchasesCreateSchema, purchasesConfirmSchema,
@@ -256,11 +256,20 @@ payments.post('/purchases/:id/confirm', async (c) => {
     userAgent: c.req.header('user-agent'),
   });
 
+  // Fetch the org's updated purchases (including the one just confirmed) to derive
+  // the highest active package tier so the frontend can update its state immediately.
+  const updatedPurchases = hasDatabase()
+    ? await dbListPurchasesByOrganisation(auth.organisationId)
+    : Array.from(purchasesById.values()).filter((p) => p.organisationId === auth.organisationId);
+
+  const activePackage = getActivePackageTier(updatedPurchases);
+
   return c.json({
     success: true,
     data: {
       purchaseId, organisationId: auth.organisationId,
       status: 'succeeded', paymentIntentId: parsed.data.paymentIntentId ?? null,
+      activePackage,
     },
   });
 });

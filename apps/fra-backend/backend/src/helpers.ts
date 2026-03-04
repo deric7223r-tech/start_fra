@@ -83,3 +83,14 @@ export function hasPackageEntitlement(purchases: Purchase[], requiredPackageId: 
     (p) => p.status === 'succeeded' && (PACKAGE_TIER[p.packageId] ?? 0) >= requiredTier
   );
 }
+
+/**
+ * Derive the highest active package tier from an org's purchases.
+ * Returns the package ID string (e.g. 'pkg_full') or null if no active package exists.
+ */
+export function getActivePackageTier(purchases: Purchase[]): string | null {
+  if (hasPackageEntitlement(purchases, 'pkg_full')) return 'pkg_full';
+  if (hasPackageEntitlement(purchases, 'pkg_training')) return 'pkg_training';
+  if (hasPackageEntitlement(purchases, 'pkg_basic')) return 'pkg_basic';
+  return null;
+}
