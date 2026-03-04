@@ -224,7 +224,16 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       try {
         logger.info('Allocating key-passes for package:', packageType);
 
-        const allocation = employeeCount === '1-10' || employeeCount === '11-50' ? 100 : 250;
+        // Respect package-tier key-pass limits
+        let allocation: number;
+        if (packageType === 'health-check') {
+          allocation = 1;
+        } else if (packageType === 'with-awareness') {
+          allocation = Math.min(50, employeeCount === '1-10' || employeeCount === '11-50' ? 10 : 50);
+        } else {
+          // Enterprise: allocate based on org size (unlimited quota on backend)
+          allocation = employeeCount === '1-10' || employeeCount === '11-50' ? 100 : 250;
+        }
 
         const result = await apiService.post<KeyPassAllocateResponse>(
           API_CONFIG.ENDPOINTS.KEYPASSES.ALLOCATE,

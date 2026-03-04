@@ -245,9 +245,9 @@ export const RISK_THRESHOLDS = {
 // ── Fallback packages ───────────────────────────────────────────
 
 export const FALLBACK_PACKAGES: Package[] = [
-  { id: 'pkg_basic', name: 'Basic', description: 'Self-service fraud risk assessment', priceCents: 0, currency: 'gbp', keypassAllowance: 1, features: ['Single assessment', 'Basic risk report', 'PDF export'], isActive: true, sortOrder: 1 },
-  { id: 'pkg_training', name: 'Training', description: 'Assessment with staff training key-passes', priceCents: 4900, currency: 'gbp', keypassAllowance: 10, features: ['Everything in Basic', '10 employee key-passes', 'Training modules', 'Compliance certificate'], isActive: true, sortOrder: 2 },
-  { id: 'pkg_full', name: 'Full', description: 'Complete fraud risk management suite', priceCents: 14900, currency: 'gbp', keypassAllowance: 50, features: ['Everything in Training', '50 employee key-passes', 'Priority support', 'Custom action plan', 'Annual review'], isActive: true, sortOrder: 3 },
+  { id: 'pkg_basic', name: 'Starter', description: 'Single fraud risk assessment with PDF report', priceCents: 79500, currency: 'gbp', keypassAllowance: 1, features: ['Single fraud risk assessment', 'PDF health check report', 'ECCTA compliance snapshot', '1 key-pass'], isActive: true, sortOrder: 1 },
+  { id: 'pkg_training', name: 'Professional', description: 'Everything in Starter plus training and support', priceCents: 199500, currency: 'gbp', keypassAllowance: 50, features: ['Everything in Starter', 'Staff awareness training modules', 'Up to 50 employee key-passes', 'Quarterly reassessment', 'Email support'], isActive: true, sortOrder: 2 },
+  { id: 'pkg_full', name: 'Enterprise', description: 'Complete solution with dashboard and unlimited access', priceCents: 499500, currency: 'gbp', keypassAllowance: 999999, features: ['Everything in Professional', 'Real-time monitoring dashboard', 'Unlimited employee key-passes', 'Risk register & action tracking', 'API access', 'Priority support', 'GovS-013 & ECCTA compliance reports'], isActive: true, sortOrder: 3 },
 ];
 
 // ── Pagination ─────────────────────────────────────────────────

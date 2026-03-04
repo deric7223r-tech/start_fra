@@ -17,6 +17,12 @@ export default function PaymentScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const processingRef = useRef(false);
 
+  // Guard: redirect to packages if no package selected
+  if (!assessment.payment.packageType || assessment.payment.price <= 0) {
+    router.replace('/packages');
+    return null;
+  }
+
   const formatCardNumber = (text: string) => {
     const cleaned = text.replace(/\s/g, '');
     const chunks = cleaned.match(/.{1,4}/g);
@@ -101,7 +107,9 @@ export default function PaymentScreen() {
     ? 'Starter'
     : assessment.payment.packageType === 'with-awareness'
     ? 'Professional'
-    : 'Enterprise';
+    : assessment.payment.packageType === 'with-dashboard'
+    ? 'Enterprise'
+    : 'Unknown';
 
   const billingPeriod = assessment.payment.packageType === 'health-check'
     ? '(one-time)'

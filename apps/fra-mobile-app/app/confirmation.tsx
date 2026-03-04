@@ -51,10 +51,12 @@ export default function ConfirmationScreen() {
   };
 
   const packageName = assessment.payment.packageType === 'health-check'
-    ? 'Health Check FRA'
+    ? 'Starter — Health Check FRA'
     : assessment.payment.packageType === 'with-awareness'
-    ? 'FRA + Awareness Briefing'
-    : 'FRA + Dashboard (12 months)';
+    ? 'Professional — FRA + Awareness Training'
+    : assessment.payment.packageType === 'with-dashboard'
+    ? 'Enterprise — FRA + Dashboard (12 months)'
+    : 'Fraud Risk Assessment';
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
