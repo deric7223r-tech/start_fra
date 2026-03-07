@@ -41,12 +41,12 @@ export default function PackagesScreen() {
       name: 'Starter',
       price: 795,
       billingPeriod: 'one-time',
-      description: 'Single fraud risk assessment with PDF report',
+      description: 'Fraud risk health check for your organisation',
       features: [
-        'Single fraud risk assessment',
-        'PDF health check report',
-        'ECCTA compliance snapshot',
-        '1 key-pass',
+        'Single fraud risk assessment across 13 key areas',
+        'Downloadable PDF health check report',
+        'ECCTA 2023 compliance snapshot',
+        '1 key-pass included',
       ],
       keyPasses: 1,
       recommended: orgSize === 'small',
@@ -55,7 +55,7 @@ export default function PackagesScreen() {
     {
       id: 'with-awareness',
       name: 'Professional',
-      price: 1995,
+      price: 1799,
       billingPeriod: 'year',
       description: 'Everything in Starter plus training and support',
       features: [

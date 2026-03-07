@@ -663,11 +663,11 @@ Foundation → Assessment → Action → Embed
  
 | Feature | Package 1 | Package 2 | Package 3 |
 |---------|-----------|-----------|-----------|
-| Fraud risk assessment | 
- | 
- | 
- |
-| Automated reporting | 
+| Fraud risk assessment | ❌ None | ✅ Full | ✅ Full |
+| Automated reporting | ❌ None | ✅ Yes | ✅ Yes |
+| Key-passes | 0 | 10 | 50 |
+| Training modules | ❌ None | ✅ Yes | ✅ Yes |
+| Support | ❌ None | Email | Priority | 
  | 
  | 
  |

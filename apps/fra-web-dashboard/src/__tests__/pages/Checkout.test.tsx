@@ -2,8 +2,20 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Checkout from '@/pages/Checkout';
+import { api } from '@/lib/api';
 
 // ── Mocks ──────────────────────────────────────────────────
+
+vi.mock('@/lib/api', () => ({
+  api: { post: vi.fn() },
+  ApiError: class ApiError extends Error {
+    code: string;
+    constructor(code: string, message: string) {
+      super(message);
+      this.code = code;
+    }
+  },
+}));
 
 vi.mock('@/components/layout/Layout', () => ({
   Layout: ({ children }: { children: React.ReactNode }) => <div data-testid="layout">{children}</div>,
@@ -36,6 +48,19 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
 }
 
 // ── Tests ──────────────────────────────────────────────────
+
+const mockPurchaseResponse = {
+  purchaseId: 'purchase-1',
+  paymentIntentId: 'pi_test',
+  clientSecret: 'secret',
+  packageId: 'pkg_training',
+  organisationId: 'org-1',
+  status: 'requires_confirmation',
+};
+
+beforeEach(() => {
+  vi.mocked(api.post).mockResolvedValue(mockPurchaseResponse);
+});
 
 describe('Checkout', () => {
   // ── Redirect for invalid params ──────────────
@@ -317,12 +342,13 @@ describe('Checkout', () => {
   describe('payment processing', () => {
     it('shows processing state during payment', async () => {
       const user = userEvent.setup();
+      // Make the API call hang so the processing state remains visible
+      vi.mocked(api.post).mockImplementationOnce(() => new Promise(() => {}));
       renderCheckout();
 
       await fillValidForm(user);
       await user.click(screen.getByRole('button', { name: /Pay/ }));
 
-      // The 2s payment delay is pending — processing state is visible
       expect(screen.getByText('Processing...')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Processing/ })).toBeDisabled();
     });
@@ -382,7 +408,7 @@ describe('Checkout', () => {
       await user.click(screen.getByRole('button', { name: /Pay/ }));
 
       expect(screen.queryByText('Enter a valid CVC (3-4 digits)')).not.toBeInTheDocument();
-      expect(screen.getByText('Processing...')).toBeInTheDocument();
+      expect(screen.getByText('Payment Successful!')).toBeInTheDocument();
     });
 
     it('accepts card number with spaces', async () => {

@@ -44,15 +44,16 @@ Status: ✅ Connected and operational
 
 | Package Type | Name | Price | Max Keypasses | Status |
 |--------------|------|-------|---------------|--------|
-| `health-check` | Package 1: Basic Health Check | $500.00 | 1 | ✅ Active |
-| `with-awareness` | Package 2: Health Check + Training | $1,500.00 | 10 | ✅ Active |
-| `with-dashboard` | Package 3: Full Dashboard | $3,000.00 | 100 | ✅ Active |
+| `pkg_basic` | Package 1: Basic | £799.00/year | 0 | ✅ Active |
+| `pkg_training` | Package 2: Training | £1,799.00/year | 10 | ✅ Active |
+| `pkg_full` | Package 3: Full | £4,999.00/year | 50 | ✅ Active |
 
 **Package Features:**
 ```json
-// Package 1
+// Package 1 - No features
 {
-  "basic_report": true,
+  "features": []
+}
   "health_check": true
 }
 

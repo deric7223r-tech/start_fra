@@ -86,7 +86,7 @@ describe('PackageProfessional', () => {
     it('shows price', () => {
       renderPage();
 
-      expect(screen.getAllByText(/£1,995/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/£1,799/).length).toBeGreaterThanOrEqual(1);
     });
 
     it('shows stats (50 Key-Passes, 4x Per Year)', () => {
@@ -112,7 +112,7 @@ describe('PackageProfessional', () => {
       renderPage();
 
       const links = screen.getAllByRole('link', { name: /Choose Professional/ });
-      expect(links[0]).toHaveAttribute('href', '/checkout?package=Professional&price=1995');
+      expect(links[0]).toHaveAttribute('href', '/checkout?package=Professional&price=1799');
     });
 
     it('CTA "Get Started Now" links to signup when not authenticated', () => {
@@ -128,7 +128,7 @@ describe('PackageProfessional', () => {
       renderPage();
 
       const link = screen.getByRole('link', { name: /Get Started Now/ });
-      expect(link).toHaveAttribute('href', '/checkout?package=Professional&price=1995');
+      expect(link).toHaveAttribute('href', '/checkout?package=Professional&price=1799');
     });
 
     it('View Resources link points to /resources', () => {
@@ -199,7 +199,7 @@ describe('PackageProfessional', () => {
       renderPage();
 
       expect(screen.getByText('Train Your Team. Prove Compliance.')).toBeInTheDocument();
-      expect(screen.getByText('£1,995/year + VAT')).toBeInTheDocument();
+      expect(screen.getByText('£1,799/year + VAT')).toBeInTheDocument();
     });
 
     it('mentions Enterprise package', () => {

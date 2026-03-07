@@ -75,13 +75,13 @@ export default function PackageProfessional() {
                   Most Popular
                 </span>
                 <p className="text-2xl font-bold text-accent">
-                  £1,995<span className="text-base font-medium text-primary-foreground/60">/year + VAT</span>
+                  £1,799<span className="text-base font-medium text-primary-foreground/60">/year + VAT</span>
                 </p>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
-                  <Link to={user ? '/checkout?package=Professional&price=1995' : '/auth?mode=signup'}>
+                  <Link to={user ? '/checkout?package=Professional&price=1799' : '/auth?mode=signup'}>
                     Choose Professional
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
@@ -127,7 +127,7 @@ export default function PackageProfessional() {
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4 mt-6">
                 {[
-                  { value: '£1,995', label: 'Per Year', sublabel: 'Annual subscription' },
+                  { value: '£1,799', label: 'Per Year', sublabel: 'Annual subscription' },
                   { value: '50', label: 'Key-Passes', sublabel: 'Employee access' },
                   { value: '4x', label: 'Per Year', sublabel: 'Quarterly reviews' },
                 ].map((stat, index) => (
@@ -267,11 +267,11 @@ export default function PackageProfessional() {
                 Fraud risk assessment + staff awareness training + 50 employee key-passes.
               </p>
               <p className="text-2xl font-bold text-accent mb-8">
-                £1,995/year + VAT
+                £1,799/year + VAT
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90" asChild>
-                  <Link to={user ? '/checkout?package=Professional&price=1995' : '/auth?mode=signup'}>
+                  <Link to={user ? '/checkout?package=Professional&price=1799' : '/auth?mode=signup'}>
                     Get Started Now
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>

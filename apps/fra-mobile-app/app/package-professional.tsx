@@ -11,7 +11,7 @@ export default function PackageProfessionalScreen() {
   const { selectPackage } = useAssessment();
 
   const handleSelectPackage = () => {
-    selectPackage('with-awareness', 1995);
+    selectPackage('with-awareness', 1799);
     router.push('/payment');
   };
 
@@ -41,7 +41,7 @@ export default function PackageProfessionalScreen() {
             </View>
             <Text style={styles.priceLabel}>Professional Package</Text>
             <View style={styles.priceRow}>
-              <Text style={styles.priceAmount}>£1,995</Text>
+              <Text style={styles.priceAmount}>£1,799</Text>
               <Text style={styles.pricePeriod}>/year + VAT</Text>
             </View>
             <Text style={styles.priceNote}>Annual subscription — cancel anytime</Text>

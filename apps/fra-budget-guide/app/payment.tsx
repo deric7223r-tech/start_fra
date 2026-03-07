@@ -14,13 +14,21 @@ import {
 } from 'react-native';
 import ScreenContainer from '@/components/ScreenContainer';
 import { colors, spacing, borderRadius, shadows } from '@/constants/theme';
+import { apiService } from '@/services/api.service';
+import { API_CONFIG } from '@/constants/api';
+
+const PACKAGE_ID_MAP: Record<string, string> = {
+  Professional: 'pkg_training',
+  Enterprise: 'pkg_full',
+  Starter: 'pkg_basic',
+};
 
 export default function PaymentScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ package: string; price: string }>();
 
   const packageName = params.package ?? 'Professional';
-  const priceRaw = Number(params.price ?? '1995');
+  const priceRaw = Number(params.price ?? '1799');
   const priceFormatted = priceRaw.toLocaleString();
   const vatAmount = Math.round(priceRaw * 0.2);
   const totalAmount = priceRaw + vatAmount;
@@ -67,7 +75,7 @@ export default function PaymentScreen() {
     }
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     const cleanedCard = cardNumber.replace(/\s/g, '');
     if (!cleanedCard || !expiry || !cvc || !cardholderName.trim()) {
       Alert.alert('Missing Information', 'Please fill in all card details before continuing.');
@@ -89,10 +97,42 @@ export default function PaymentScreen() {
     }
 
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      const packageId = PACKAGE_ID_MAP[packageName] ?? 'pkg_basic';
+
+      const purchase = await apiService.post<{ purchaseId: string; paymentIntentId: string }>(
+        API_CONFIG.ENDPOINTS.PURCHASES.CREATE,
+        { packageId },
+        { requiresAuth: true },
+      );
+
+      if (!purchase.success || !purchase.data?.purchaseId) {
+        throw new Error(purchase.error?.message || 'Failed to create purchase');
+      }
+
+      const confirmed = await apiService.post<{ status: string }>(
+        API_CONFIG.ENDPOINTS.PURCHASES.CONFIRM(purchase.data.purchaseId),
+        { paymentIntentId: purchase.data.paymentIntentId },
+        { requiresAuth: true },
+      );
+
+      if (!confirmed.success) {
+        throw new Error(confirmed.error?.message || 'Failed to confirm purchase');
+      }
+
       setIsSuccess(true);
-    }, 2000);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('TIMEOUT') || message.includes('timed out')) {
+        Alert.alert('Request Timed Out', 'The payment request timed out. Please check your connection and try again.');
+      } else if (message.includes('NETWORK') || message.includes('Network')) {
+        Alert.alert('Network Error', 'Please check your internet connection and try again.');
+      } else {
+        Alert.alert('Payment Failed', 'There was an issue processing your payment. Please try again.');
+      }
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // ---- Success state ----

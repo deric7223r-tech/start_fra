@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
+import { api, ApiError } from '@/lib/api';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,7 +18,14 @@ import {
 export default function Checkout() {
   const [searchParams] = useSearchParams();
 
-  const VALID_PACKAGES = ['Professional', 'Enterprise', 'Health-Check'] as const;
+  const VALID_PACKAGES = ['Professional', 'Enterprise', 'Health-Check', 'Starter'] as const;
+
+  const PACKAGE_ID_MAP: Record<string, string> = {
+    Professional: 'pkg_training',
+    Enterprise: 'pkg_full',
+    'Health-Check': 'pkg_basic',
+    Starter: 'pkg_basic',
+  };
 
   const rawPackageName = searchParams.get('package');
   const priceParam = searchParams.get('price');
@@ -88,10 +96,28 @@ export default function Checkout() {
 
     setIsProcessing(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const packageId = PACKAGE_ID_MAP[packageName!];
+      const { purchaseId, paymentIntentId } = await api.post<{
+        purchaseId: string;
+        paymentIntentId: string;
+        clientSecret: string;
+        packageId: string;
+        organisationId: string;
+        status: string;
+      }>('/api/v1/purchases', { packageId });
+
+      await api.post<{ purchaseId: string; status: string }>(
+        `/api/v1/purchases/${purchaseId}/confirm`,
+        { paymentIntentId },
+      );
+
       setIsSuccess(true);
-    } catch {
-      setPaymentError('Payment failed. Please check your card details and try again.');
+    } catch (err) {
+      if (err instanceof ApiError && err.code === 'DUPLICATE_PURCHASE') {
+        setPaymentError('You already have an active subscription for this package.');
+      } else {
+        setPaymentError('Payment failed. Please check your card details and try again.');
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -207,7 +233,9 @@ export default function Checkout() {
                     <p className="text-primary-foreground/70 text-sm">
                       {packageName === 'Professional'
                         ? 'FRA + Training - Annual Subscription'
-                        : 'Full Dashboard - Annual Subscription'}
+                        : packageName === 'Enterprise'
+                        ? 'Full Dashboard - Annual Subscription'
+                        : 'Fraud Risk Health Check - One-Time'}
                     </p>
                   </div>
 

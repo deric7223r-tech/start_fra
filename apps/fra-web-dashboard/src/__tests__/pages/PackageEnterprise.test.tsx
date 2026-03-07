@@ -249,7 +249,7 @@ describe('PackageEnterprise', () => {
     it('mentions Professional package', () => {
       renderPage();
 
-      expect(screen.getByText(/Professional package at £1,995/)).toBeInTheDocument();
+      expect(screen.getByText(/Professional package at £1,799/)).toBeInTheDocument();
     });
   });
 

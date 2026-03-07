@@ -14,7 +14,7 @@ create table if not exists public.packages (
 -- Seed the three product tiers
 insert into public.packages (id, name, description, price_cents, currency, keypass_allowance, features, sort_order)
 values
-  ('pkg_basic', 'Basic', 'Self-service fraud risk assessment', 0, 'gbp', 1, '["Single assessment", "Basic risk report", "PDF export"]'::jsonb, 1),
-  ('pkg_training', 'Training', 'Assessment with staff training key-passes', 4900, 'gbp', 10, '["Everything in Basic", "10 employee key-passes", "Training modules", "Compliance certificate"]'::jsonb, 2),
-  ('pkg_full', 'Full', 'Complete fraud risk management suite', 14900, 'gbp', 50, '["Everything in Training", "50 employee key-passes", "Priority support", "Custom action plan", "Annual review"]'::jsonb, 3)
+  ('pkg_basic', 'Starter', 'Fraud risk assessment with downloadable PDF report', 79500, 'gbp', 1, '["Single fraud risk assessment across 13 key areas", "Downloadable PDF health check report", "ECCTA 2023 compliance snapshot", "1 key-pass included"]'::jsonb, 1),
+  ('pkg_training', 'Professional', 'FRA health check + staff awareness training', 179900, 'gbp', 50, '["Everything in Starter", "50 employee key-passes", "Staff awareness training with certificates", "Quarterly reassessment", "Email support"]'::jsonb, 2),
+  ('pkg_full', 'Enterprise', 'Complete fraud risk management suite with live dashboard', 499500, 'gbp', -1, '["Everything in Professional", "Unlimited employee key-passes", "Real-time monitoring dashboard", "Risk register and action tracking", "API access", "Priority support", "Compliance reports"]'::jsonb, 3)
 on conflict (id) do nothing;

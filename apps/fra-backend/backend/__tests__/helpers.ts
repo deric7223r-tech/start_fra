@@ -43,7 +43,7 @@ export function seedPurchase(organisationId: string, userId: string, packageId =
     userId,
     packageId,
     status: 'succeeded',
-    amountCents: 14900,
+    amountCents: 499500,
     currency: 'gbp',
     createdAt: new Date().toISOString(),
   });

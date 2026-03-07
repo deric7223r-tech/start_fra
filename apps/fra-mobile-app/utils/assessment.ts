@@ -155,7 +155,7 @@ export function createEmptyAssessment(
     },
     payment: {
       packageType: null,
-      price: 0,
+      price: 795,
       transactionId: null,
       status: 'pending' as PaymentStatus,
       date: null,

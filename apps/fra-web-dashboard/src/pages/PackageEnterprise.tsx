@@ -374,7 +374,7 @@ export default function PackageEnterprise() {
                 </Button>
               </div>
               <p className="text-sm text-primary-foreground/50 mt-6">
-                Need a smaller team solution? Check out our Professional package at £1,995/year.
+                Need a smaller team solution? Check out our Professional package at £1,799/year.
               </p>
             </CardContent>
           </Card>

@@ -386,11 +386,11 @@ describe('AssessmentContext', () => {
       });
 
       act(() => {
-        result.current.selectPackage('with-awareness', 1995);
+        result.current.selectPackage('with-awareness', 1799);
       });
 
       expect(result.current.assessment.payment.packageType).toBe('with-awareness');
-      expect(result.current.assessment.payment.price).toBe(1995);
+      expect(result.current.assessment.payment.price).toBe(1799);
     });
   });
 

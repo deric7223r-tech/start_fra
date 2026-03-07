@@ -208,9 +208,9 @@ After running `bun run db:seed`, you'll have:
 - Organisation: `Test Organisation`
 
 **Packages:**
-- Package 1: Health Check (£499)
-- Package 2: Health Check + Awareness (£799)
-- Package 3: Full Dashboard (£1,299)
+- Package 1: Basic (£799/year) - No features included
+- Package 2: Training (£1,799/year) - Full assessment + training
+- Package 3: Full (£4,999/year) - Everything + priority support
 
 **Stripe Test Cards:**
 - Success: `4242 4242 4242 4242`
@@ -434,9 +434,9 @@ Test package purchases with these prices:
 
 | Package | Price | Key-Passes | Features |
 |---------|-------|------------|----------|
-| **Package 1: Health Check** | £499 | Up to 100 | Basic health check only |
-| **Package 2: With Awareness** | £799 | Up to 100 | Health check + 30-min training |
-| **Package 3: With Dashboard** | £1,299 | Up to 250 | Full dashboard + analytics |
+| **Package 1: Basic** | £799/year | 0 | No features - upgrade required |
+| **Package 2: Training** | £1,799/year | 10 | Full assessment + training modules |
+| **Package 3: Full** | £4,999/year | 50 | Everything + priority support |
 
 #### Testing Payment Flow
 

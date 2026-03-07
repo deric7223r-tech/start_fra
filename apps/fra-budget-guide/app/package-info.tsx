@@ -31,7 +31,7 @@ export default function PackageInfoScreen() {
       </View>
 
       <View style={styles.priceCard}>
-        <Text style={styles.priceAmount}>£1,995</Text>
+        <Text style={styles.priceAmount}>£1,799</Text>
         <Text style={styles.pricePeriod}>/year + VAT</Text>
         <Text style={styles.priceNote}>Annual subscription — up to 50 employees</Text>
       </View>
@@ -114,7 +114,7 @@ export default function PackageInfoScreen() {
 
       <TouchableOpacity
         style={styles.ctaPrimary}
-        onPress={() => router.push('/payment?package=Professional&price=1995' as any)}
+        onPress={() => router.push('/payment?package=Professional&price=1799' as any)}
         activeOpacity={0.85}
         accessibilityRole="button"
         accessibilityLabel="Choose Professional"

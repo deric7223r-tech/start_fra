@@ -65,7 +65,7 @@ export default function HomeScreen() {
             onPress={handlePackage1}
             activeOpacity={0.85}
             accessibilityRole="button"
-            accessibilityLabel="Package 1: Starter — Fraud Risk Health Check, 795 pounds one-time"
+            accessibilityLabel="Package 1: Starter — No features included, 799 pounds per year - upgrade required"
             accessibilityHint="Starts a new fraud risk health check assessment"
           >
             <View style={styles.cardInner}>
@@ -76,17 +76,15 @@ export default function HomeScreen() {
                 <Text style={styles.packageBadgeText}>PACKAGE 1</Text>
               </View>
               <Text style={styles.cardTitle}>Starter</Text>
-              <Text style={styles.cardSubtitle}>Fraud Risk Health Check</Text>
+              <Text style={styles.cardSubtitle}>No Features Included</Text>
               <View style={styles.priceBlock}>
-                <Text style={styles.cardPrice}>£795</Text>
-                <Text style={styles.cardPriceNote}>one-time + VAT</Text>
+                <Text style={styles.cardPrice}>£799</Text>
+                <Text style={styles.cardPriceNote}>per year + VAT</Text>
               </View>
               <View style={styles.featureDivider} />
               <View style={styles.cardFeatures}>
-                <FeatureBullet text="Single fraud risk assessment" color={colors.govBlue} />
-                <FeatureBullet text="PDF health check report" color={colors.govBlue} />
-                <FeatureBullet text="ECCTA compliance snapshot" color={colors.govBlue} />
-                <FeatureBullet text="1 key-pass" color={colors.govBlue} />
+                <FeatureBullet text="No features available" color={colors.govBlue} />
+                <FeatureBullet text="Must upgrade to access functionality" color={colors.govBlue} />
               </View>
               <View style={styles.ctaDivider} />
               <View style={styles.ctaOutlineBlue}>
@@ -102,7 +100,7 @@ export default function HomeScreen() {
             onPress={handlePackage2}
             activeOpacity={0.85}
             accessibilityRole="button"
-            accessibilityLabel="Package 2: Professional — FRA plus Training, 1995 pounds per year. Most popular option"
+            accessibilityLabel="Package 2: Professional — FRA plus Training, 1799 pounds per year. Most popular option"
             accessibilityHint="Opens the Professional package details page"
           >
             <View style={styles.popularTag}>

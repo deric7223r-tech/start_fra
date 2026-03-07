@@ -202,7 +202,7 @@ describe('Index', () => {
       expect(screen.getByText('Starter')).toBeInTheDocument();
       expect(screen.getByText('£795')).toBeInTheDocument();
       expect(screen.getByText('Professional')).toBeInTheDocument();
-      expect(screen.getByText('£1,995')).toBeInTheDocument();
+      expect(screen.getByText('£1,799')).toBeInTheDocument();
       expect(screen.getByText('Enterprise')).toBeInTheDocument();
       expect(screen.getByText('£4,995')).toBeInTheDocument();
     });
@@ -226,7 +226,7 @@ describe('Index', () => {
       renderIndex();
 
       const link = screen.getByRole('link', { name: /Choose Professional/ });
-      expect(link).toHaveAttribute('href', '/checkout?package=Professional&price=1995');
+      expect(link).toHaveAttribute('href', '/checkout?package=Professional&price=1799');
     });
 
     it('Professional links to signup when not authenticated', () => {

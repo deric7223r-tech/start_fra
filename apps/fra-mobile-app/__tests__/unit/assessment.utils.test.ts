@@ -134,7 +134,7 @@ describe('createEmptyAssessment', () => {
     const a = createEmptyAssessment('u', 'o');
     expect(a.payment.status).toBe('pending');
     expect(a.payment.packageType).toBeNull();
-    expect(a.payment.price).toBe(0);
+    expect(a.payment.price).toBe(795);
   });
 
   it('should set createdAt and updatedAt to valid ISO strings', () => {

@@ -352,7 +352,7 @@ export default function Index() {
                   Ongoing protection with training & support
                 </p>
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-[#0b0c0c]">£1,995</span>
+                  <span className="text-4xl font-bold text-[#0b0c0c]">£1,799</span>
                   <span className="ml-1 text-sm text-[#505a5f]">/ year</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
@@ -370,7 +370,7 @@ export default function Index() {
                   ))}
                 </ul>
                 <Link
-                  to={user ? '/checkout?package=Professional&price=1995' : '/auth?mode=signup'}
+                  to={user ? '/checkout?package=Professional&price=1799' : '/auth?mode=signup'}
                   className="inline-flex items-center justify-center gap-2 rounded bg-[#00703c] px-4 py-3 text-sm font-bold text-white shadow-[0_2px_0_#002d18] hover:bg-[#005a30] no-underline"
                 >
                   Choose Professional

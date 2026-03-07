@@ -29,6 +29,10 @@ export const API_CONFIG = {
       ANALYTICS: '/api/v1/budget-guide/analytics',
       ORG_ANALYTICS: (orgId: string) => `/api/v1/budget-guide/analytics/org/${orgId}`,
     },
+    PURCHASES: {
+      CREATE: '/api/v1/purchases',
+      CONFIRM: (id: string) => `/api/v1/purchases/${id}/confirm`,
+    },
   },
   TIMEOUT: API_DEFAULTS.TIMEOUT,
 };
