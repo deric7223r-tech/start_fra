@@ -1,154 +1,38 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
+import React from 'react';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { AlertOctagon, Clock, Search, FileText } from 'lucide-react-native';
-import colors from '@/constants/colors';
+import { AssessmentScreen, ScaleQuestion, CurrencyQuestion } from '@/components/ui';
+import type { ScaleValue, CurrencyValue } from '@/types/assessment';
 
 export default function FraudResponseScreen() {
-  const router = useRouter();
   const { assessment, updateAssessment } = useAssessment();
-  const [notes, setNotes] = useState(assessment.fraudResponsePlan.notes);
-
-  const handleNext = () => {
-    updateAssessment({
-      fraudResponsePlan: {
-        ...assessment.fraudResponsePlan,
-        notes,
-      },
-    });
-    router.push('/action-plan');
-  };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AssessmentScreen
+      title="Fraud Response Plan"
+      nextRoute="/action-plan"
+      previousRoute="/monitoring-evaluation"
+      hidePrevious={false}
+      progress={{ current: 12, total: 13 }}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <AlertOctagon size={32} color={colors.govRed} />
-          <Text style={styles.title} accessibilityRole="header">Fraud Response Plan</Text>
-        </View>
+      <CurrencyQuestion
+        question="Estimated fraud losses detected in the past 3 years"
+        hint="Total value of fraud incidents identified before completion"
+        value={assessment.fraudResponsePlan.detectedLossesValue}
+        onChange={(value) =>
+          updateAssessment({ fraudResponsePlan: { ...assessment.fraudResponsePlan, detectedLossesValue: value } })
+        }
+      />
 
-        <Text style={styles.intro}>
-          A clear fraud response plan ensures incidents are handled quickly, consistently, and in compliance with legal requirements.
-        </Text>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Clock size={20} color={colors.govBlue} />
-            <Text style={styles.sectionTitle}>Reporting Timelines</Text>
-          </View>
-          <View style={styles.timelineCard}>
-            <View style={styles.timelineItem}>
-              <View style={styles.timelineDot} />
-              <View style={styles.timelineContent}>
-                <Text style={styles.timelineTitle}>Log Incident</Text>
-                <Text style={styles.timelineTime}>Within 24 hours</Text>
-                <Text style={styles.timelineDesc}>All suspected fraud must be logged in the incident register</Text>
-              </View>
-            </View>
-            <View style={styles.timelineItem}>
-              <View style={styles.timelineDot} />
-              <View style={styles.timelineContent}>
-                <Text style={styles.timelineTitle}>Initial Assessment</Text>
-                <Text style={styles.timelineTime}>Within 48 hours</Text>
-                <Text style={styles.timelineDesc}>Preliminary review to assess severity and determine next steps</Text>
-              </View>
-            </View>
-            <View style={styles.timelineItem}>
-              <View style={styles.timelineDot} />
-              <View style={styles.timelineContent}>
-                <Text style={styles.timelineTitle}>Investigation Start</Text>
-                <Text style={styles.timelineTime}>Within 72 hours</Text>
-                <Text style={styles.timelineDesc}>Formal investigation begins with assigned investigator</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Search size={20} color={colors.warningOrange} />
-            <Text style={styles.sectionTitle}>Investigation Lifecycle</Text>
-          </View>
-          <View style={styles.card}>
-            <View style={styles.phaseRow}>
-              <Text style={styles.phaseLabel}>1. Triage</Text>
-              <Text style={styles.phaseDays}>2 days</Text>
-            </View>
-            <Text style={styles.phaseDesc}>Initial evidence gathering and risk assessment</Text>
-          </View>
-          <View style={[styles.card, styles.cardMargin]}>
-            <View style={styles.phaseRow}>
-              <Text style={styles.phaseLabel}>2. Investigation</Text>
-              <Text style={styles.phaseDays}>10 days</Text>
-            </View>
-            <Text style={styles.phaseDesc}>Detailed investigation, interviews, and evidence collection</Text>
-          </View>
-          <View style={[styles.card, styles.cardMargin]}>
-            <View style={styles.phaseRow}>
-              <Text style={styles.phaseLabel}>3. Findings</Text>
-              <Text style={styles.phaseDays}>3 days</Text>
-            </View>
-            <Text style={styles.phaseDesc}>Analysis, conclusions, and recommendations</Text>
-          </View>
-          <View style={[styles.card, styles.cardMargin]}>
-            <View style={styles.phaseRow}>
-              <Text style={styles.phaseLabel}>4. Closure</Text>
-              <Text style={styles.phaseDays}>5 days</Text>
-            </View>
-            <Text style={styles.phaseDesc}>Final report, actions, and case closure</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <FileText size={20} color={colors.govRed} />
-            <Text style={styles.sectionTitle}>Disciplinary Measures</Text>
-          </View>
-          <View style={styles.disciplinaryCard}>
-            <Text style={styles.disciplinaryItem}>1️⃣ Verbal Warning</Text>
-            <Text style={styles.disciplinaryItem}>2️⃣ Written Warning</Text>
-            <Text style={styles.disciplinaryItem}>3️⃣ Suspension</Text>
-            <Text style={styles.disciplinaryItem}>4️⃣ Dismissal</Text>
-            <Text style={styles.disciplinaryItem}>5️⃣ Prosecution (where criminal activity identified)</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.infoBox}>
-            <Text style={styles.infoTitle}>External Reporting</Text>
-            <Text style={styles.infoText}>
-              Regulatory reporting within 7 days where legally required. This includes notifying relevant regulators, law enforcement, or sector-specific bodies as appropriate.
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Response Plan Notes</Text>
-          <Text style={styles.hint}>
-            Describe any organisation-specific response procedures or escalation paths
-          </Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Enter fraud response plan details..."
-            placeholderTextColor={colors.govGrey3}
-            multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-            accessibilityLabel="Response Plan Notes"
-          />
-        </View>
-
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Continue to Action Plan">
-          <Text style={styles.nextButtonText}>Continue to Action Plan</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <ScaleQuestion
+        question="How quickly does the organisation typically respond to suspected fraud?"
+        minLabel="Response is slow or reactive"
+        maxLabel="Rapid, proactive response"
+        value={assessment.fraudResponsePlan.responseSpeed}
+        onChange={(value) =>
+          updateAssessment({ fraudResponsePlan: { ...assessment.fraudResponsePlan, responseSpeed: value } })
+        }
+      />
+    </AssessmentScreen>
   );
 }
 

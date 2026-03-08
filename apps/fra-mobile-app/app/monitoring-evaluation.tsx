@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, TextInput } from 'react-native';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { BarChart3, Target, TrendingUp } from 'lucide-react-native';import { ScaleQuestion } from '@/components/ui';import colors from '@/constants/colors';
+import { AssessmentScreen, ScaleQuestion } from '@/components/ui';
+import { BarChart3, TrendingUp, AlertTriangle } from 'lucide-react-native';
+import colors from '@/constants/colors';
+import type { ScaleValue } from '@/types/assessment';
 
 export default function MonitoringEvaluationScreen() {
-  const router = useRouter();
   const { assessment, updateAssessment } = useAssessment();
-  const [notes, setNotes] = useState(assessment.monitoringEvaluation.notes);
   const [responsiblePerson, setResponsiblePerson] = useState(assessment.monitoringEvaluation.responsiblePerson);
+  const [notes, setNotes] = useState(assessment.monitoringEvaluation.notes);
 
   const handleNext = () => {
     updateAssessment({
@@ -16,125 +17,108 @@ export default function MonitoringEvaluationScreen() {
         ...assessment.monitoringEvaluation,
         notes,
         responsiblePerson,
+        fraudIncidentsDetected: parseInt(assessment.monitoringEvaluation.fraudIncidentsDetected?.toString() || '0'),
+        suspiciousTradeDetected: parseInt(assessment.monitoringEvaluation.suspiciousTradeDetected?.toString() || '0'),
+        fraudRiskLikelihood: assessment.monitoringEvaluation.fraudRiskLikelihood,
       },
     });
-    router.push('/compliance-mapping');
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <AssessmentScreen
+      title="Monitoring & Evaluation"
+      nextRoute="/fraud-response"
+      previousRoute="/training-awareness"
+      hidePrevious={false}
+      progress={{ current: 11, total: 13 }}
+      onNext={handleNext}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <BarChart3 size={32} color={colors.govBlue} />
-          <Text style={styles.title} accessibilityRole="header">Monitoring & Evaluation</Text>
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <AlertTriangle size={20} color={colors.govBlue} />
+          <Text style={styles.sectionTitle}>Incident Tracking</Text>
         </View>
 
-        <Text style={styles.intro}>
-          Continuous monitoring and evaluation ensure fraud prevention measures remain effective over time.
-        </Text>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Target size={20} color={colors.govBlue} />
-            <Text style={styles.sectionTitle}>Key Performance Indicators (KPIs)</Text>
-          </View>
-
-          <View style={styles.kpiCard}>
-            <View style={styles.kpiRow}>
-              <Text style={styles.kpiLabel}>Training Completion Rate</Text>
-              <Text style={styles.kpiTarget}>Target: 95%</Text>
-            </View>
-            <Text style={styles.kpiDesc}>Percentage of staff completing mandatory fraud training</Text>
-          </View>
-
-          <View style={styles.kpiCard}>
-            <View style={styles.kpiRow}>
-              <Text style={styles.kpiLabel}>Investigation Closure Time</Text>
-              <Text style={styles.kpiTarget}>Target: &lt; 30 days</Text>
-            </View>
-            <Text style={styles.kpiDesc}>Average time to complete fraud investigations</Text>
-          </View>
-
-          <View style={styles.kpiCard}>
-            <View style={styles.kpiRow}>
-              <Text style={styles.kpiLabel}>High-Risk Controls Tested</Text>
-              <Text style={styles.kpiTarget}>Target: 20 per year</Text>
-            </View>
-            <Text style={styles.kpiDesc}>Number of critical controls reviewed annually</Text>
-          </View>
-
-          <View style={styles.kpiCard}>
-            <View style={styles.kpiRow}>
-              <Text style={styles.kpiLabel}>Duplicate Payments</Text>
-              <Text style={styles.kpiTarget}>Target: 0 per month</Text>
-            </View>
-            <Text style={styles.kpiDesc}>Number of duplicate payments detected</Text>
-          </View>
-
-          <View style={styles.kpiCard}>
-            <View style={styles.kpiRow}>
-              <Text style={styles.kpiLabel}>Manual Overrides</Text>
-              <Text style={styles.kpiTarget}>Target: &lt; 1%</Text>
-            </View>
-            <Text style={styles.kpiDesc}>Percentage of payments with manual approval overrides</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <TrendingUp size={20} color={colors.successGreen} />
-            <Text style={styles.sectionTitle}>Review Framework</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.reviewItem}>📅 Quarterly FRA review meetings</Text>
-            <Text style={styles.reviewItem}>📊 Monthly KPI dashboard updates</Text>
-            <Text style={styles.reviewItem}>🔍 Semi-annual deep-dive audits</Text>
-            <Text style={styles.reviewItem}>📈 Annual risk register refresh</Text>
-            <Text style={styles.reviewItem}>✅ Continuous control testing</Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Responsible Person</Text>
-          <Text style={styles.hint}>
-            Who is responsible for monitoring and evaluation oversight?
-          </Text>
+        <View style={styles.inputSection}>
+          <Text style={styles.label}>Fraud Incidents Detected (Last 12 months)</Text>
           <TextInput
             style={styles.input}
-            value={responsiblePerson}
-            onChangeText={setResponsiblePerson}
-            placeholder="e.g. Head of Internal Audit, CFO"
-            placeholderTextColor={colors.govGrey3}
-            accessibilityLabel="Responsible Person"
+            value={assessment.monitoringEvaluation.fraudIncidentsDetected?.toString() || '0'}
+            onChangeText={(val) =>
+              updateAssessment({
+                monitoringEvaluation: {
+                  ...assessment.monitoringEvaluation,
+                  fraudIncidentsDetected: parseInt(val) || 0,
+                },
+              })
+            }
+            placeholder="Number of incidents"
+            keyboardType="number-pad"
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Monitoring Notes</Text>
-          <Text style={styles.hint}>
-            Describe current monitoring practices or planned improvements
-          </Text>
+        <View style={styles.inputSection}>
+          <Text style={styles.label}>Suspicious Trades or Anomalies Detected</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Enter monitoring and evaluation details..."
-            placeholderTextColor={colors.govGrey3}
-            multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-            accessibilityLabel="Monitoring Notes"
+            style={styles.input}
+            value={assessment.monitoringEvaluation.suspiciousTradeDetected?.toString() || '0'}
+            onChangeText={(val) =>
+              updateAssessment({
+                monitoringEvaluation: {
+                  ...assessment.monitoringEvaluation,
+                  suspiciousTradeDetected: parseInt(val) || 0,
+                },
+              })
+            }
+            placeholder="Number of anomalies"
+            keyboardType="number-pad"
           />
         </View>
+      </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Continue to Compliance Mapping">
-          <Text style={styles.nextButtonText}>Continue to Compliance Mapping</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <ScaleQuestion
+        question="Based on current controls, what is the likelihood of undetected fraud occurring?"
+        minLabel="Very low likelihood"
+        maxLabel="Very high likelihood"
+        value={assessment.monitoringEvaluation.fraudRiskLikelihood}
+        onChange={(value) =>
+          updateAssessment({
+            monitoringEvaluation: { ...assessment.monitoringEvaluation, fraudRiskLikelihood: value },
+          })
+        }
+      />
+
+      <View style={styles.section}>
+        <Text style={styles.label}>Responsible Person</Text>
+        <Text style={styles.hint}>
+          Who is responsible for monitoring and evaluation oversight?
+        </Text>
+        <TextInput
+          style={styles.input}
+          value={responsiblePerson}
+          onChangeText={setResponsiblePerson}
+          placeholder="e.g. Head of Internal Audit, CFO"
+          placeholderTextColor={colors.govGrey3}
+        />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>Key Observations & Notes</Text>
+        <Text style={styles.hint}>
+          Describe current monitoring practices or planned improvements
+        </Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Enter monitoring and evaluation details..."
+          placeholderTextColor={colors.govGrey3}
+          multiline
+          numberOfLines={6}
+          textAlignVertical="top"
+        />
+      </View>
+    </AssessmentScreen>
   );
 }
 
@@ -178,51 +162,23 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: colors.govGrey1,
   },
-  kpiCard: {
-    backgroundColor: colors.lightBlue,
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.govBlue,
+const styles = StyleSheet.create({
+  section: {
+    marginBottom: 24,
   },
-  kpiRow: {
+  sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    gap: 8,
+    marginBottom: 12,
   },
-  kpiLabel: {
-    fontSize: 15,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '600' as const,
     color: colors.govGrey1,
-    flex: 1,
   },
-  kpiTarget: {
-    fontSize: 13,
-    fontWeight: '700' as const,
-    color: colors.govBlue,
-    backgroundColor: colors.white,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  kpiDesc: {
-    fontSize: 13,
-    color: colors.govGrey2,
-  },
-  card: {
-    backgroundColor: colors.lightBlue,
-    borderRadius: 8,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.successGreen,
-  },
-  reviewItem: {
-    fontSize: 14,
-    color: colors.govGrey1,
-    marginBottom: 8,
-    paddingLeft: 4,
+  inputSection: {
+    marginBottom: 16,
   },
   label: {
     fontSize: 16,
@@ -249,17 +205,6 @@ const styles = StyleSheet.create({
     minHeight: 120,
     paddingTop: 12,
   },
-  nextButton: {
-    backgroundColor: colors.govBlue,
-    borderRadius: 4,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  nextButtonText: {
-    fontSize: 17,
-    fontWeight: '600' as const,
-    color: colors.white,
-  },
+});
 
 });

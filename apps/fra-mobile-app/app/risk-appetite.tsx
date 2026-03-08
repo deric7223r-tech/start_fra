@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { AssessmentScreen, QuestionGroup, QuestionOption } from '@/components/ui';
-import type { RiskTolerance, FraudSeriousness, ReputationImportance } from '@/types/assessment';
+import { AssessmentScreen, QuestionGroup, QuestionOption, ScaleQuestion } from '@/components/ui';
+import type { RiskTolerance, FraudSeriousness, ReputationImportance, ScaleValue } from '@/types/assessment';
 
 export default function RiskAppetiteScreen() {
   const { assessment, updateAssessment } = useAssessment();
@@ -32,6 +32,16 @@ export default function RiskAppetiteScreen() {
       nextRoute="/fraud-triangle"
       progress={{ current: 1, total: 13 }}
     >
+      <ScaleQuestion
+        question="On a scale of 1-5, how would you quantify your risk tolerance level?"
+        minLabel="Very risk averse"
+        maxLabel="Very risk tolerant"
+        value={assessment.riskAppetite.tolerance}
+        onChange={(value) =>
+          updateAssessment({ riskAppetite: { ...assessment.riskAppetite, tolerance: value } })
+        }
+      />
+
       <QuestionGroup
         question="Overall, how much fraud risk can you accept?"
         options={toleranceOptions}
@@ -47,6 +57,16 @@ export default function RiskAppetiteScreen() {
         value={assessment.riskAppetite.fraudSeriousness}
         onChange={(value) =>
           updateAssessment({ riskAppetite: { ...assessment.riskAppetite, fraudSeriousness: value } })
+        }
+      />
+
+      <ScaleQuestion
+        question="How significant would reputational damage be to your organisation?"
+        minLabel="Minimal impact"
+        maxLabel="Severe/critical impact"
+        value={assessment.riskAppetite.reputationImportance}
+        onChange={(value) =>
+          updateAssessment({ riskAppetite: { ...assessment.riskAppetite, reputationImportance: value } })
         }
       />
 

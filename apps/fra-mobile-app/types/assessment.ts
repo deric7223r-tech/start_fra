@@ -101,15 +101,17 @@ export interface OrganisationInfo {
 }
 
 export interface RiskAppetite {
-  tolerance: RiskTolerance | null;
+  tolerance: RiskTolerance | ScaleValue | null;
   fraudSeriousness: FraudSeriousness | null;
-  reputationImportance: ReputationImportance | null;
+  reputationImportance: ReputationImportance | ScaleValue | null;
 }
 
 export interface FraudTriangle {
   pressure: Pressure | null;
   controlStrength: ControlStrength | null;
   speakUpCulture: SpeakUpCulture | null;
+  estimatedLossExposure: CurrencyValue | null;
+  rationalizationRisk: ScaleValue | null;
 }
 
 export interface ProcessRiskAnswers {
@@ -345,6 +347,9 @@ export interface TrainingAwareness {
   specialistTraining: TrainingRecord[];
   boardTraining: TrainingRecord[];
   overallCompletionRate: number;
+  mandatoryCompletedCount: number;
+  specialistCompletedCount: number;
+  boardCompletedCount: number;
   notes: string;
 }
 
@@ -364,6 +369,9 @@ export interface MonitoringEvaluation {
   lastReviewDate: string | null;
   nextReviewDate: string | null;
   responsiblePerson: string;
+  fraudIncidentsDetected: number;
+  suspiciousTradeDetected: number;
+  fraudRiskLikelihood: ScaleValue | null;
   notes: string;
 }
 
@@ -400,6 +408,8 @@ export interface FraudResponsePlan {
   };
   disciplinaryMeasures: string[];
   externalReporting: string;
+  detectedLossesValue: CurrencyValue | null;
+  responseSpeed: ScaleValue | null;
   notes: string;
 }
 
