@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { AssessmentScreen, QuestionGroup, QuestionOption } from '@/components/ui';
-import type { SegregationLevel, ConfidenceLevel, MonitoringLevel } from '@/types/assessment';
+import { AssessmentScreen, QuestionGroup, QuestionOption, ScaleQuestion, YesNoQuestion } from '@/components/ui';
+import type { SegregationLevel, ConfidenceLevel, MonitoringLevel, ScaleValue } from '@/types/assessment';
 
 export default function ControlsTechnologyScreen() {
   const { assessment, updateAssessment } = useAssessment();
@@ -35,6 +35,16 @@ export default function ControlsTechnologyScreen() {
       hidePrevious={false}
       progress={{ current: 9, total: 13 }}
     >
+      <ScaleQuestion
+        question="How effectively are duties segregated in your financial processes?"
+        minLabel="One person can perform end-to-end"
+        maxLabel="Well-separated critical functions"
+        value={assessment.controlsTechnology.segregationMaturity}
+        onChange={(value) =>
+          updateAssessment({ controlsTechnology: { ...assessment.controlsTechnology, segregationMaturity: value } })
+        }
+      />
+
       <QuestionGroup
         question="Segregation of duties"
         options={segregationOptions}
@@ -44,12 +54,35 @@ export default function ControlsTechnologyScreen() {
         }
       />
 
+      <ScaleQuestion
+        question="How mature is your system access management and user provisioning process?"
+        minLabel="Manual ad-hoc access"
+        maxLabel="Automated role-based access control"
+        value={assessment.controlsTechnology.accessMaturity}
+        onChange={(value) =>
+          updateAssessment({ controlsTechnology: { ...assessment.controlsTechnology, accessMaturity: value } })
+        }
+      />
+
       <QuestionGroup
         question="System access management"
         options={confidenceOptions}
         value={assessment.controlsTechnology.accessManagement}
         onChange={(value) =>
           updateAssessment({ controlsTechnology: { ...assessment.controlsTechnology, accessManagement: value } })
+        }
+      />
+
+      <YesNoQuestion
+        question="Do you have automated monitoring or exception reporting for unusual transactions?"
+        value={assessment.controlsTechnology.automatedMonitoring}
+        onChange={(value) =>
+          updateAssessment({ controlsTechnology: { ...assessment.controlsTechnology, automatedMonitoring: value } })
+        }
+        followUpQuestion="Please describe your monitoring procedures and what thresholds trigger alerts"
+        followUpValue={assessment.controlsTechnology.automatedMonitoringDetails}
+        onFollowUpChange={(text) =>
+          updateAssessment({ controlsTechnology: { ...assessment.controlsTechnology, automatedMonitoringDetails: text } })
         }
       />
 

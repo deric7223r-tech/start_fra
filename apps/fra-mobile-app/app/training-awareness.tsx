@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Keyboa
 import { useRouter } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
 import { GraduationCap, Users, Briefcase } from 'lucide-react-native';
+import { CurrencyQuestion } from '@/components/ui';
 import colors from '@/constants/colors';
 
 export default function TrainingAwarenessScreen() {
@@ -19,6 +20,9 @@ export default function TrainingAwarenessScreen() {
         ...assessment.trainingAwareness,
         notes,
         overallCompletionRate: parseFloat(completionRate) || 0,
+        mandatoryCompletedCount: parseInt(assessment.trainingAwareness.mandatoryCompletedCount?.toString() || '0'),
+        specialistCompletedCount: parseInt(assessment.trainingAwareness.specialistCompletedCount?.toString() || '0'),
+        boardCompletedCount: parseInt(assessment.trainingAwareness.boardCompletedCount?.toString() || '0'),
       },
     });
     router.push('/monitoring-evaluation');
@@ -91,6 +95,51 @@ export default function TrainingAwarenessScreen() {
               <Text style={styles.frequencyText}>Frequency: Every 2 years</Text>
             </View>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Staff Completing Mandatory Training</Text>
+          <TextInput
+            style={styles.input}
+            value={assessment.trainingAwareness.mandatoryCompletedCount?.toString() || '0'}
+            onChangeText={(val) =>
+              updateAssessment({
+                trainingAwareness: { ...assessment.trainingAwareness, mandatoryCompletedCount: parseInt(val) || 0 },
+              })
+            }
+            placeholder="Number of staff"
+            keyboardType="number-pad"
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Staff Completing Specialist Training</Text>
+          <TextInput
+            style={styles.input}
+            value={assessment.trainingAwareness.specialistCompletedCount?.toString() || '0'}
+            onChangeText={(val) =>
+              updateAssessment({
+                trainingAwareness: { ...assessment.trainingAwareness, specialistCompletedCount: parseInt(val) || 0 },
+              })
+            }
+            placeholder="Number of staff"
+            keyboardType="number-pad"
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Board Members Completing Training</Text>
+          <TextInput
+            style={styles.input}
+            value={assessment.trainingAwareness.boardCompletedCount?.toString() || '0'}
+            onChangeText={(val) =>
+              updateAssessment({
+                trainingAwareness: { ...assessment.trainingAwareness, boardCompletedCount: parseInt(val) || 0 },
+              })
+            }
+            placeholder="Number of board members"
+            keyboardType="number-pad"
+          />
         </View>
 
         <View style={styles.section}>

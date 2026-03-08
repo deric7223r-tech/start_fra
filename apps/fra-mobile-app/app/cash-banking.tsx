@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { AssessmentScreen, QuestionGroup, TextArea, QuestionOption } from '@/components/ui';
-import type { Frequency } from '@/types/assessment';
+import { AssessmentScreen, QuestionGroup, TextArea, QuestionOption, ScaleQuestion, CurrencyQuestion, YesNoQuestion } from '@/components/ui';
+import type { Frequency, ScaleValue } from '@/types/assessment';
 
 export default function CashBankingScreen() {
   const { assessment, updateAssessment } = useAssessment();
@@ -22,6 +22,47 @@ export default function CashBankingScreen() {
       hidePrevious={false}
       progress={{ current: 4, total: 13 }}
     >
+      <CurrencyQuestion
+        question="What is your estimated average daily cash volume?"
+        hint="Total daily cash receipts and disbursements"
+        value={assessment.cashBanking.dailyCashVolume}
+        onChange={(value) =>
+          updateAssessment({ cashBanking: { ...assessment.cashBanking, dailyCashVolume: value } })
+        }
+      />
+
+      <CurrencyQuestion
+        question="How many bank accounts does the organisation maintain?"
+        hint="Include all operational, savings, and payroll accounts"
+        value={assessment.cashBanking.bankAccountCount}
+        onChange={(value) =>
+          updateAssessment({ cashBanking: { ...assessment.cashBanking, bankAccountCount: value } })
+        }
+      />
+
+      <YesNoQuestion
+        question="Have you experienced any cash or banking fraud incidents in the past 2 years?"
+        value={assessment.cashBanking.fraudIncidents}
+        onChange={(value) =>
+          updateAssessment({ cashBanking: { ...assessment.cashBanking, fraudIncidents: value } })
+        }
+        followUpQuestion="Please describe the incident(s) and what controls have been implemented since"
+        followUpValue={assessment.cashBanking.fraudDescription}
+        onFollowUpChange={(text) =>
+          updateAssessment({ cashBanking: { ...assessment.cashBanking, fraudDescription: text } })
+        }
+      />
+
+      <ScaleQuestion
+        question="How would you rate the effectiveness of your cash and banking controls?"
+        minLabel="Weak"
+        maxLabel="Strong"
+        value={assessment.cashBanking.controlEffectiveness}
+        onChange={(value) =>
+          updateAssessment({ cashBanking: { ...assessment.cashBanking, controlEffectiveness: value } })
+        }
+      />
+
       <QuestionGroup
         question="Are cash receipts recorded and banked promptly?"
         options={frequencyOptions}

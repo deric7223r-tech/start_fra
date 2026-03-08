@@ -27,6 +27,71 @@ export type MonitoringFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly' |
 export type AlertSeverity = 'critical' | 'high' | 'medium' | 'low';
 export type ComplianceStatus = 'compliant' | 'partially-compliant' | 'non-compliant' | 'not-assessed';
 
+// Phase 2: Enhanced Question Types
+export type QuestionType = 'frequency' | 'scale' | 'yesno' | 'multichoice' | 'currency' | 'percentage' | 'text';
+export type ScaleValue = 1 | 2 | 3 | 4 | 5;
+export type CurrencyValue = number; // Amount in GBP
+export type PercentageValue = number; // 0-100
+
+export interface ScaleQuestion {
+  type: 'scale';
+  question: string;
+  minLabel: string;
+  maxLabel: string;
+  value: ScaleValue | null;
+}
+
+export interface FrequencyQuestion {
+  type: 'frequency';
+  question: string;
+  value: Frequency | null;
+}
+
+export interface YesNoQuestion {
+  type: 'yesno';
+  question: string;
+  followUp?: string; // Question to ask if "yes"
+  value: YesNoUnsure | null;
+  followUpValue?: string;
+}
+
+export interface MultiChoiceQuestion {
+  type: 'multichoice';
+  question: string;
+  options: { value: string; label: string; riskWeight: number }[];
+  value: string[] | null;
+}
+
+export interface CurrencyQuestion {
+  type: 'currency';
+  question: string;
+  hint?: string;
+  value: CurrencyValue | null;
+}
+
+export interface PercentageQuestion {
+  type: 'percentage';
+  question: string;
+  hint?: string;
+  value: PercentageValue | null;
+}
+
+export interface TextQuestion {
+  type: 'text';
+  question: string;
+  placeholder?: string;
+  value: string;
+}
+
+export type EnhancedQuestion =
+  | ScaleQuestion
+  | FrequencyQuestion
+  | YesNoQuestion
+  | MultiChoiceQuestion
+  | CurrencyQuestion
+  | PercentageQuestion
+  | TextQuestion;
+
 export interface OrganisationInfo {
   name: string;
   type: OrganisationType | null;
@@ -52,6 +117,67 @@ export interface ProcessRiskAnswers {
   q2: Frequency | YesNoUnsure | null;
   q3?: Frequency | YesNoUnsure | null;
   notes: string;
+}
+
+export interface EnhancedProcurementAnswers extends ProcessRiskAnswers {
+  dueDiligenceLevel: ScaleValue | null;
+  monthlySpend: CurrencyValue | null;
+  recentFraud: YesNoUnsure | null;
+  fraudDescription: string;
+  controlMaturity: ScaleValue | null;
+}
+
+export interface EnhancedITSystemsAnswers extends ProcessRiskAnswers {
+  cybersecurityMaturity: ScaleValue | null;
+  securityIncidentsCount: CurrencyValue | null;
+  hasCriticalSystems: YesNoUnsure | null;
+  criticalSystemsDescription: string;
+  backupTestingFrequency: ScaleValue | null;
+  mfaAdoption: ScaleValue | null;
+}
+
+export interface EnhancedCashBankingAnswers extends ProcessRiskAnswers {
+  dailyCashVolume: CurrencyValue | null;
+  bankAccountCount: CurrencyValue | null;
+  fraudIncidents: YesNoUnsure | null;
+  fraudDescription: string;
+  controlEffectiveness: ScaleValue | null;
+}
+
+export interface EnhancedPayrollHRAnswers extends ProcessRiskAnswers {
+  totalEmployeeCount: CurrencyValue | null;
+  payrollFrequency: Frequency | null;
+  unauthorizedChangesDetected: YesNoUnsure | null;
+  changeDescription: string;
+  controlMaturity: ScaleValue | null;
+}
+
+export interface EnhancedRevenueAnswers extends ProcessRiskAnswers {
+  monthlyRevenueVolume: CurrencyValue | null;
+  unpaidInvoicesPercentage: CurrencyValue | null;
+  writeOffsOccurred: YesNoUnsure | null;
+  writeOffDescription: string;
+  collectionEffectiveness: ScaleValue | null;
+}
+
+export interface EnhancedPeopleCultureAnswers {
+  staffChecks: Frequency | null;
+  staffCheckMaturity: ScaleValue | null;
+  whistleblowing: WhistleblowingRoute | null;
+  whistleblowingUsed: YesNoUnsure | null;
+  whistleblowingDetails: string;
+  leadershipMessage: LeadershipMessage | null;
+  leadershipMessagingIntensity: ScaleValue | null;
+}
+
+export interface EnhancedControlsTechnologyAnswers {
+  segregation: SegregationLevel | null;
+  segregationMaturity: ScaleValue | null;
+  accessManagement: ConfidenceLevel | null;
+  accessMaturity: ScaleValue | null;
+  monitoring: MonitoringLevel | null;
+  automatedMonitoring: YesNoUnsure | null;
+  automatedMonitoringDetails: string;
 }
 
 export interface PeopleCulture {
@@ -312,13 +438,13 @@ export interface AssessmentData {
   organisation: OrganisationInfo;
   riskAppetite: RiskAppetite;
   fraudTriangle: FraudTriangle;
-  procurement: ProcessRiskAnswers;
-  cashBanking: ProcessRiskAnswers;
-  payrollHR: ProcessRiskAnswers;
-  revenue: ProcessRiskAnswers;
-  itSystems: ProcessRiskAnswers;
-  peopleCulture: PeopleCulture;
-  controlsTechnology: ControlsTechnology;
+  procurement: EnhancedProcurementAnswers;
+  cashBanking: EnhancedCashBankingAnswers;
+  payrollHR: EnhancedPayrollHRAnswers;
+  revenue: EnhancedRevenueAnswers;
+  itSystems: EnhancedITSystemsAnswers;
+  peopleCulture: EnhancedPeopleCultureAnswers;
+  controlsTechnology: EnhancedControlsTechnologyAnswers;
   priorities: string;
   riskRegister: RiskRegisterItem[];
   paymentsModule: PaymentsModule;

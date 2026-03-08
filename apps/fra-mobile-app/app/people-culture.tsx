@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { AssessmentScreen, QuestionGroup, QuestionOption } from '@/components/ui';
-import type { Frequency, WhistleblowingRoute, LeadershipMessage } from '@/types/assessment';
+import { AssessmentScreen, QuestionGroup, QuestionOption, ScaleQuestion, YesNoQuestion } from '@/components/ui';
+import type { Frequency, WhistleblowingRoute, LeadershipMessage, ScaleValue } from '@/types/assessment';
 
 export default function PeopleCultureScreen() {
   const { assessment, updateAssessment } = useAssessment();
@@ -35,12 +35,35 @@ export default function PeopleCultureScreen() {
       hidePrevious={false}
       progress={{ current: 8, total: 13 }}
     >
+      <ScaleQuestion
+        question="How thorough are your background and vetting checks on new staff?"
+        minLabel="Basic name check only"
+        maxLabel="Comprehensive multi-layer checks"
+        value={assessment.peopleCulture.staffCheckMaturity}
+        onChange={(value) =>
+          updateAssessment({ peopleCulture: { ...assessment.peopleCulture, staffCheckMaturity: value } })
+        }
+      />
+
       <QuestionGroup
-        question="Basic checks on new staff and key contractors"
+        question="How often are vetting checks performed?"
         options={frequencyOptions}
         value={assessment.peopleCulture.staffChecks}
         onChange={(value) =>
           updateAssessment({ peopleCulture: { ...assessment.peopleCulture, staffChecks: value } })
+        }
+      />
+
+      <YesNoQuestion
+        question="Has your whistleblowing route been used to report fraud concerns in the last 2 years?"
+        value={assessment.peopleCulture.whistleblowingUsed}
+        onChange={(value) =>
+          updateAssessment({ peopleCulture: { ...assessment.peopleCulture, whistleblowingUsed: value } })
+        }
+        followUpQuestion="Please describe the cases and how they were handled"
+        followUpValue={assessment.peopleCulture.whistleblowingDetails}
+        onFollowUpChange={(text) =>
+          updateAssessment({ peopleCulture: { ...assessment.peopleCulture, whistleblowingDetails: text } })
         }
       />
 
@@ -50,6 +73,16 @@ export default function PeopleCultureScreen() {
         value={assessment.peopleCulture.whistleblowing}
         onChange={(value) =>
           updateAssessment({ peopleCulture: { ...assessment.peopleCulture, whistleblowing: value } })
+        }
+      />
+
+      <ScaleQuestion
+        question="How frequently and clearly does leadership communicate expectations about fraud prevention?"
+        minLabel="Rarely addressed"
+        maxLabel="Regular, clear, consistent messaging"
+        value={assessment.peopleCulture.leadershipMessagingIntensity}
+        onChange={(value) =>
+          updateAssessment({ peopleCulture: { ...assessment.peopleCulture, leadershipMessagingIntensity: value } })
         }
       />
 

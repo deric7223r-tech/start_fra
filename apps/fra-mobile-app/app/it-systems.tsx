@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { AssessmentScreen, QuestionGroup, TextArea, QuestionOption } from '@/components/ui';
-import type { Frequency } from '@/types/assessment';
+import { AssessmentScreen, QuestionGroup, TextArea, QuestionOption, ScaleQuestion, CurrencyQuestion, YesNoQuestion } from '@/components/ui';
+import type { Frequency, ScaleValue } from '@/types/assessment';
 
 export default function ITSystemsScreen() {
   const { assessment, updateAssessment } = useAssessment();
@@ -22,6 +22,58 @@ export default function ITSystemsScreen() {
       hidePrevious={false}
       progress={{ current: 7, total: 13 }}
     >
+      <ScaleQuestion
+        question="How would you rate your organisation's cybersecurity maturity?"
+        minLabel="Basic"
+        maxLabel="Advanced"
+        value={assessment.itSystems.cybersecurityMaturity}
+        onChange={(value) =>
+          updateAssessment({ itSystems: { ...assessment.itSystems, cybersecurityMaturity: value } })
+        }
+      />
+
+      <CurrencyQuestion
+        question="How many cybersecurity incidents have you experienced in the last 12 months?"
+        hint="Include breaches, malware, unauthorized access, etc."
+        value={assessment.itSystems.securityIncidentsCount}
+        onChange={(value) =>
+          updateAssessment({ itSystems: { ...assessment.itSystems, securityIncidentsCount: value } })
+        }
+      />
+
+      <YesNoQuestion
+        question="Do you have critical systems that could cause significant business disruption if compromised?"
+        value={assessment.itSystems.hasCriticalSystems}
+        onChange={(value) =>
+          updateAssessment({ itSystems: { ...assessment.itSystems, hasCriticalSystems: value } })
+        }
+        followUpQuestion="Please describe your critical systems and their importance to business operations"
+        followUpValue={assessment.itSystems.criticalSystemsDescription}
+        onFollowUpChange={(text) =>
+          updateAssessment({ itSystems: { ...assessment.itSystems, criticalSystemsDescription: text } })
+        }
+      />
+
+      <ScaleQuestion
+        question="How frequently are your data backups tested and verified?"
+        minLabel="Never tested"
+        maxLabel="Continuously"
+        value={assessment.itSystems.backupTestingFrequency}
+        onChange={(value) =>
+          updateAssessment({ itSystems: { ...assessment.itSystems, backupTestingFrequency: value } })
+        }
+      />
+
+      <ScaleQuestion
+        question="What percentage of your users have multi-factor authentication enabled?"
+        minLabel="None"
+        maxLabel="All users"
+        value={assessment.itSystems.mfaAdoption}
+        onChange={(value) =>
+          updateAssessment({ itSystems: { ...assessment.itSystems, mfaAdoption: value } })
+        }
+      />
+
       <QuestionGroup
         question="Are user access rights reviewed regularly?"
         options={frequencyOptions}

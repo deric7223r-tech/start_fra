@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { AssessmentScreen, QuestionGroup, TextArea, QuestionOption } from '@/components/ui';
-import type { Frequency } from '@/types/assessment';
+import { AssessmentScreen, QuestionGroup, TextArea, QuestionOption, ScaleQuestion, CurrencyQuestion, YesNoQuestion } from '@/components/ui';
+import type { Frequency, ScaleValue } from '@/types/assessment';
 
 export default function PayrollHRScreen() {
   const { assessment, updateAssessment } = useAssessment();
@@ -22,6 +22,47 @@ export default function PayrollHRScreen() {
       hidePrevious={false}
       progress={{ current: 5, total: 13 }}
     >
+      <CurrencyQuestion
+        question="What is your total number of employees on payroll?"
+        hint="Include full-time, part-time, and contractors"
+        value={assessment.payrollHR.totalEmployeeCount}
+        onChange={(value) =>
+          updateAssessment({ payrollHR: { ...assessment.payrollHR, totalEmployeeCount: value } })
+        }
+      />
+
+      <QuestionGroup
+        question="What is your payroll frequency?"
+        options={frequencyOptions}
+        value={assessment.payrollHR.payrollFrequency}
+        onChange={(value) =>
+          updateAssessment({ payrollHR: { ...assessment.payrollHR, payrollFrequency: value } })
+        }
+      />
+
+      <YesNoQuestion
+        question="Have you detected any unauthorized payroll changes (salary, bank details, etc.)?"
+        value={assessment.payrollHR.unauthorizedChangesDetected}
+        onChange={(value) =>
+          updateAssessment({ payrollHR: { ...assessment.payrollHR, unauthorizedChangesDetected: value } })
+        }
+        followUpQuestion="Please describe the incidents detected and remediation actions taken"
+        followUpValue={assessment.payrollHR.changeDescription}
+        onFollowUpChange={(text) =>
+          updateAssessment({ payrollHR: { ...assessment.payrollHR, changeDescription: text } })
+        }
+      />
+
+      <ScaleQuestion
+        question="How mature are your payroll controls and HR processes?"
+        minLabel="Basic"
+        maxLabel="Advanced"
+        value={assessment.payrollHR.controlMaturity}
+        onChange={(value) =>
+          updateAssessment({ payrollHR: { ...assessment.payrollHR, controlMaturity: value } })
+        }
+      />
+
       <QuestionGroup
         question="Are payroll changes reviewed and approved?"
         options={frequencyOptions}

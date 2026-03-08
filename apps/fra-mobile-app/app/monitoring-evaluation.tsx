@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { BarChart3, Target, TrendingUp } from 'lucide-react-native';
-import colors from '@/constants/colors';
+import { BarChart3, Target, TrendingUp } from 'lucide-react-native';import { ScaleQuestion } from '@/components/ui';import colors from '@/constants/colors';
 
 export default function MonitoringEvaluationScreen() {
   const router = useRouter();

@@ -12,6 +12,15 @@ export type { RadioOptionProps } from './RadioOption';
 export { QuestionGroup } from './QuestionGroup';
 export type { QuestionGroupProps, QuestionOption } from './QuestionGroup';
 
+export { ScaleQuestion } from './ScaleQuestion';
+export type { ScaleQuestionProps } from './ScaleQuestion';
+
+export { CurrencyQuestion } from './CurrencyQuestion';
+export type { CurrencyQuestionProps } from './CurrencyQuestion';
+
+export { YesNoQuestion } from './YesNoQuestion';
+export type { YesNoQuestionProps } from './YesNoQuestion';
+
 export { TextArea } from './TextArea';
 export type { TextAreaProps } from './TextArea';
 

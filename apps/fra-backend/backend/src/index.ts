@@ -15,6 +15,7 @@ import keypassRoutes from './routes/keypasses.js';
 import paymentRoutes from './routes/payments.js';
 import analyticsRoutes from './routes/analytics.js';
 import s3Routes from './routes/s3.js';
+import reportsExportsRoutes from './routes/reports-exports.js';
 import workshop from './workshop.js';
 import budgetGuide from './budget-guide.js';
 
@@ -104,6 +105,7 @@ api.route('/', keypassRoutes);
 api.route('/', paymentRoutes);
 api.route('/', analyticsRoutes);
 api.route('/', s3Routes);
+api.route('/', reportsExportsRoutes);
 api.route('/workshop', workshop);
 api.route('/budget-guide', budgetGuide);
 

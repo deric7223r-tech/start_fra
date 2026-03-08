@@ -1,24 +1,143 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { CheckCircle, AlertCircle, FileCheck } from 'lucide-react-native';
+import { CheckCircle, AlertCircle, FileCheck, TrendingUp } from 'lucide-react-native';
 import colors from '@/constants/colors';
+
+// Calculate compliance status based on assessment data
+function calculateComplianceStatus(assessment: any) {
+  const status = {
+    govS013: { score: 0, gaps: [] as string[], actions: [] as string[] },
+    fraudPreventionStandard: { score: 0, gaps: [] as string[], actions: [] as string[] },
+    eccta2023: { score: 0, gaps: [] as string[], actions: [] as string[] },
+  };
+
+  // Analyse procurement controls for GovS-013
+  if (assessment.procurement.controlMaturity && assessment.procurement.controlMaturity >= 4) {
+    status.govS013.score += 15;
+  } else if (assessment.procurement.controlMaturity && assessment.procurement.controlMaturity >= 3) {
+    status.govS013.score += 10;
+    status.govS013.gaps.push('Procurement control maturity below recommended level');
+    status.govS013.actions.push('Enhance supplier due diligence procedures and approval workflows');
+  } else {
+    status.govS013.gaps.push('Weak procurement controls detected');
+    status.govS013.actions.push('Implement comprehensive procurement controls framework');
+  }
+
+  // Analyse cash banking controls
+  if (assessment.cashBanking.controlEffectiveness && assessment.cashBanking.controlEffectiveness >= 4) {
+    status.govS013.score += 15;
+  } else {
+    status.govS013.gaps.push('Cash and banking controls need strengthening');
+    status.govS013.actions.push('Implement daily reconciliation and segregation of duties');
+  }
+
+  // Analyse payroll controls (critical for fraud prevention)
+  if (assessment.payrollHR.unauthorizedChangesDetected === 'no' && assessment.payrollHR.controlMaturity >= 3) {
+    status.govS013.score += 15;
+    status.fraudPreventionStandard.score += 15;
+  } else if (assessment.payrollHR.unauthorizedChangesDetected === 'yes') {
+    status.govS013.gaps.push('Critical: Unauthorized payroll changes detected');
+    status.govS013.actions.push('URGENT: Conduct investigation and implement multi-level approval controls');
+    status.fraudPreventionStandard.gaps.push('Payroll fraud risk requires immediate attention');
+  } else {
+    status.govS013.score += 8;
+    status.fraudPreventionStandard.gaps.push('Payroll control maturity below optimal level');
+  }
+
+  // Analyse IT systems and security
+  if (assessment.itSystems.cybersecurityMaturity && assessment.itSystems.cybersecurityMaturity >= 3) {
+    status.eccta2023.score += 20;
+  } else {
+    status.eccta2023.gaps.push('Cybersecurity maturity below required standards');
+    status.eccta2023.actions.push('Develop comprehensive cybersecurity incident response plan');
+  }
+
+  if (assessment.itSystems.mfaAdoption && assessment.itSystems.mfaAdoption >= 4) {
+    status.eccta2023.score += 15;
+  } else {
+    status.eccta2023.gaps.push('Multi-factor authentication adoption insufficient');
+    status.eccta2023.actions.push('Mandate MFA for all user accounts and critical systems');
+  }
+
+  // Revenue and receivables controls
+  if (assessment.revenue.collectionEffectiveness && assessment.revenue.collectionEffectiveness >= 3) {
+    status.fraudPreventionStandard.score += 10;
+  } else {
+    status.fraudPreventionStandard.gaps.push('Receivables controls need improvement');
+    status.fraudPreventionStandard.actions.push('Strengthen collection procedures and credit review');
+  }
+
+  // Training and awareness (critical for all frameworks)
+  if (assessment.trainingAwareness.overallCompletionRate >= 80) {
+    status.govS013.score += 15;
+    status.fraudPreventionStandard.score += 15;
+    status.eccta2023.score += 15;
+  } else {
+    status.govS013.gaps.push('Training completion rates below expected levels');
+    status.fraudPreventionStandard.gaps.push('Limited fraud awareness across workforce');
+    status.eccta2023.gaps.push('Staff understanding of fraud prevention procedures insufficient');
+  }
+
+  // Monitoring and controls
+  if (assessment.controlsTechnology.monitoring === 'regularly') {
+    status.govS013.score += 10;
+    status.fraudPreventionStandard.score += 10;
+  } else {
+    status.govS013.gaps.push('Monitoring and data checks require enhancement');
+  }
+
+  // Final status determination (max 100)
+  status.govS013.score = Math.min(100, status.govS013.score);
+  status.fraudPreventionStandard.score = Math.min(100, status.fraudPreventionStandard.score);
+  status.eccta2023.score = Math.min(100, status.eccta2023.score);
+
+  return status;
+}
+
+function getComplianceStatus(score: number) {
+  if (score >= 80) return { label: 'Substantially Compliant', color: colors.successGreen };
+  if (score >= 60) return { label: 'Partially Compliant', color: colors.warningOrange };
+  return { label: 'Below Standard', color: colors.errorRed };
+}
 
 export default function ComplianceMappingScreen() {
   const router = useRouter();
   const { assessment, updateAssessment } = useAssessment();
   const [notes, setNotes] = useState(assessment.complianceMapping.notes);
 
+  // Calculate compliance status dynamically based on assessment
+  const complianceStatus = useMemo(() => calculateComplianceStatus(assessment), [assessment]);
+
   const handleNext = () => {
     updateAssessment({
       complianceMapping: {
         ...assessment.complianceMapping,
         notes,
+        govS013: {
+          status: complianceStatus.govS013.score >= 80 ? 'compliant' : complianceStatus.govS013.score >= 60 ? 'partial' : 'non-compliant',
+          gaps: complianceStatus.govS013.gaps,
+          actions: complianceStatus.govS013.actions,
+        },
+        fraudPreventionStandard: {
+          status: complianceStatus.fraudPreventionStandard.score >= 80 ? 'compliant' : complianceStatus.fraudPreventionStandard.score >= 60 ? 'partial' : 'non-compliant',
+          gaps: complianceStatus.fraudPreventionStandard.gaps,
+          actions: complianceStatus.fraudPreventionStandard.actions,
+        },
+        eccta2023: {
+          status: complianceStatus.eccta2023.score >= 80 ? 'compliant' : complianceStatus.eccta2023.score >= 60 ? 'partial' : 'non-compliant',
+          gaps: complianceStatus.eccta2023.gaps,
+          actions: complianceStatus.eccta2023.actions,
+        },
       },
     });
     router.push('/fraud-response');
   };
+
+  const govStatus = getComplianceStatus(complianceStatus.govS013.score);
+  const fraudStatus = getComplianceStatus(complianceStatus.fraudPreventionStandard.score);
+  const eccStatus = getComplianceStatus(complianceStatus.eccta2023.score);
 
   return (
     <KeyboardAvoidingView
@@ -27,103 +146,120 @@ export default function ComplianceMappingScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <FileCheck size={32} color={colors.govBlue} />
-          <Text style={styles.title} accessibilityRole="header">Compliance Mapping</Text>
+          <TrendingUp size={32} color={colors.govBlue} />
+          <Text style={styles.title} accessibilityRole="header">Compliance Assessment</Text>
         </View>
 
         <Text style={styles.intro}>
-          Map your fraud prevention framework against key UK standards and regulatory requirements.
+          Your compliance status against key UK fraudprevention standards based on your assessment responses.
         </Text>
 
         <View style={styles.section}>
-          <View style={styles.standardCard}>
+          {/* GovS-013 */}
+          <View style={[styles.standardCard, complianceStatus.govS013.score >= 80 && styles.compliantCard]}>
             <View style={styles.standardHeader}>
-              <CheckCircle size={24} color={colors.govBlue} />
+              <CheckCircle size={24} color={govStatus.color} />
               <Text style={styles.standardTitle}>GovS-013 Counter Fraud Standard</Text>
             </View>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>Fully Compliant</Text>
+            <View style={[styles.scoreBar, { backgroundColor: govStatus.color }]}>
+              <Text style={styles.scoreText}>{complianceStatus.govS013.score}%</Text>
             </View>
-            <Text style={styles.standardDesc}>
-              The Government Functional Standard for Counter Fraud provides the framework for counter fraud activity across government.
-            </Text>
-            <View style={styles.requirementsList}>
-              <Text style={styles.requirementItem}>✓ 3.2 Controls in place</Text>
-              <Text style={styles.requirementItem}>✓ 3.4 Monitoring procedures</Text>
-              <Text style={styles.requirementItem}>✓ 4.1 Investigation readiness</Text>
-              <Text style={styles.requirementItem}>⚠ Minor improvements required</Text>
+            <View style={[styles.statusBadge, { backgroundColor: govStatus.color + '20' }]}>
+              <Text style={[styles.statusText, { color: govStatus.color }]}>{govStatus.label}</Text>
             </View>
+            {complianceStatus.govS013.gaps.length > 0 && (
+              <>
+                <Text style={styles.gapsTitle}>Gaps Identified:</Text>
+                {complianceStatus.govS013.gaps.map((gap, i) => (
+                  <Text key={i} style={styles.gapItem}>• {gap}</Text>
+                ))}
+              </>
+            )}
+            {complianceStatus.govS013.actions.length > 0 && (
+              <>
+                <Text style={styles.actionsTitle}>Recommended Actions:</Text>
+                {complianceStatus.govS013.actions.map((action, i) => (
+                  <Text key={i} style={styles.actionItem}>→ {action}</Text>
+                ))}
+              </>
+            )}
           </View>
 
-          <View style={[styles.standardCard, styles.partialCard]}>
+          {/* Fraud Prevention Standard */}
+          <View style={[styles.standardCard, complianceStatus.fraudPreventionStandard.score >= 80 && styles.compliantCard]}>
             <View style={styles.standardHeader}>
-              <AlertCircle size={24} color={colors.warningOrange} />
+              <AlertCircle size={24} color={fraudStatus.color} />
               <Text style={styles.standardTitle}>Fraud Prevention Standard</Text>
             </View>
-            <View style={[styles.statusBadge, styles.partialBadge]}>
-              <Text style={styles.statusText}>Partially Compliant</Text>
+            <View style={[styles.scoreBar, { backgroundColor: fraudStatus.color }]}>
+              <Text style={styles.scoreText}>{complianceStatus.fraudPreventionStandard.score}%</Text>
             </View>
-            <Text style={styles.standardDesc}>
-              Proportionality and control expectations for fraud prevention across all organisations.
-            </Text>
-            <View style={styles.requirementsList}>
-              <Text style={styles.requirementItem}>✓ Risk assessment completed</Text>
-              <Text style={styles.requirementItem}>✓ Basic controls in place</Text>
-              <Text style={styles.requirementItem}>⚠ Enhanced monitoring needed</Text>
-              <Text style={styles.requirementItem}>⚠ Training program expansion required</Text>
+            <View style={[styles.statusBadge, { backgroundColor: fraudStatus.color + '20' }]}>
+              <Text style={[styles.statusText, { color: fraudStatus.color }]}>{fraudStatus.label}</Text>
             </View>
+            {complianceStatus.fraudPreventionStandard.gaps.length > 0 && (
+              <>
+                <Text style={styles.gapsTitle}>Gaps Identified:</Text>
+                {complianceStatus.fraudPreventionStandard.gaps.map((gap, i) => (
+                  <Text key={i} style={styles.gapItem}>• {gap}</Text>
+                ))}
+              </>
+            )}
+            {complianceStatus.fraudPreventionStandard.actions.length > 0 && (
+              <>
+                <Text style={styles.actionsTitle}>Recommended Actions:</Text>
+                {complianceStatus.fraudPreventionStandard.actions.map((action, i) => (
+                  <Text key={i} style={styles.actionItem}>→ {action}</Text>
+                ))}
+              </>
+            )}
           </View>
 
-          <View style={styles.standardCard}>
+          {/* ECCTA 2023 */}
+          <View style={[styles.standardCard, complianceStatus.eccta2023.score >= 80 && styles.compliantCard]}>
             <View style={styles.standardHeader}>
-              <CheckCircle size={24} color={colors.successGreen} />
-              <Text style={styles.standardTitle}>ECCTA 2023</Text>
+              <CheckCircle size={24} color={eccStatus.color} />
+              <Text style={styles.standardTitle}>ECCTA 2023 Aligned</Text>
             </View>
-            <View style={[styles.statusBadge, styles.alignedBadge]}>
-              <Text style={styles.statusText}>Framework Aligned</Text>
+            <View style={[styles.scoreBar, { backgroundColor: eccStatus.color }]}>
+              <Text style={styles.scoreText}>{complianceStatus.eccta2023.score}%</Text>
             </View>
-            <Text style={styles.standardDesc}>
-              Economic Crime and Corporate Transparency Act 2023 introduces &ldquo;failure to prevent fraud&rdquo; offence requiring reasonable prevention procedures.
-            </Text>
-            <View style={styles.requirementsList}>
-              <Text style={styles.requirementItem}>✓ Reasonable procedures framework</Text>
-              <Text style={styles.requirementItem}>✓ Risk-based approach</Text>
-              <Text style={styles.requirementItem}>✓ Documentation and evidence</Text>
-              <Text style={styles.requirementItem}>⚠ Periodic testing required</Text>
+            <View style={[styles.statusBadge, { backgroundColor: eccStatus.color + '20' }]}>
+              <Text style={[styles.statusText, { color: eccStatus.color }]}>{eccStatus.label}</Text>
             </View>
+            {complianceStatus.eccta2023.gaps.length > 0 && (
+              <>
+                <Text style={styles.gapsTitle}>Process Improvements Needed:</Text>
+                {complianceStatus.eccta2023.gaps.map((gap, i) => (
+                  <Text key={i} style={styles.gapItem}>• {gap}</Text>
+                ))}
+              </>
+            )}
+            {complianceStatus.eccta2023.actions.length > 0 && (
+              <>
+                <Text style={styles.actionsTitle}>Recommended Actions:</Text>
+                {complianceStatus.eccta2023.actions.map((action, i) => (
+                  <Text key={i} style={styles.actionItem}>→ {action}</Text>
+                ))}
+              </>
+            )}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.summaryTitle}>Compliance Summary</Text>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryItem}>🟢 Overall compliance level: <Text style={styles.bold}>Good</Text></Text>
-            <Text style={styles.summaryItem}>📋 Total requirements assessed: <Text style={styles.bold}>42</Text></Text>
-            <Text style={styles.summaryItem}>✅ Fully compliant: <Text style={styles.bold}>28</Text></Text>
-            <Text style={styles.summaryItem}>⚠️ Partially compliant: <Text style={styles.bold}>11</Text></Text>
-            <Text style={styles.summaryItem}>❌ Non-compliant: <Text style={styles.bold}>3</Text></Text>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>Compliance Notes</Text>
-          <Text style={styles.hint}>
-            Describe any specific compliance gaps, actions taken, or planned improvements
-          </Text>
+          <Text style={styles.summaryTitle}>Assessment Notes</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={styles.notesInput}
+            placeholder="Add any additional compliance notes or context..."
             value={notes}
             onChangeText={setNotes}
-            placeholder="Enter compliance mapping details..."
-            placeholderTextColor={colors.govGrey3}
             multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-            accessibilityLabel="Compliance Notes"
+            numberOfLines={4}
+            placeholderTextColor={colors.lightGrey}
           />
         </View>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext} activeOpacity={0.8} accessibilityRole="button" accessibilityLabel="Continue to Fraud Response Plan">
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
           <Text style={styles.nextButtonText}>Continue to Fraud Response Plan</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -168,8 +304,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: colors.govBlue,
   },
-  partialCard: {
-    borderLeftColor: colors.warningOrange,
+  compliantCard: {
+    borderLeftColor: colors.successGreen,
   },
   standardHeader: {
     flexDirection: 'row',
@@ -183,39 +319,55 @@ const styles = StyleSheet.create({
     color: colors.govGrey1,
     flex: 1,
   },
+  scoreBar: {
+    height: 30,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  scoreText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: colors.white,
+  },
   statusBadge: {
-    backgroundColor: colors.govBlue,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 4,
     alignSelf: 'flex-start',
     marginBottom: 12,
   },
-  partialBadge: {
-    backgroundColor: colors.warningOrange,
-  },
-  alignedBadge: {
-    backgroundColor: colors.successGreen,
-  },
   statusText: {
     fontSize: 12,
     fontWeight: '700' as const,
-    color: colors.white,
     textTransform: 'uppercase' as const,
   },
-  standardDesc: {
+  gapsTitle: {
     fontSize: 14,
-    color: colors.govGrey2,
-    marginBottom: 14,
-    lineHeight: 20,
-  },
-  requirementsList: {
-    gap: 6,
-  },
-  requirementItem: {
-    fontSize: 13,
+    fontWeight: '600' as const,
     color: colors.govGrey1,
-    paddingLeft: 4,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  gapItem: {
+    fontSize: 13,
+    color: colors.govGrey2,
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  actionsTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.govGrey1,
+    marginTop: 10,
+    marginBottom: 8,
+  },
+  actionItem: {
+    fontSize: 13,
+    color: colors.govGrey2,
+    marginBottom: 6,
+    marginLeft: 4,
   },
   summaryTitle: {
     fontSize: 18,
@@ -223,57 +375,27 @@ const styles = StyleSheet.create({
     color: colors.govGrey1,
     marginBottom: 12,
   },
-  summaryCard: {
-    backgroundColor: colors.lightBlue,
-    borderRadius: 8,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.successGreen,
-  },
-  summaryItem: {
-    fontSize: 14,
-    color: colors.govGrey1,
-    marginBottom: 8,
-  },
-  bold: {
-    fontWeight: '700' as const,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: colors.govGrey1,
-    marginBottom: 8,
-  },
-  hint: {
-    fontSize: 14,
-    color: colors.govGrey2,
-    marginBottom: 12,
-    fontStyle: 'italic' as const,
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: colors.govGrey1,
+  notesInput: {
+    backgroundColor: colors.lightGrey,
     borderRadius: 4,
     padding: 12,
-    fontSize: 16,
+    fontSize: 14,
     color: colors.govGrey1,
-    backgroundColor: colors.white,
-  },
-  textArea: {
-    minHeight: 120,
-    paddingTop: 12,
+    minHeight: 100,
+    textAlignVertical: 'top' as const,
   },
   nextButton: {
     backgroundColor: colors.govBlue,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 4,
-    padding: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 20,
   },
   nextButtonText: {
-    fontSize: 17,
-    fontWeight: '600' as const,
+    fontSize: 16,
+    fontWeight: '700' as const,
     color: colors.white,
   },
-
 });
+

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAssessment } from '@/contexts/AssessmentContext';
-import { AssessmentScreen, QuestionGroup, QuestionOption } from '@/components/ui';
-import type { Pressure, ControlStrength, SpeakUpCulture } from '@/types/assessment';
+import { AssessmentScreen, QuestionGroup, QuestionOption, ScaleQuestion, CurrencyQuestion } from '@/components/ui';
+import type { Pressure, ControlStrength, SpeakUpCulture, ScaleValue, CurrencyValue } from '@/types/assessment';
 
 export default function FraudTriangleScreen() {
   const { assessment, updateAssessment } = useAssessment();
@@ -35,6 +35,25 @@ export default function FraudTriangleScreen() {
       hidePrevious={false}
       progress={{ current: 2, total: 13 }}
     >
+      <CurrencyQuestion
+        question="If fraud occurred undetected, what is your estimate of potential annual loss?"
+        hint="This helps quantify the impact of opportunity and pressure combined"
+        value={assessment.fraudTriangle.estimatedLossExposure}
+        onChange={(value) =>
+          updateAssessment({ fraudTriangle: { ...assessment.fraudTriangle, estimatedLossExposure: value } })
+        }
+      />
+
+      <ScaleQuestion
+        question="How would you rate the cultural likelihood that staff would rationalize fraudulent behaviour?"
+        minLabel="Culture actively discourages"
+        maxLabel="Culture could enable rationalization"
+        value={assessment.fraudTriangle.rationalizationRisk}
+        onChange={(value) =>
+          updateAssessment({ fraudTriangle: { ...assessment.fraudTriangle, rationalizationRisk: value } })
+        }
+      />
+
       <QuestionGroup
         question="Overall financial or operational pressure on the organisation"
         options={pressureOptions}

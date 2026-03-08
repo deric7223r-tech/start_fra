@@ -228,6 +228,8 @@ export const RATE_LIMITS = {
   WORKSHOP_WRITE_MAX: 30,
   WORKSHOP_JOIN_WINDOW_MS: 60 * 1000,   // 1 minute
   WORKSHOP_JOIN_MAX: 10,
+  WEBHOOK_WINDOW_MS: 60 * 1000,  // 1 minute
+  WEBHOOK_MAX: 100,
 } as const;
 
 // ── Keypass grace period ────────────────────────────────────────

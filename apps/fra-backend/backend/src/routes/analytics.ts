@@ -107,16 +107,8 @@ analytics.get('/reports/generate', async (c) => {
   const auth = requireAuth(c);
   if (auth instanceof Response) return auth;
 
-  // Require at least pkg_training to generate reports
-  const orgPurchases = hasDatabase()
-    ? await dbListPurchasesByOrganisation(auth.organisationId)
-    : Array.from(purchasesById.values()).filter((p) => p.organisationId === auth.organisationId);
-
-  if (!hasPackageEntitlement(orgPurchases, 'pkg_training')) {
-    return jsonError(c, 403, 'PACKAGE_REQUIRED', 'Report generation requires a Training or Full package');
-  }
-
-  // Fetch the organisation's assessments
+  // Allow all packages (basic, training, full) to generate reports
+  // PDF export with full details available to all packages via /assessments/:id/export-pdf
   const orgAssessments = hasDatabase()
     ? await dbListAssessmentsByOrganisation(auth.organisationId)
     : Array.from(assessmentsById.values()).filter((a) => a.organisationId === auth.organisationId);
